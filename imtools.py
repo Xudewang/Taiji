@@ -823,6 +823,28 @@ def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace = True):
 
     return (confidence, origi_cs_diff, cs_diff_arr)
 
+def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
+
+    '''
+    This function is to illustrate the sbp easily. It is to be developed into a more genaral version. Like Song and Jiaxuan do.
+    ''' 
+    sma = ellipse_data['sma']
+    intens = ellipse_data['intens']
+    mu = ellipse_data['mu']
+    mu_err = ellipse_data['mu_err']
+    
+    index = intens > outer_limit
+    sma_sky = sma[index]
+    mu_sky = mu[index]
+    mu_err_sky = mu_err[index]
+    
+    plt.plot(sma_sky*pixel_size, mu_sky)
+    plt.fill_between(sma_sky*pixel_size, mu_sky - mu_err_sky, mu_sky+mu_err_sky, alpha=0.2)
+    plt.ylim(np.min(mu_sky)-0.2, np.max(mu_sky)+0.2)
+    plt.gca().invert_yaxis()
+    plt.ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=20)
+    plt.xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=20)
+
 if __name__ == '__main__':
     test_pa = -50
 
