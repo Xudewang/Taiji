@@ -845,6 +845,18 @@ def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
     plt.ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=20)
     plt.xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=20)
 
+def getOuterBound(ellipse_data, sky_err, alter=0.2):
+    sma = ellipse_data['sma']
+    intens = ellipse_data['intens']
+    mu = ellipse_data['mu']
+    mu_err = ellipse_data['mu_err']
+    
+    mu_err_justsky = easy_propagate_err_mu(intens, sky_err)
+    
+    index = mu_err_justsky <= alter
+
+    return sma[index][-1]
+
 if __name__ == '__main__':
     test_pa = -50
 
