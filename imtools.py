@@ -98,7 +98,7 @@ def pospa(pa):
 
     return temp
 
-def bright_to_mag(intens, zpt0):
+def bright_to_mag(intens, zpt0, texp):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = 1
     A = 0.259**2
@@ -351,7 +351,7 @@ def normalize_angle(num, lower=0, upper=360, b=False):
     return res
     
 
-def runEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
+def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
               pa, ell_e, zpt0, interactive = False, inellip='', hcenter=False, hpa=False, hellip=False, 
               nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False):
     
