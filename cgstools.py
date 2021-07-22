@@ -301,8 +301,27 @@ def calculateCGSSky(galaxy_name, maxis = 1200, e_input = 0.5, pa_input = 40):
     print('sky error with box smooth: ', skyerr_bin)
     print('sky error w/o box smooth: ', skyerr)      
 
-    return [skyval, skyerr_bin]                                                                                          
+    return [skyval, skyerr_bin]     
 
+def subtract_sky_cgs(input_file, mask_file, sky_value):
+    modfile = input_file.replace('.fit','_sky.fit')
+    Remove_file(modfile)
+
+    hdul = fits.open(input_file)
+    header_list = hdul[0].header
+    data_list = hdul[0].data
+
+    data_list -= sky_value
+    try:
+        header_list.rename_keyword('D26.5C','D26_5C')
+        header_list.rename_keyword('D26.5', 'D26_5')
+    except ValueError as e:
+        print(e)
+        print("no D26.5")
+
+    hdul.writeto(modfile) 
+    
+    maskFitsTool(modfile, mask_file)                                                                                     
 
 # test part
 if __name__ == '__main__':

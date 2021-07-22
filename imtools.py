@@ -134,7 +134,7 @@ def Remove_file(file):
 # firstly, I should judge the file is fits or fit.
 
 def maskFitsTool(inputImg_fits_file, mask_fits_file):
-    
+
     # firstly, I should judge the file is fits or fit.
     if inputImg_fits_file[-3:] == 'its':
         mask_pl_file = inputImg_fits_file.replace('.fits','.fits.pl')
@@ -148,6 +148,12 @@ def maskFitsTool(inputImg_fits_file, mask_fits_file):
         iraf.imcopy(mask_fits_file, mask_pl_file)
 
 def subtract_sky(input_file, mask_file, sky_value):
+    '''
+    This function is to subtract the sky value form the original image and meanwhile copy the mask file for it.
+    It is to be modifed, use another way to write just the data into the file. Then we do not 
+    need consider the header.
+    '''
+
     modfile = input_file.replace('.fit','_sky.fit')
     Remove_file(modfile)
 
@@ -156,19 +162,13 @@ def subtract_sky(input_file, mask_file, sky_value):
     data_list = hdul[0].data
 
     data_list -= sky_value
-    try:
-        header_list.rename_keyword('D26.5C','D26_5C')
-        header_list.rename_keyword('D26.5', 'D26_5')
-    except ValueError as e:
-        print(e)
-        print("no D26.5")
 
     hdul.writeto(modfile) 
     
     maskFitsTool(modfile, mask_file)
     
 def propagate_err_mu(intens, intens_err, zpt0, pix = 0.259 , exp_time = 1):
-    '''    
+    ''' 
     How to propagate the error.
     
     ellipse_data: the data array from Iraf ellipse task.
