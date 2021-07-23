@@ -1,5 +1,5 @@
 import sys 
-sys.path.append('/home/dewang/python_code')
+sys.path.append('../')
 import re
 from astropy.io import fits
 from astropy.io import ascii
@@ -9,6 +9,7 @@ import os
 from Taiji.imtools import maskFitsTool
 from Taiji.imtools import readGalfitInput
 from Taiji.imtools import subtract_sky
+from Taiji.imtools import Remove_file
 
 
 def getgalName(galaxy_name):
@@ -45,8 +46,8 @@ def getinforHua(galaxy_name):
         galnamesep = ['NGC', '4373A']
 
     # table from Hua
-    coor_data = ascii.read('/home/dewang/para_file/bul_cen.dat', names=['name1','name2','x0','y0'])
-    geo_data = ascii.read('/home/dewang/para_file/bul_struct_param.bin',names=['name1','name2','mtotal','mt_err','BT','BT_err',
+    coor_data = ascii.read('../para_file/bul_cen.dat', names=['name1','name2','x0','y0'])
+    geo_data = ascii.read('../para_file/bul_struct_param.bin',names=['name1','name2','mtotal','mt_err','BT','BT_err',
                         'mue','mue_err','n','n_err','re','re_err','ellip','ellip_err','pa','pa_err','DT','bT','BL'])
     index_coor = (coor_data['name1']==galnamesep[0]) & (coor_data['name2']==galnamesep[1])
     index_geo = (geo_data['name1']==galnamesep[0]) & (geo_data['name2']==galnamesep[1])
@@ -83,9 +84,9 @@ def getGalfitSky(galaxy_name):
 
     # image path and data
     # Some images are fit, others are fits.
-    imageFile_fit = '/home/dewang/data/disk_galaxies/{}/R/{}_R_reg.fit'.format(galaxy_name, galaxy_name)
-    imageFile_fits = '/home/dewang/data/disk_galaxies/{}/R/{}_R_reg.fits'.format(galaxy_name, galaxy_name)
-    image_clean_file = '/home/dewang/data/CGS/{}/R/{}_R_reg_clean.fits'.format(galaxy_name, galaxy_name)
+    imageFile_fit = '../disk_galaxies/{}/R/{}_R_reg.fit'.format(galaxy_name, galaxy_name)
+    imageFile_fits = '../disk_galaxies/{}/R/{}_R_reg.fits'.format(galaxy_name, galaxy_name)
+    image_clean_file = '../disk_galaxies/{}/R/{}_R_reg_clean.fits'.format(galaxy_name, galaxy_name)
     if os.path.exists(imageFile_fit):
         imageFile = imageFile_fit
     elif os.path.exists(imageFile_fits):
@@ -96,20 +97,20 @@ def getGalfitSky(galaxy_name):
     exp_time = image_header['old_expt']
 
     # To get sky value and its error from Hua's parametric file.
-    dir_arr = ascii.read('/home/dewang/para_file/dir_GALFITmod', names=['path_gal','path_name', 'model_name'])  # path name etc.
+    dir_arr = ascii.read('../para_file/dir_GALFITmod', names=['path_gal','path_name', 'model_name'])  # path name etc.
     modelFile_arr = np.array(dir_arr['model_name'])
     gal_name_arr = np.array([re.findall('(?<=\/).*', dir_arr['path_gal'][i])[0] for i in range(len(dir_arr))])
 
     modelFile_name = modelFile_arr[gal_name_arr==galaxy_name][0]
     
-    modelFile_path = '/home/dewang/para_file/galfit_output/'+galaxy_name+'_'+modelFile_name
+    modelFile_path = '../para_file/galfit_output/'+galaxy_name+'_'+modelFile_name
     
 
     Galfit_input = readGalfitInput(modelFile_path)
     sky_value = float(Galfit_input[-1])/exp_time
     
     modelSkyupFile_name = modelFile_name.replace('.in','_up.in')
-    modelSkyupFile_path = '/home/dewang/para_file/galfit_output/'+galaxy_name+'_'+modelSkyupFile_name
+    modelSkyupFile_path = '../para_file/galfit_output/'+galaxy_name+'_'+modelSkyupFile_name
     try:
         if modelSkyupFile_name:
 
@@ -140,21 +141,21 @@ def sky_HUA(galaxy_name, image_header):
     exp_time = image_header['old_expt']
     
     # To get sky value and its error from Hua's parametric file.
-    dir_arr = ascii.read('/home/dewang/para_file/dir_GALFITmod', names=['path_gal','path_name', 'model_name'])  # path name etc.
+    dir_arr = ascii.read('../para_file/dir_GALFITmod', names=['path_gal','path_name', 'model_name'])  # path name etc.
     modelFile_arr = np.array(dir_arr['model_name'])
     gal_name_arr = np.array([re.findall('(?<=\/).*', dir_arr['path_gal'][i])[0] for i in range(len(dir_arr))])
     
     if galaxy_name in gal_name_arr:
         modelFile_name = modelFile_arr[gal_name_arr==galaxy_name][0]
 
-        modelFile_path = '/home/dewang/para_file/galfit_output/'+galaxy_name+'_'+modelFile_name
+        modelFile_path = '../para_file/galfit_output/'+galaxy_name+'_'+modelFile_name
 
 
         Galfit_input = readGalfitInput(modelFile_path)
         sky_value = float(Galfit_input[-1])/exp_time
 
         modelSkyupFile_name = modelFile_name.replace('.in','_up.in')
-        modelSkyupFile_path = '/home/dewang/para_file/galfit_output/'+galaxy_name+'_'+modelSkyupFile_name
+        modelSkyupFile_path = '../para_file/galfit_output/'+galaxy_name+'_'+modelSkyupFile_name
         
         if os.path.exists(modelSkyupFile_path):
             # because some galaxies sky values do not exist in Hua's parafile.
@@ -202,15 +203,15 @@ def sky_ZY(image_header):
 
 def calculateCGSSky(galaxy_name, maxis = 1200, e_input = 0.5, pa_input = 40):
     galaxy_name = galaxy_name
-    imageFile_fit = '/home/dewang/data/CGS/{}/R/{}_R_reg.fit'.format(galaxy_name, galaxy_name)
-    imageFile_fits = '/home/dewang/data/CGS/{}/R/{}_R_reg.fits'.format(galaxy_name, galaxy_name)
+    imageFile_fit = '../disk_galaxies/{}/R/{}_R_reg.fit'.format(galaxy_name, galaxy_name)
+    imageFile_fits = '../disk_galaxies/{}/R/{}_R_reg.fits'.format(galaxy_name, galaxy_name)
     if os.path.exists(imageFile_fit):
         imageFile = imageFile_fit
     elif os.path.exists(imageFile_fits):
         imageFile = imageFile_fits
     data_fits_file = imageFile
-    cleandata_fits_file = '/home/dewang/data/CGS/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_clean.fits'
-    mask_fits_file = '/home/dewang/data/CGS/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_mm.fits'
+    cleandata_fits_file = '../disk_galaxies/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_clean.fits'
+    mask_fits_file = '../disk_galaxies/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_mm.fits'
 
     datahdu = fits.open(data_fits_file)
     parafile_from_header = fits.getheader(data_fits_file)

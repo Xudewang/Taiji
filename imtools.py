@@ -353,7 +353,7 @@ def normalize_angle(num, lower=0, upper=360, b=False):
 
 def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
               pa, ell_e, zpt0, interactive = False, inellip='', hcenter=False, hpa=False, hellip=False, 
-              nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False):
+              nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False, texp=1):
     
     if not os.path.isfile(input_img):
         raise Exception("### Can not find the input image: %s !" % input_img)
@@ -434,7 +434,7 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0)
+    mu = bright_to_mag(intens, zpt0, texp)
     mu_err = easy_propagate_err_mu(np.array(intens), intens_err_removeindef_sky)
     
     ellipse_data.add_column(Column(name='mu', data=mu ))
