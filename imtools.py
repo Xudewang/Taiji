@@ -857,6 +857,370 @@ def getOuterBound(ellipse_data, sky_err, alter=0.2):
 
     return sma[index][-1]
 
+def plot_ellip(sma, ellip, ellip_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
+                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
+    
+    '''
+    This function is a templete to plot the ellipticity profile.
+    '''
+    
+    if plot_style == 'errorbar':
+        plt.errorbar(sma*pixel_size, ellip, yerr = ellip_err,fmt='o', markersize=3, color=color,capsize=3,elinewidth=0.7)
+        
+    elif plot_style == 'fill':
+        plt.plot(sma*pixel_size, ellip, color = color, lw = 3)
+        plt.fill_between(sma*pixel_size, ellip + ellip_err, ellip - ellip_err, color=color, alpha=0.5)
+    
+    if ylimax:
+        plt.ylim(ylimin, ylimax)
+    else:
+        plt.ylim(np.min(ellip)-0.05, np.max(ellip)+0.05)
+    
+    if xlimax: 
+        plt.xlim(xlimin, xlimax)
+#     else:
+#         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
+        
+    plt.ylabel(r'Ellipticity')
+    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
+    
+def plot_pa(sma, pa, pa_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
+                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
+    
+    '''
+    This function is a templete to plot the PA profile.
+    '''
+    
+    if plot_style == 'errorbar':
+        plt.errorbar(sma*pixel_size, pa, yerr = pa_err,fmt='o', markersize=3, color=color,capsize=3, elinewidth=0.7)
+        
+    elif plot_style == 'fill':
+        plt.plot(sma*pixel_size, pa, color = color, lw = 3)
+        plt.fill_between(sma*pixel_size, pa + pa_err, pa - pa_err, color=color, alpha=0.5)
+    
+    if ylimax:
+        plt.ylim(ylimin, ylimax)
+    else:
+        plt.ylim(np.min(pa)-5, np.max(pa)+5)
+    
+    if xlimax: 
+        plt.xlim(xlimin, xlimax)
+#     else:
+#         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
+        
+    plt.ylabel(r'PA\, (deg)')
+    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
+    
+def plot_SBP(sma, mu, mu_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
+                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
+    
+    '''
+    This function is a templete to plot the SB profile.
+    '''
+    
+    if plot_style == 'errorbar':
+        plt.errorbar(sma*pixel_size, mu, yerr = mu_err,fmt='o', markersize=3, color=color,capsize=3, elinewidth=0.7)
+        
+    elif plot_style == 'fill':
+        plt.plot(sma*pixel_size, mu, color = color, lw = 3)
+        plt.fill_between(sma*pixel_size, mu + mu_err, mu - mu_err, color=color, alpha=0.5)
+    
+    if ylimax:
+        plt.ylim(ylimin, ylimax)
+    else:
+        plt.ylim(np.min(mu)-0.5, np.max(mu)+0.5)
+    
+    if xlimax: 
+        plt.xlim(xlimin, xlimax)
+        
+    plt.ylabel(r'$\Sigma_R\ (\mathrm{mag\ arcsec^{-2}})$')
+    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
+    plt.gca().invert_yaxis()
+    
+
+def plot_completeSBP(sma, ell, ell_err, pa, pa_err, mu, mu_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
+                    xlimin = None, xlimax = None, ylimin_e = None, ylimax_e = None, ylimin_pa = None, ylimax_pa = None, 
+                     ylimin_mu = None, ylimax_mu = None, save_file = ''):
+    '''
+    This function is to plot the standard and basic surface brightness profiles including sbp, ell, and pa panels.
+    '''
+    fig = plt.figure(figsize=(10,12))
+    fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
+    gs = GridSpec(ncols=1, nrows=24, figure=fig)
+    
+    ax1 = fig.add_subplot(gs[:5, 0])
+    plot_ellip(sma, ell, ell_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
+                      ylimin = ylimin_e, ylimax = ylimax_e, xlimin = xlimin, xlimax = xlimax)
+
+    ax2 = fig.add_subplot(gs[5:10, 0])
+    plot_pa(sma, pa, pa_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
+                      ylimin = ylimin_pa, ylimax = ylimax_pa, xlimin = xlimin, xlimax = xlimax)
+
+    ax3 = fig.add_subplot(gs[10:, 0])            
+    plot_SBP(sma, mu, mu_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
+                      ylimin = ylimin_mu, ylimax = ylimax_mu, xlimin = xlimin, xlimax = xlimax)
+
+    if save_file:
+        plt.savefig(save_file, dpi=200, bbox_inches='tight')
+    plt.show()
+    
+def random_cmap(ncolors=256, background_color='white'):
+    """Random color maps.
+    Generate a matplotlib colormap consisting of random (muted) colors.
+    A random colormap is very useful for plotting segmentation images.
+    Parameters
+    ----------
+    ncolors : int, optional
+        The number of colors in the colormap.  The default is 256.
+    random_state : int or `~numpy.random.RandomState`, optional
+        The pseudo-random number generator state used for random
+        sampling.  Separate function calls with the same
+        ``random_state`` will generate the same colormap.
+    Returns
+    -------
+    cmap : `matplotlib.colors.Colormap`
+        The matplotlib colormap with random colors.
+    Notes
+    -----
+    Based on: colormaps.py in photutils
+    """
+    prng = np.random.mtrand._rand
+
+    h = prng.uniform(low=0.0, high=1.0, size=ncolors)
+    s = prng.uniform(low=0.2, high=0.7, size=ncolors)
+    v = prng.uniform(low=0.5, high=1.0, size=ncolors)
+
+    hsv = np.dstack((h, s, v))
+    rgb = np.squeeze(colors.hsv_to_rgb(hsv))
+
+    if background_color is not None:
+        if background_color not in colors.cnames:
+            raise ValueError('"{0}" is not a valid background color '
+                             'name'.format(background_color))
+        rgb[0] = colors.hex2color(colors.cnames[background_color])
+
+    return colors.ListedColormap(rgb)
+
+
+# About the Colormaps
+IMG_CMAP = plt.get_cmap('viridis')
+IMG_CMAP.set_bad(color='black')
+SEG_CMAP = random_cmap(ncolors=512, background_color=u'white')
+SEG_CMAP.set_bad(color='white')
+SEG_CMAP.set_under(color='white')
+
+cmaplist = ['#000000', '#720026', '#A0213F', '#ce4257', '#E76154', '#ff9b54', '#ffd1b1']
+cdict = {'red': [], 'green': [], 'blue': []}
+cpoints = np.linspace(0,1,len(cmaplist))
+for i in range(len(cmaplist)):
+    cdict['red'].append([cpoints[i], int(cmaplist[i][1:3],16)/256,int(cmaplist[i][1:3],16)/256])
+    cdict['green'].append([cpoints[i], int(cmaplist[i][3:5],16)/256,int(cmaplist[i][3:5],16)/256])
+    cdict['blue'].append([cpoints[i], int(cmaplist[i][5:7],16)/256,int(cmaplist[i][5:7],16)/256])
+autocmap = LinearSegmentedColormap('autocmap', cdict)
+autocmap.set_under('k', alpha=0)
+
+
+def display_single(img,
+                   pixel_scale=0.168,
+                   physical_scale=None,
+                   xsize=8,
+                   ysize=8,
+                   ax=None,
+                   stretch='arcsinh',
+                   scale='zscale',
+                   contrast=0.25,
+                   zmin=None,
+                   zmax=None,
+                   no_negative=False,
+                   lower_percentile=1.0,
+                   upper_percentile=99.0,
+                   cmap=IMG_CMAP,
+                   scale_bar=True,
+                   scale_bar_length=5.0,
+                   scale_bar_fontsize=20,
+                   scale_bar_y_offset=0.5,
+                   scale_bar_color='w',
+                   scale_bar_loc='left',
+                   color_bar=False,
+                   color_bar_loc=1,
+                   color_bar_width='75%',
+                   color_bar_height='5%',
+                   color_bar_fontsize=18,
+                   color_bar_color='w',
+                   add_text=None,
+                   text_fontsize=30,
+                   text_color='w'):
+    """Display single image.
+    Parameters
+    ----------
+        img: np 2-D array for image
+        xsize: int, default = 8
+            Width of the image.
+        ysize: int, default = 8
+            Height of the image.
+    """
+    if ax is None:
+        fig = plt.figure(figsize=(xsize, ysize))
+        ax1 = fig.add_subplot(111)
+    else:
+        ax1 = ax
+
+    # Stretch option
+    if stretch.strip() == 'arcsinh':
+        img_scale = np.arcsinh(img)
+    elif stretch.strip() == 'log':
+        if no_negative:
+            img[img <= 0.0] = 1.0E-10
+        img_scale = np.log(img)
+    elif stretch.strip() == 'log10':
+        if no_negative:
+            img[img <= 0.0] = 1.0E-10
+        img_scale = np.log10(img)
+    elif stretch.strip() == 'linear':
+        img_scale = img
+    else:
+        raise Exception("# Wrong stretch option.")
+
+    # Scale option
+    if zmin is not None and zmax is not None:
+        zmin, zmax = zmin, zmax
+    elif scale.strip() == 'zscale':
+        try:
+            zmin, zmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+        except IndexError:
+            # TODO: Deal with problematic image
+            zmin, zmax = -1.0, 1.0
+    elif scale.strip() == 'percentile':
+        try:
+            zmin, zmax = AsymmetricPercentileInterval(
+                lower_percentile=lower_percentile,
+                upper_percentile=upper_percentile).get_limits(img_scale)
+        except IndexError:
+            # TODO: Deal with problematic image
+            zmin, zmax = -1.0, 1.0
+    else:
+        zmin, zmax = np.nanmin(img_scale), np.nanmax(img_scale)
+
+    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
+                      vmin=zmin, vmax=zmax)
+
+    # Hide ticks and tick labels
+    ax1.tick_params(
+        labelbottom=False,
+        labelleft=False,
+        axis=u'both',
+        which=u'both',
+        length=0)
+
+    # Put scale bar on the image
+    (img_size_x, img_size_y) = img.shape
+    if physical_scale is not None:
+        pixel_scale *= physical_scale
+    if scale_bar:
+        if scale_bar_loc == 'left':
+            scale_bar_x_0 = int(img_size_x * 0.04)
+            scale_bar_x_1 = int(img_size_x * 0.04 +
+                                (scale_bar_length / pixel_scale))
+        else:
+            scale_bar_x_0 = int(img_size_x * 0.95 -
+                                (scale_bar_length / pixel_scale))
+            scale_bar_x_1 = int(img_size_x * 0.95)
+
+        scale_bar_y = int(img_size_y * 0.10)
+        scale_bar_text_x = (scale_bar_x_0 + scale_bar_x_1) / 2
+        scale_bar_text_y = (scale_bar_y * scale_bar_y_offset)
+        if physical_scale is not None:
+            scale_bar_text = r'$%d\ \mathrm{kpc}$' % int(scale_bar_length)
+        else:
+            scale_bar_text = r'$%d^{\prime\prime}$' % int(scale_bar_length)
+        scale_bar_text_size = scale_bar_fontsize
+
+        ax1.plot(
+            [scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
+            linewidth=3,
+            c=scale_bar_color,
+            alpha=1.0)
+        ax1.text(
+            scale_bar_text_x,
+            scale_bar_text_y,
+            scale_bar_text,
+            fontsize=scale_bar_text_size,
+            horizontalalignment='center',
+            color=scale_bar_color)
+    if add_text is not None:
+        text_x_0 = int(img_size_x*0.08)
+        text_y_0 = int(img_size_y*0.80)
+        ax1.text(text_x_0, text_y_0, r'$\mathrm{'+add_text+'}$', fontsize=text_fontsize, color=text_color)
+
+    # Put a color bar on the image
+    if color_bar:
+        ax_cbar = inset_axes(ax1,
+                             width=color_bar_width,
+                             height=color_bar_height,
+                             loc=color_bar_loc)
+        if ax is None:
+            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
+                                orientation='horizontal')
+        else:
+            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
+                                orientation='horizontal')
+
+        cbar.ax.xaxis.set_tick_params(color=color_bar_color)
+        cbar.ax.yaxis.set_tick_params(color=color_bar_color)
+        cbar.outline.set_edgecolor(color_bar_color)
+        plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
+                 color=color_bar_color, fontsize=color_bar_fontsize)
+        plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
+                 color=color_bar_color, fontsize=color_bar_fontsize)
+
+    if ax is None:
+        return fig
+    return ax1
+
+
+def display_isophote(img, x0, y0, sma, ell, pa, ax):
+    """Visualize the isophotes."""
+
+    display_single(img, ax=ax, scale_bar=True, pixel_scale=0.259, cmap='Greys_r', scale_bar_length = 30)
+
+    for k in range(len(sma)):
+        if k % 2 == 0:
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#878ECD')
+            e.set_alpha(1)
+            e.set_linewidth(1.5)
+            ax.add_artist(e)
+            
+    for k in range(len(sma)):
+        if np.logical_and(k % 5 == 0, k>200):
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#30E3CA')
+            e.set_alpha(1)
+            e.set_linewidth(2)
+            e.set_linestyle('-')
+            ax.add_artist(e)
+            
+    for k in range(len(sma)):
+        if np.logical_and(k % 15 == 0, k<=200):
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#30E3CA')
+            e.set_alpha(1)
+            e.set_linewidth(1)
+            e.set_linestyle('-')
+            ax.add_artist(e)
+
 if __name__ == '__main__':
     test_pa = -50
 
