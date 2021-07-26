@@ -27,6 +27,16 @@ from astropy.stats import bootstrap
 from sklearn.utils import resample 
 from scipy import signal
 
+from matplotlib import colors
+from matplotlib.ticker import AutoMinorLocator
+from matplotlib.colors import LinearSegmentedColormap
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.ticker import NullFormatter
+from matplotlib.ticker import MaxNLocator
+from astropy.visualization import ZScaleInterval
+import matplotlib.patches as mpatches
+from matplotlib.patches import Ellipse
+
 iraf.stsdas()
 iraf.analysis()
 iraf.isophote()
@@ -98,10 +108,10 @@ def pospa(pa):
 
     return temp
 
-def bright_to_mag(intens, zpt0, texp):
+def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = 1
-    A = 0.259**2
+    A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
 def inten_to_mag(intens, zpt0):
@@ -353,7 +363,7 @@ def normalize_angle(num, lower=0, upper=360, b=False):
 
 def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
               pa, ell_e, zpt0, interactive = False, inellip='', hcenter=False, hpa=False, hellip=False, 
-              nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False, texp=1):
+              nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False, texp=1, pixel_size=0.259):
     
     if not os.path.isfile(input_img):
         raise Exception("### Can not find the input image: %s !" % input_img)
@@ -434,7 +444,7 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0, texp)
+    mu = bright_to_mag(intens, zpt0, texp, pixel_size)
     mu_err = easy_propagate_err_mu(np.array(intens), intens_err_removeindef_sky)
     
     ellipse_data.add_column(Column(name='mu', data=mu ))
@@ -442,7 +452,7 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     
     return ellipse_data
 
-def readEllipse(outDat, zpt0, sky_err):
+def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259):
     
     # read the data
     ellipse_data = Table.read(outDat, format='ascii.no_header')
@@ -502,7 +512,7 @@ def readEllipse(outDat, zpt0, sky_err):
     
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0)
+    mu = bright_to_mag(intens, zpt0, pixel_size=pixel_size)
     mu_err = easy_propagate_err_mu(np.array(intens), intens_err_removeindef_sky)
     
     ellipse_data.add_column(Column(name='mu', data=mu ))
