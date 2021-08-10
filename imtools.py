@@ -9,22 +9,23 @@ import matplotlib.image as mpimg
 from matplotlib.gridspec import GridSpec
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
+from matplotlib import cm
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import HistEqStretch, LogStretch
 from matplotlib.colors import LogNorm
 from astropy.io import ascii
 from astropy.modeling.models import custom_model
-from astropy.modeling import models,fitting
+from astropy.modeling import models, fitting
 from astropy.modeling.models import Sersic1D
 import re
 from uncertainties import unumpy
-from astropy.table import Table,Column
+from astropy.table import Table, Column
 import subprocess
 import shutil
 from scipy.interpolate import interp1d
 from matplotlib.patches import Ellipse, Circle
 from astropy.stats import bootstrap
-from sklearn.utils import resample 
+from sklearn.utils import resample
 from scipy import signal
 
 from matplotlib import colors
@@ -41,9 +42,11 @@ iraf.stsdas()
 iraf.analysis()
 iraf.isophote()
 
+
 def muRe_to_intenRe(muRe, zpt):
-    intenRe = 10**((zpt-muRe)/2.5)*0.259**2
+    intenRe = 10**((zpt - muRe) / 2.5) * 0.259**2
     return intenRe
+
 
 def all_ninety_pa(pa):
     temp = 0
@@ -51,8 +54,9 @@ def all_ninety_pa(pa):
         temp = pa - 180
     else:
         temp = pa
-        
+
     return temp
+
 
 def galaxy_model(x0, y0, PA, ell, I_e, r_e, n):
     model = pyimfit.SimpleModelDescription()
@@ -61,8 +65,8 @@ def galaxy_model(x0, y0, PA, ell, I_e, r_e, n):
     model.y0.setValue(y0, [y0 - 10, y0 + 10])
 
     bulge = pyimfit.make_imfit_function('Sersic', label='bulge')
-    bulge.I_e.setValue(I_e, [1e-33, 10*I_e])
-    bulge.r_e.setValue(r_e, [1e-33, 10*r_e])
+    bulge.I_e.setValue(I_e, [1e-33, 10 * I_e])
+    bulge.r_e.setValue(r_e, [1e-33, 10 * r_e])
     bulge.n.setValue(n, [0.5, 5])
     bulge.PA.setValue(PA, [0, 180])
     bulge.ell.setValue(ell, [0, 1])
@@ -71,14 +75,16 @@ def galaxy_model(x0, y0, PA, ell, I_e, r_e, n):
 
     return model
 
+
 def Ser_kappa(n):
     if n > 0.36:
-        bn = 2*n - 1/3 + 4/(405*n) + 46/(25515*n**2)
-        
+        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
+
     elif n < 0.36:
-        bn = 0.01945 - 0.8902*n + 10.95 * n**2 - 19.67 * n **3 + 13.43 * n **4
-        
+        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
+
     return bn
+
 
 def nantozero(data):
     temp = []
@@ -86,8 +92,9 @@ def nantozero(data):
         if np.isnan(data[i]):
             data[i] = 0
         temp.append(data[i])
-        
+
     return np.array(temp)
+
 
 def pospa(pa):
     if isinstance(pa, int) or isinstance(pa, float):
@@ -101,12 +108,13 @@ def pospa(pa):
         temp = []
         for i in range(len(pa)):
             if pa[i] < 0:
-                temp.append(pa[i]+180)
+                temp.append(pa[i] + 180)
             else:
                 temp.append(pa[i])
         temp = np.array(temp)
 
     return temp
+
 
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
@@ -114,48 +122,58 @@ def bright_to_mag(intens, zpt0, texp, pixel_size):
     A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
+
 def inten_to_mag(intens, zpt0):
     '''
     This function is for calculating the magnitude of total intensity.
     '''
     return -2.5 * np.log10(intens) + zpt0
 
-def inten_tomag_err(inten,err):
+
+def inten_tomag_err(inten, err):
     detup_residual = 2.5 * np.log10((inten + err) / inten)
     detdown_residual = 2.5 * np.log10(inten / (inten - err))
-    
-    return detup_residual,detdown_residual
+
+    return detup_residual, detdown_residual
+
 
 def GrowthCurve(sma, ellip, isoInten):
-    ellArea = np.pi * ((sma ** 2.0) * (1.0 - ellip))
+    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
-    curveOfGrowth = list(map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
-    
+    curveOfGrowth = list(
+        map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
+
     indexMax = np.argmax(curveOfGrowth)
     maxIsoSma = sma[indexMax]
     maxIsoFlux = curveOfGrowth[indexMax]
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
+
 def Remove_file(file):
     if os.path.exists(file):
         os.remove(file)
 
+
 # firstly, I should judge the file is fits or fit.
+
 
 def maskFitsTool(inputImg_fits_file, mask_fits_file):
 
     # firstly, I should judge the file is fits or fit.
     if inputImg_fits_file[-3:] == 'its':
-        mask_pl_file = inputImg_fits_file.replace('.fits','.fits.pl')
+        mask_pl_file = inputImg_fits_file.replace('.fits', '.fits.pl')
     elif inputImg_fits_file[-3:] == 'fit':
-        mask_pl_file = inputImg_fits_file.replace('.fit','.pl')
+        mask_pl_file = inputImg_fits_file.replace('.fit', '.pl')
 
     if os.path.exists(mask_pl_file):
         print('pl file exists')
     else:
-        print('pl file does not exist and we should make a pl file for ellipse task')
+        print(
+            'pl file does not exist and we should make a pl file for ellipse task'
+        )
         iraf.imcopy(mask_fits_file, mask_pl_file)
+
 
 def subtract_sky(input_file, mask_file, sky_value):
     '''
@@ -164,7 +182,7 @@ def subtract_sky(input_file, mask_file, sky_value):
     need consider the header.
     '''
 
-    modfile = input_file.replace('.fit','_sky.fit')
+    modfile = input_file.replace('.fit', '_sky.fit')
     Remove_file(modfile)
 
     hdul = fits.open(input_file)
@@ -173,11 +191,12 @@ def subtract_sky(input_file, mask_file, sky_value):
 
     data_list -= sky_value
 
-    hdul.writeto(modfile) 
-    
+    hdul.writeto(modfile)
+
     maskFitsTool(modfile, mask_file)
-    
-def propagate_err_mu(intens, intens_err, zpt0, pix = 0.259 , exp_time = 1):
+
+
+def propagate_err_mu(intens, intens_err, zpt0, pix=0.259, exp_time=1):
     ''' 
     How to propagate the error.
     
@@ -192,17 +211,17 @@ def propagate_err_mu(intens, intens_err, zpt0, pix = 0.259 , exp_time = 1):
     '''
     texp = exp_time
     A = pix**2
-    
-#     intens = ellipse_data['intens']
-#     intens_err = ellipse_data['int_err']
-    
-#     intens_err_removeindef = removeellipseIndef(intens_err)
-    
-#     intens_err[intens_err=='INDEF'] = np.nan 
-    
-#     intens_err_removeindef = [float(intens_err[i]) for i in range(len(intens_err))]
 
-    uncertainty_inten = unumpy.uarray(list(intens),list(intens_err))
+    #     intens = ellipse_data['intens']
+    #     intens_err = ellipse_data['int_err']
+
+    #     intens_err_removeindef = removeellipseIndef(intens_err)
+
+    #     intens_err[intens_err=='INDEF'] = np.nan
+
+    #     intens_err_removeindef = [float(intens_err[i]) for i in range(len(intens_err))]
+
+    uncertainty_inten = unumpy.uarray(list(intens), list(intens_err))
 
     uncertainty_mu = -2.5 * unumpy.log10(uncertainty_inten / (texp * A)) + zpt0
     uncertainty_mu_value = unumpy.nominal_values(uncertainty_mu)
@@ -210,30 +229,34 @@ def propagate_err_mu(intens, intens_err, zpt0, pix = 0.259 , exp_time = 1):
 
     return uncertainty_mu_value, uncertainty_mu_std
 
+
 def easy_propagate_err_mu(intens, intens_err):
-    
-    return np.array(2.5/np.log(10)*intens_err/intens)
+
+    return np.array(2.5 / np.log(10) * intens_err / intens)
+
 
 def removeellipseIndef(arr):
-    
+
     # let the indef equals NaN
-    arr[arr=='INDEF'] = np.nan
-    
+    arr[arr == 'INDEF'] = np.nan
+
     # convert the str array into float array
-    
+
     arr_new = [float(arr[i]) for i in range(len(arr))]
-    
+
     return np.array(arr_new)
+
 
 def imageMax(image_data_temp, mask_data_temp):
 
     # combine the image and mask
-    image_data_temp[mask_data_temp>0]=np.nan
+    image_data_temp[mask_data_temp > 0] = np.nan
     image_value_max = np.nanmax(image_data_temp)
 
     return image_value_max
 
-def ellipseGetGrowthCurve(ellipOut,useTflux=False):
+
+def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     """
     Extract growth curve from Ellipse output.
     Parameters: ellipOut
@@ -242,12 +265,15 @@ def ellipseGetGrowthCurve(ellipOut,useTflux=False):
     if not useTflux:
         # The area in unit of pixels covered by an elliptical isophote
         ell = removeellipseIndef(ellipOut['ell'])
-        ellArea = np.pi * ((ellipOut['sma'] ** 2.0) * (1.0 - ell))
+        ellArea = np.pi * ((ellipOut['sma']**2.0) * (1.0 - ell))
         # The total flux inside the "ring"
         intensUse = ellipOut['intens']
-        isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * ellipOut['intens']
+        isoFlux = np.append(ellArea[0],
+                            [ellArea[1:] - ellArea[:-1]]) * ellipOut['intens']
         # Get the growth Curve
-        curveOfGrowth = list(map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
+        curveOfGrowth = list(
+            map(lambda x: np.nansum(isoFlux[0:x + 1]),
+                range(isoFlux.shape[0])))
     else:
         curveOfGrowth = ellipOut['tflux_e']
 
@@ -256,6 +282,7 @@ def ellipseGetGrowthCurve(ellipOut,useTflux=False):
     maxIsoFlux = curveOfGrowth[indexMax]
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
+
 
 def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
     """
@@ -284,6 +311,7 @@ def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
 
     return ellipse_output
 
+
 def fix_pa_profile_single(pa_arr, delta_pa=75.0):
     """
     Correct the position angle for large jump.
@@ -306,6 +334,7 @@ def fix_pa_profile_single(pa_arr, delta_pa=75.0):
             pa[i] += 180.0
 
     return pa
+
 
 def normalize_angle(num, lower=0, upper=360, b=False):
     """Normalize number to range [lower, upper) or [lower, upper].
@@ -359,15 +388,41 @@ def normalize_angle(num, lower=0, upper=360, b=False):
     res *= 1.0  # Make all numbers float, to be consistent
 
     return res
-    
 
-def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
-              pa, ell_e, zpt0, interactive = False, inellip='', hcenter=False, hpa=False, hellip=False, 
-              nclip=3, usclip=3, lsclip=2.5, FracBad=0.9, olthresh=0, intemode='median',step=0.1, sky_err=0, maxgerr=0.5, harmonics=False, texp=1, pixel_size=0.259):
-    
+
+def PyrafEllipse(input_img,
+                 outTab,
+                 outDat,
+                 cdf,
+                 pf,
+                 inisma,
+                 maxsma,
+                 x0,
+                 y0,
+                 pa,
+                 ell_e,
+                 zpt0,
+                 interactive=False,
+                 inellip='',
+                 hcenter=False,
+                 hpa=False,
+                 hellip=False,
+                 nclip=3,
+                 usclip=3,
+                 lsclip=2.5,
+                 FracBad=0.9,
+                 olthresh=0,
+                 intemode='median',
+                 step=0.1,
+                 sky_err=0,
+                 maxgerr=0.5,
+                 harmonics=False,
+                 texp=1,
+                 pixel_size=0.259):
+
     if not os.path.isfile(input_img):
         raise Exception("### Can not find the input image: %s !" % input_img)
-    
+
     if os.path.exists(outTab):
         os.remove(outTab)
     if os.path.exists(outDat):
@@ -377,15 +432,33 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     if os.path.exists(pf):
         os.remove(pf)
 
-    iraf.ellipse(interactive = interactive,input = input_img, out=outTab,fflag= FracBad, sma0 = inisma, 
-                 maxsma=maxsma,x0=x0,nclip=nclip, usclip=usclip,lsclip=lsclip,
-             y0=y0,pa = pa, e = ell_e, hcenter=hcenter,hpa = hpa,hellip = hellip,olthresh=olthresh,
-                 integrmode=intemode, step=step, inellip=inellip, maxgerr=maxgerr, harmonics=harmonics)
+    iraf.ellipse(interactive=interactive,
+                 input=input_img,
+                 out=outTab,
+                 fflag=FracBad,
+                 sma0=inisma,
+                 maxsma=maxsma,
+                 x0=x0,
+                 nclip=nclip,
+                 usclip=usclip,
+                 lsclip=lsclip,
+                 y0=y0,
+                 pa=pa,
+                 e=ell_e,
+                 hcenter=hcenter,
+                 hpa=hpa,
+                 hellip=hellip,
+                 olthresh=olthresh,
+                 integrmode=intemode,
+                 step=step,
+                 inellip=inellip,
+                 maxgerr=maxgerr,
+                 harmonics=harmonics)
 
     iraf.tdump(table=outTab, datafile=outDat, cdfile=cdf, pfile=pf)
-    
+
     print('The ellipse finished!')
-    
+
     # read the data
     ellipse_data = Table.read(outDat, format='ascii.no_header')
     ellipse_data.rename_column('col1', 'sma')
@@ -428,7 +501,7 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     ellipse_data.rename_column('col38', 'stop')
     ellipse_data.rename_column('col39', 'a_big')
     ellipse_data.rename_column('col40', 'sarea')
-    
+
     # Normalize the PA
     # dPA = 75
     # ellipse_data = fix_pa_profile(ellipse_data, pa_col='pa', delta_pa=dPA)
@@ -437,23 +510,31 @@ def PyrafEllipse(input_img, outTab, outDat, cdf, pf, inisma, maxsma, x0, y0,
     #         [normalize_angle(pa, lower=-90, upper=90.0, b=True)
     #          for pa in ellipse_data['pa']])))
 
-    # remove the indef 
+    # remove the indef
     intens = ellipse_data['intens']
     intens_err = ellipse_data['int_err']
     intens_err_removeindef = removeellipseIndef(intens_err)
-    
+
+    ellipse_data['ell'] = removeellipseIndef(ellipse_data['ell'])
+    ellipse_data['pa'] = removeellipseIndef(ellipse_data['pa'])
+    ellipse_data['ell_err'] = removeellipseIndef(ellipse_data['ell_err'])
+    ellipse_data['pa_err'] = removeellipseIndef(ellipse_data['pa_err'])
+
     # calculate the magnitude.
-    intens_err_removeindef_sky = np.sqrt(np.array(intens_err_removeindef)**2 + sky_err**2)
+    intens_err_removeindef_sky = np.sqrt(
+        np.array(intens_err_removeindef)**2 + sky_err**2)
     mu = bright_to_mag(intens, zpt0, texp, pixel_size)
-    mu_err = easy_propagate_err_mu(np.array(intens), intens_err_removeindef_sky)
-    
-    ellipse_data.add_column(Column(name='mu', data=mu ))
-    ellipse_data.add_column(Column(name='mu_err', data = mu_err))
-    
+    mu_err = easy_propagate_err_mu(np.array(intens),
+                                   intens_err_removeindef_sky)
+
+    ellipse_data.add_column(Column(name='mu', data=mu))
+    ellipse_data.add_column(Column(name='mu_err', data=mu_err))
+
     return ellipse_data
 
-def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259):
-    
+
+def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, texp=1):
+
     # read the data
     ellipse_data = Table.read(outDat, format='ascii.no_header')
     ellipse_data.rename_column('col1', 'sma')
@@ -505,34 +586,42 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259):
     #         [normalize_angle(pa, lower=-90, upper=90.0, b=True)
     #          for pa in ellipse_data['pa']])))
 
-    # remove the indef 
+    # remove the indef
     intens = ellipse_data['intens']
     intens_err = ellipse_data['int_err']
     intens_err_removeindef = removeellipseIndef(intens_err)
-    
+
+    ellipse_data['ell'] = removeellipseIndef(ellipse_data['ell'])
+    ellipse_data['pa'] = removeellipseIndef(ellipse_data['pa'])
+    ellipse_data['ell_err'] = removeellipseIndef(ellipse_data['ell_err'])
+    ellipse_data['pa_err'] = removeellipseIndef(ellipse_data['pa_err'])
+
     # calculate the magnitude.
-    intens_err_removeindef_sky = np.sqrt(np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0, pixel_size=pixel_size)
-    mu_err = easy_propagate_err_mu(np.array(intens), intens_err_removeindef_sky)
-    
-    ellipse_data.add_column(Column(name='mu', data=mu ))
-    ellipse_data.add_column(Column(name='mu_err', data = mu_err))
-    
+    intens_err_removeindef_sky = np.sqrt(
+        np.array(intens_err_removeindef)**2 + sky_err**2)
+    mu = bright_to_mag(intens, zpt0, pixel_size=pixel_size,texp=texp)
+    mu_err = easy_propagate_err_mu(np.array(intens),
+                                   intens_err_removeindef_sky)
+
+    ellipse_data.add_column(Column(name='mu', data=mu))
+    ellipse_data.add_column(Column(name='mu_err', data=mu_err))
 
     return ellipse_data
+
 
 def readGalfitInput(input_file):
     with open(input_file) as f:
         input_data = f.read()
-        
-    mue = re.search('(?<=3\)\s).*(?=\s[0-9])', input_data)[0]    
+
+    mue = re.search('(?<=3\)\s).*(?=\s[0-9])', input_data)[0]
     Re = re.search('(?<=4\)\s).*(?=\s[0-9])', input_data)[0]
     n = re.search('(?<=5\)\s).*(?=\s[0-9])', input_data)[0]
-    
+
     sky_value_t = re.search('(?<=1\)\s).*(?=#\s\sSky)', input_data)[0]
     sky_value = re.search('.*(?=\s[0-9])', sky_value_t)[0]
-    
-    return np.array([mue,Re,n,sky_value])
+
+    return np.array([mue, Re, n, sky_value])
+
 
 def numpy_weighted_mean(data, weights=None):
     """Calculate the weighted mean of an array/list using numpy."""
@@ -548,52 +637,53 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
 
     ellipseOut = fix_pa_profile(ellipseOut, pa_col='pa', delta_pa=dPA)
     ellipseOut.add_column(
-        Column(name='pa_norm', data=np.array(
-            [normalize_angle(pa, lower=-90, upper=90.0, b=True)
-             for pa in ellipseOut['pa']])))
+        Column(name='pa_norm',
+               data=np.array([
+                   normalize_angle(pa, lower=-90, upper=90.0, b=True)
+                   for pa in ellipseOut['pa']
+               ])))
 
     ell_err = removeellipseIndef(ellipseOut['ell_err'])
     pa_err = removeellipseIndef(ellipseOut['pa_err'])
-    
+
     try:
-        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                 (ellipseOut['sma'] >= minSma) &
+        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                 & (ellipseOut['sma'] >= minSma) &
                                  (np.isfinite(ell_err)) &
                                  (np.isfinite(pa_err))]
-        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= minSma) &
+        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= minSma) &
                                      (np.isfinite(ell_err)) &
                                      (np.isfinite(pa_err))]
-        fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                        (ellipseOut['sma'] >= minSma) &
-                        (np.isfinite(ell_err)) &
-                        (np.isfinite(pa_err))]
+        fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                        & (ellipseOut['sma'] >= minSma) &
+                        (np.isfinite(ell_err)) & (np.isfinite(pa_err))]
     except Exception:
         try:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5) &
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5) &
                                      (np.isfinite(ell_err)) &
                                      (np.isfinite(pa_err))]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5) &
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5) &
                                          (np.isfinite(ell_err)) &
                                          (np.isfinite(pa_err))]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5) &
-                            (np.isfinite(ell_err)) &
-                            (np.isfinite(pa_err))]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5) &
+                            (np.isfinite(ell_err)) & (np.isfinite(pa_err))]
         except Exception:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5)]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5)]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5)]
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5)]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5)]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5)]
 
     avgEll = numpy_weighted_mean(eUse.astype('float'), weights=fUse)
     avgPA = numpy_weighted_mean(pUse.astype('float'), weights=fUse)
 
     return avgEll, avgPA
+
 
 def notnan(alist):
     temp = []
@@ -602,20 +692,23 @@ def notnan(alist):
             temp.append(alist[i])
     return temp
 
-def maxiscal(x1,y1,x2,y2):
-    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
-def bmax(x1,y1,x2,y2):
-    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
+def maxiscal(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
-def boxbin(img_sky,nbin):
+
+def bmax(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+
+def boxbin(img_sky, nbin):
     '''
     this function is for box bin (smooth).
     '''
     imgR = img_sky.shape[0]
     imgC = img_sky.shape[1]
-    nPixelR = int(imgR/nbin)
-    nPixelC = int(imgC/nbin)
+    nPixelR = int(imgR / nbin)
+    nPixelC = int(imgC / nbin)
     imgRb = nPixelR * nbin
     imgCb = nPixelC * nbin
 
@@ -624,11 +717,11 @@ def boxbin(img_sky,nbin):
     for loopR in range(nPixelR):
         for loopC in range(nPixelC):
             R_bin = loopR * nbin
-            R_end = (loopR+1) * nbin
+            R_end = (loopR + 1) * nbin
             C_bin = loopC * nbin
-            C_end = (loopC+1) * nbin
+            C_end = (loopC + 1) * nbin
             pixel_temp_sky = imgb_sky[R_bin:R_end, C_bin:C_end]
-            
+
             flat = pixel_temp_sky.flatten()
             flat2 = notnan(flat)
             if len(flat2) == 0:
@@ -638,36 +731,41 @@ def boxbin(img_sky,nbin):
                 imgBnd_sky[loopR, loopC] = attemp
     return imgBnd_sky
 
-def subtract_source(image, x0, y0, PAs, c, maxis):
-    xf1 = x0 - c*np.sin(PAs)
-    yf1 = y0 + c*np.cos(PAs)
-    xf2 = x0 + c*np.sin(PAs)
-    yf2 = y0 - c*np.cos(PAs)
 
-    def distance(x,y):
-        return np.sqrt((x-xf1)**2 + (y-yf1)**2) + np.sqrt((x-xf2)**2 + (y-yf2)**2)
+def subtract_source(image, x0, y0, PAs, c, maxis):
+    xf1 = x0 - c * np.sin(PAs)
+    yf1 = y0 + c * np.cos(PAs)
+    xf2 = x0 + c * np.sin(PAs)
+    yf2 = y0 - c * np.cos(PAs)
+
+    def distance(x, y):
+        return np.sqrt((x - xf1)**2 + (y - yf1)**2) + np.sqrt((x - xf2)**2 +
+                                                              (y - yf2)**2)
 
     sky = np.zeros_like(image)
     for m in range(len(image)):
         for n in range(len(image)):
-            if distance(n,m) >= 2*maxis:
+            if distance(n, m) >= 2 * maxis:
                 sky[m][n] = image[m][n]
             else:
                 sky[m][n] = np.nan
-                
+
     return sky
 
-def calculateSky(galaxy_name, maxis = 1200):
+
+def calculateSky(galaxy_name, maxis=1200):
     galaxy_name = galaxy_name
-    imageFile_fit = '/home/dewang/data/CGS/{}/R/{}_R_reg.fit'.format(galaxy_name, galaxy_name)
-    imageFile_fits = '/home/dewang/data/CGS/{}/R/{}_R_reg.fits'.format(galaxy_name, galaxy_name)
+    imageFile_fit = '/home/dewang/data/CGS/{}/R/{}_R_reg.fit'.format(
+        galaxy_name, galaxy_name)
+    imageFile_fits = '/home/dewang/data/CGS/{}/R/{}_R_reg.fits'.format(
+        galaxy_name, galaxy_name)
     if os.path.exists(imageFile_fit):
         imageFile = imageFile_fit
     elif os.path.exists(imageFile_fits):
         imageFile = imageFile_fits
     data_fits_file = imageFile
-    cleandata_fits_file = '/home/dewang/data/CGS/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_clean.fits'
-    mask_fits_file = '/home/dewang/data/CGS/'+galaxy_name+'/R/'+galaxy_name+'_R_reg_mm.fits'
+    cleandata_fits_file = '/home/dewang/data/CGS/' + galaxy_name + '/R/' + galaxy_name + '_R_reg_clean.fits'
+    mask_fits_file = '/home/dewang/data/CGS/' + galaxy_name + '/R/' + galaxy_name + '_R_reg_mm.fits'
 
     datahdu = fits.open(data_fits_file)
     parafile_from_header = fits.getheader(data_fits_file)
@@ -678,47 +776,57 @@ def calculateSky(galaxy_name, maxis = 1200):
     try:
         x0 = parafile_from_header['CEN_X']
         y0 = parafile_from_header['CEN_Y']
-        print(x0,y0)
+        print(x0, y0)
         ellip = parafile_from_header['ell_e']
         PA = parafile_from_header['ell_pa']
     except:
         x0 = clean_header['CEN_X']
         y0 = clean_header['CEN_Y']
-        print(x0,y0)
+        print(x0, y0)
         ellip = clean_header['ell_e']
         PA = clean_header['ell_pa']
 
-    # convert ellipticity to ecentricity/PA, sometimes we should give a e by ourself because that the e/PA of header isnt good enough 
-    e = np.sqrt((2-ellip)*ellip)
+    # convert ellipticity to ecentricity/PA, sometimes we should give a e by ourself because that the e/PA of header isnt good enough
+    e = np.sqrt((2 - ellip) * ellip)
     #e = 0.3
-   
-    #PA = 170
-    PAs = PA * np.pi/180
 
-    maxis = maxis#4*parafile_from_header['R80']/0.259
-    b = np.sqrt(maxis**2*(1-e**2))
-    c = maxis*e #np.sqrt(maxis**2-b**2)
+    #PA = 170
+    PAs = PA * np.pi / 180
+
+    maxis = maxis  #4*parafile_from_header['R80']/0.259
+    b = np.sqrt(maxis**2 * (1 - e**2))
+    c = maxis * e  #np.sqrt(maxis**2-b**2)
     print(e)
     print(maxis)
-    print(PA)     
+    print(PA)
 
-    fig = plt.figure(figsize=(10,10))
+    fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
 
-    image_mask_plot = image*((mask-1)*(-1))
+    image_mask_plot = image * ((mask - 1) * (-1))
 
     norm = ImageNormalize(stretch=HistEqStretch(image))
     #norm = ImageNormalize(stretch=LogStretch(), vmin=0)
 
-    ell1 = Ellipse(xy = (x0, y0), width = 2*b, height = 2*maxis, 
-                angle = PA, alpha=0.9,hatch='',fill=False,linestyle='--',color='red',linewidth=1.2)
-    ax.imshow(image,origin='lower', norm=norm, cmap='Greys_r')
+    ell1 = Ellipse(xy=(x0, y0),
+                   width=2 * b,
+                   height=2 * maxis,
+                   angle=PA,
+                   alpha=0.9,
+                   hatch='',
+                   fill=False,
+                   linestyle='--',
+                   color='red',
+                   linewidth=1.2)
+    ax.imshow(image, origin='lower', norm=norm, cmap='Greys_r')
     ax.add_patch(ell1)
 
     plt.axis('scaled')
-    plt.axis('equal')   #changes limits of x or y axis so that equal increments of x and y have the same length
+    plt.axis(
+        'equal'
+    )  #changes limits of x or y axis so that equal increments of x and y have the same length
     #plt.axis('off')
-    plt.show()           
+    plt.show()
 
     # imagemm = np.zeros_like(image)
     # for m in range(len(image)):
@@ -727,14 +835,14 @@ def calculateSky(galaxy_name, maxis = 1200):
     #             imagemm[m][n] = image[m][n] * 1
     #         else:
     #             #imagemm[m][n] = image[m][n]*0
-    #             imagemm[m][n] = np.nan 
+    #             imagemm[m][n] = np.nan
 
-    image[mask>0] = np.nan
-                        
+    image[mask > 0] = np.nan
+
     imagesky = subtract_source(image, x0, y0, PAs, c, maxis)
 
     # boxsize = 20, calculated by ZhaoYu.
-    imagesky_bin = boxbin(imagesky,20)
+    imagesky_bin = boxbin(imagesky, 20)
 
     sky_flat_bin = imagesky_bin.flatten()
     sky_flat = imagesky.flatten()
@@ -744,53 +852,59 @@ def calculateSky(galaxy_name, maxis = 1200):
 
     skyerr = np.nanstd(sky_flat)
     skyerr_bin = np.nanstd(sky_flat_bin)
- 
+
     print('sky value: ', skyval)
     print('sky error with box smooth: ', skyerr_bin)
-    print('sky error w/o box smooth: ', skyerr)      
+    print('sky error w/o box smooth: ', skyerr)
 
-    return [skyval, skyerr_bin]                                                                                          
+    return [skyval, skyerr_bin]
+
 
 def Remove_file(file):
     if os.path.exists(file):
         os.remove(file)
-        
+
+
 def round_up_to_odd(f):
     f = int(np.ceil(f))
     return f - 1 if f % 2 == 0 else f
+
 
 # I want to calculate the scale length using finite diff.
 def get_local_h(r, sbp):
     mu_obs = sbp
     local_h_arr = []
     for i in range(len(r)):
-        if i-2<0:
-            temp_r = r[0:i+3]
-            temp_mu = mu_obs[0:i+3]
+        if i - 2 < 0:
+            temp_r = r[0:i + 3]
+            temp_mu = mu_obs[0:i + 3]
         else:
-            temp_r = r[i-2:i+3]
-            temp_mu = mu_obs[i-2:i+3]
-        
+            temp_r = r[i - 2:i + 3]
+            temp_mu = mu_obs[i - 2:i + 3]
+
         #print(temp_r,temp_mu)
 
         # calculate the deviation using finite difference
-        deltayx = (temp_mu[-1]+temp_mu[-2] - temp_mu[1] - temp_mu[0])/(6*1)
-        
+        deltayx = (temp_mu[-1] + temp_mu[-2] - temp_mu[1] - temp_mu[0]) / (6 *
+                                                                           1)
+
         #print(m)
-        h_local_temp = 1.086/deltayx
+        h_local_temp = 1.086 / deltayx
         local_h_arr.append(h_local_temp)
         #print(h_local_temp)
     return local_h_arr
 
+
 def medfil_h(local_h, frac_rad):
-    kernel_size = round_up_to_odd(frac_rad*local_h.size)
-    
+    kernel_size = round_up_to_odd(frac_rad * local_h.size)
+
     return signal.medfilt(local_h, kernel_size)
+
 
 def cs(h_arr):
     h_mean = np.mean(h_arr)
     cs0 = 0
-     
+
     cs_arr = []
     cs_arr.append(cs0)
     cs_temp = cs0
@@ -798,13 +912,13 @@ def cs(h_arr):
         h_diff = h_arr[i] - h_mean
         cs_temp += h_diff
         cs_arr.append(cs_temp)
-    
+
     cs_min = np.min(cs_arr)
     cs_min_loca = np.argmin(cs_arr)
     cs_max = np.max(cs_arr)
     cs_max_loca = np.argmax(cs_arr)
 
-    cs_diff = cs_max - cs_min 
+    cs_diff = cs_max - cs_min
 
     return (cs_arr, cs_min_loca, cs_min, cs_max_loca, cs_max, cs_diff)
 
@@ -816,164 +930,281 @@ def cs_bootstrap(h_arr, bootstrap_size):
     cs_diff_arr = np.array(cs_diff_arr)
     cs_diff_small = cs_diff_arr[cs_diff_arr < origi_cs_diff]
 
-    confidence = len(cs_diff_small)/bootstrap_size
+    confidence = len(cs_diff_small) / bootstrap_size
 
     return (confidence, origi_cs_diff, cs_diff_arr)
 
- 
-def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace = True):
+
+def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace=True):
     origi_cs_diff = cs(h_arr)[-1]
-    bootresult = np.array([resample(h_arr, n_samples=len(h_arr), replace=replace) for i in range(bootstrap_size)])
+    bootresult = np.array([
+        resample(h_arr, n_samples=len(h_arr), replace=replace)
+        for i in range(bootstrap_size)
+    ])
 
     cs_diff_arr = [cs(bootresult[i])[-1] for i in range(len(bootresult))]
     cs_diff_arr = np.array(cs_diff_arr)
     cs_diff_small = cs_diff_arr[cs_diff_arr < origi_cs_diff]
 
-    confidence = len(cs_diff_small)/bootstrap_size
+    confidence = len(cs_diff_small) / bootstrap_size
 
     return (confidence, origi_cs_diff, cs_diff_arr)
 
-def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
 
+def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
     '''
     This function is to illustrate the sbp easily. It is to be developed into a more genaral version. Like Song and Jiaxuan do.
-    ''' 
+    '''
     sma = ellipse_data['sma']
     intens = ellipse_data['intens']
     mu = ellipse_data['mu']
     mu_err = ellipse_data['mu_err']
-    
+
     index = intens > outer_limit
     sma_sky = sma[index]
     mu_sky = mu[index]
     mu_err_sky = mu_err[index]
-    
-    plt.plot(sma_sky*pixel_size, mu_sky)
-    plt.fill_between(sma_sky*pixel_size, mu_sky - mu_err_sky, mu_sky+mu_err_sky, alpha=0.2)
-    plt.ylim(np.min(mu_sky)-0.2, np.max(mu_sky)+0.2)
+
+    plt.plot(sma_sky * pixel_size, mu_sky)
+    plt.fill_between(sma_sky * pixel_size,
+                     mu_sky - mu_err_sky,
+                     mu_sky + mu_err_sky,
+                     alpha=0.2)
+    plt.ylim(np.min(mu_sky) - 0.2, np.max(mu_sky) + 0.2)
     plt.gca().invert_yaxis()
     plt.ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=20)
     plt.xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=20)
+
 
 def getOuterBound(ellipse_data, sky_err, alter=0.2):
     sma = ellipse_data['sma']
     intens = ellipse_data['intens']
     mu = ellipse_data['mu']
     mu_err = ellipse_data['mu_err']
-    
+
     mu_err_justsky = easy_propagate_err_mu(intens, sky_err)
-    
+
     index = mu_err_justsky <= alter
 
     return sma[index][-1]
 
-def plot_ellip(sma, ellip, ellip_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
-                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
-    
+
+def plot_ellip(ax,
+               sma,
+               ellip,
+               ellip_err,
+               pixel_size=0.259,
+               plot_style='fill',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label=''):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
-    
+
     if plot_style == 'errorbar':
-        plt.errorbar(sma*pixel_size, ellip, yerr = ellip_err,fmt='o', markersize=3, color=color,capsize=3,elinewidth=0.7)
-        
+        ax.errorbar(sma * pixel_size,
+                    ellip,
+                    yerr=ellip_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
     elif plot_style == 'fill':
-        plt.plot(sma*pixel_size, ellip, color = color, lw = 3)
-        plt.fill_between(sma*pixel_size, ellip + ellip_err, ellip - ellip_err, color=color, alpha=0.5)
-    
+        ax.plot(sma * pixel_size, ellip, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        ellip + ellip_err,
+                        ellip - ellip_err,
+                        color=color,
+                        alpha=0.5)
+
     if ylimax:
-        plt.ylim(ylimin, ylimax)
+        ax.set_ylim(ylimin, ylimax)
     else:
-        plt.ylim(np.min(ellip)-0.05, np.max(ellip)+0.05)
-    
-    if xlimax: 
-        plt.xlim(xlimin, xlimax)
-#     else:
-#         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
-        
-    plt.ylabel(r'Ellipticity')
-    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
-    
-def plot_pa(sma, pa, pa_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
-                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
-    
+        ax.set_ylim(np.nanmin(ellip) - 0.05, np.nanmax(ellip) + 0.05)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+    ax.set_ylabel(r'Ellipticity')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.legend()
+
+
+def plot_pa(ax,
+            sma,
+            pa,
+            pa_err,
+            pixel_size=0.259,
+            plot_style='fill',
+            color='k',
+            ylimin=None,
+            ylimax=None,
+            xlimin=None,
+            xlimax=None,
+            label=''):
     '''
     This function is a templete to plot the PA profile.
     '''
-    
+
     if plot_style == 'errorbar':
-        plt.errorbar(sma*pixel_size, pa, yerr = pa_err,fmt='o', markersize=3, color=color,capsize=3, elinewidth=0.7)
-        
+        ax.errorbar(sma * pixel_size,
+                    pa,
+                    yerr=pa_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
     elif plot_style == 'fill':
-        plt.plot(sma*pixel_size, pa, color = color, lw = 3)
-        plt.fill_between(sma*pixel_size, pa + pa_err, pa - pa_err, color=color, alpha=0.5)
-    
+        ax.plot(sma * pixel_size, pa, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        pa + pa_err,
+                        pa - pa_err,
+                        color=color,
+                        alpha=0.5)
+
     if ylimax:
-        plt.ylim(ylimin, ylimax)
+        ax.set_ylim(ylimin, ylimax)
     else:
-        plt.ylim(np.min(pa)-5, np.max(pa)+5)
-    
-    if xlimax: 
-        plt.xlim(xlimin, xlimax)
+        ax.set_ylim(np.nanmin(pa) - 5, np.nanmax(pa) + 5)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+
 #     else:
 #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
-        
-    plt.ylabel(r'PA\, (deg)')
-    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
-    
-def plot_SBP(sma, mu, mu_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
-                      ylimin = None, ylimax = None, xlimin = None, xlimax = None):
-    
+
+    ax.set_ylabel(r'PA\, (deg)')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.legend()
+
+
+def plot_SBP(ax,
+             sma,
+             mu,
+             mu_err,
+             pixel_size=0.259,
+             plot_style='fill',
+             color='k',
+             ylimin=None,
+             ylimax=None,
+             xlimin=None,
+             xlimax=None,
+             label=''):
     '''
     This function is a templete to plot the SB profile.
     '''
-    
-    if plot_style == 'errorbar':
-        plt.errorbar(sma*pixel_size, mu, yerr = mu_err,fmt='o', markersize=3, color=color,capsize=3, elinewidth=0.7)
-        
-    elif plot_style == 'fill':
-        plt.plot(sma*pixel_size, mu, color = color, lw = 3)
-        plt.fill_between(sma*pixel_size, mu + mu_err, mu - mu_err, color=color, alpha=0.5)
-    
-    if ylimax:
-        plt.ylim(ylimin, ylimax)
-    else:
-        plt.ylim(np.min(mu)-0.5, np.max(mu)+0.5)
-    
-    if xlimax: 
-        plt.xlim(xlimin, xlimax)
-        
-    plt.ylabel(r'$\Sigma_R\ (\mathrm{mag\ arcsec^{-2}})$')
-    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
-    plt.gca().invert_yaxis()
-    
 
-def plot_completeSBP(sma, ell, ell_err, pa, pa_err, mu, mu_err, pixel_size = 0.259, plot_style = 'fill', color = 'k', 
-                    xlimin = None, xlimax = None, ylimin_e = None, ylimax_e = None, ylimin_pa = None, ylimax_pa = None, 
-                     ylimin_mu = None, ylimax_mu = None, save_file = ''):
+    if plot_style == 'errorbar':
+        ax.errorbar(sma * pixel_size,
+                    mu,
+                    yerr=mu_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
+    elif plot_style == 'fill':
+        ax.plot(sma * pixel_size, mu, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        mu + mu_err,
+                        mu - mu_err,
+                        color=color,
+                        alpha=0.5)
+
+    if ylimax:
+        ax.set_ylim(ylimin, ylimax)
+    else:
+        ax.set_ylim(np.min(mu) - 0.5, np.max(mu) + 0.5)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+    ax.legend()
+    ax.set_ylabel(r'$\Sigma_R\ (\mathrm{mag\ arcsec^{-2}})$')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    plt.gca().invert_yaxis()
+
+
+def plot_completeSBP(sma,
+                     ell,
+                     ell_err,
+                     pa,
+                     pa_err,
+                     mu,
+                     mu_err,
+                     pixel_size=0.259,
+                     plot_style='fill',
+                     color='k',
+                     xlimin=None,
+                     xlimax=None,
+                     ylimin_e=None,
+                     ylimax_e=None,
+                     ylimin_pa=None,
+                     ylimax_pa=None,
+                     ylimin_mu=None,
+                     ylimax_mu=None,
+                     save_file=''):
     '''
     This function is to plot the standard and basic surface brightness profiles including sbp, ell, and pa panels.
     '''
-    fig = plt.figure(figsize=(10,12))
+    fig = plt.figure(figsize=(10, 12))
     fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
     gs = GridSpec(ncols=1, nrows=24, figure=fig)
-    
+
     ax1 = fig.add_subplot(gs[:5, 0])
-    plot_ellip(sma, ell, ell_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
-                      ylimin = ylimin_e, ylimax = ylimax_e, xlimin = xlimin, xlimax = xlimax)
+    plot_ellip(sma,
+               ell,
+               ell_err,
+               pixel_size=pixel_size,
+               plot_style=plot_style,
+               color=color,
+               ylimin=ylimin_e,
+               ylimax=ylimax_e,
+               xlimin=xlimin,
+               xlimax=xlimax)
 
     ax2 = fig.add_subplot(gs[5:10, 0])
-    plot_pa(sma, pa, pa_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
-                      ylimin = ylimin_pa, ylimax = ylimax_pa, xlimin = xlimin, xlimax = xlimax)
+    plot_pa(sma,
+            pa,
+            pa_err,
+            pixel_size=pixel_size,
+            plot_style=plot_style,
+            color=color,
+            ylimin=ylimin_pa,
+            ylimax=ylimax_pa,
+            xlimin=xlimin,
+            xlimax=xlimax)
 
-    ax3 = fig.add_subplot(gs[10:, 0])            
-    plot_SBP(sma, mu, mu_err, pixel_size = pixel_size, plot_style = plot_style, color = color, 
-                      ylimin = ylimin_mu, ylimax = ylimax_mu, xlimin = xlimin, xlimax = xlimax)
+    ax3 = fig.add_subplot(gs[10:, 0])
+    plot_SBP(sma,
+             mu,
+             mu_err,
+             pixel_size=pixel_size,
+             plot_style=plot_style,
+             color=color,
+             ylimin=ylimin_mu,
+             ylimax=ylimax_mu,
+             xlimin=xlimin,
+             xlimax=xlimax)
 
     if save_file:
         plt.savefig(save_file, dpi=200, bbox_inches='tight')
-    plt.show()
-    
+    #plt.show()
+
+
 def random_cmap(ncolors=256, background_color='white'):
     """Random color maps.
     Generate a matplotlib colormap consisting of random (muted) colors.
@@ -1011,6 +1242,22 @@ def random_cmap(ncolors=256, background_color='white'):
 
     return colors.ListedColormap(rgb)
 
+def LSBImage(ax, dat, noise, pixel_size = 0.259, bar_length=50):
+    ax.imshow(dat, origin = 'lower', cmap = 'Greys',
+               norm = ImageNormalize(stretch=HistEqStretch(dat))) 
+    my_cmap = cm.Greys_r
+    my_cmap.set_under('k', alpha=0)
+    ax.imshow(np.clip(dat,a_min = noise, a_max = None),
+               origin = 'lower', cmap = my_cmap,
+               norm = ImageNormalize(stretch=LogStretch(), clip = False),
+               clim = [3*noise, None], vmin = 3*noise) 
+    scalebar = ScaleBar(pixel_size, "''",dimension = ANGLE,color='black',box_alpha=1, font_properties={'size':25},
+                    location = 'lower left', fixed_value= bar_length)
+    plt.gca().add_artist(scalebar)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    plt.subplots_adjust(left=0.03, right=0.97, top=0.97, bottom=0.05)
+
 
 # About the Colormaps
 IMG_CMAP = plt.get_cmap('viridis')
@@ -1019,13 +1266,27 @@ SEG_CMAP = random_cmap(ncolors=512, background_color=u'white')
 SEG_CMAP.set_bad(color='white')
 SEG_CMAP.set_under(color='white')
 
-cmaplist = ['#000000', '#720026', '#A0213F', '#ce4257', '#E76154', '#ff9b54', '#ffd1b1']
+cmaplist = [
+    '#000000', '#720026', '#A0213F', '#ce4257', '#E76154', '#ff9b54', '#ffd1b1'
+]
 cdict = {'red': [], 'green': [], 'blue': []}
-cpoints = np.linspace(0,1,len(cmaplist))
+cpoints = np.linspace(0, 1, len(cmaplist))
 for i in range(len(cmaplist)):
-    cdict['red'].append([cpoints[i], int(cmaplist[i][1:3],16)/256,int(cmaplist[i][1:3],16)/256])
-    cdict['green'].append([cpoints[i], int(cmaplist[i][3:5],16)/256,int(cmaplist[i][3:5],16)/256])
-    cdict['blue'].append([cpoints[i], int(cmaplist[i][5:7],16)/256,int(cmaplist[i][5:7],16)/256])
+    cdict['red'].append([
+        cpoints[i],
+        int(cmaplist[i][1:3], 16) / 256,
+        int(cmaplist[i][1:3], 16) / 256
+    ])
+    cdict['green'].append([
+        cpoints[i],
+        int(cmaplist[i][3:5], 16) / 256,
+        int(cmaplist[i][3:5], 16) / 256
+    ])
+    cdict['blue'].append([
+        cpoints[i],
+        int(cmaplist[i][5:7], 16) / 256,
+        int(cmaplist[i][5:7], 16) / 256
+    ])
 autocmap = LinearSegmentedColormap('autocmap', cdict)
 autocmap.set_under('k', alpha=0)
 
@@ -1096,7 +1357,8 @@ def display_single(img,
         zmin, zmax = zmin, zmax
     elif scale.strip() == 'zscale':
         try:
-            zmin, zmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+            zmin, zmax = ZScaleInterval(
+                contrast=contrast).get_limits(img_scale)
         except IndexError:
             # TODO: Deal with problematic image
             zmin, zmax = -1.0, 1.0
@@ -1111,16 +1373,19 @@ def display_single(img,
     else:
         zmin, zmax = np.nanmin(img_scale), np.nanmax(img_scale)
 
-    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
-                      vmin=zmin, vmax=zmax)
+    show = ax1.imshow(img_scale,
+                      origin='lower',
+                      cmap=cmap,
+                      interpolation='none',
+                      vmin=zmin,
+                      vmax=zmax)
 
     # Hide ticks and tick labels
-    ax1.tick_params(
-        labelbottom=False,
-        labelleft=False,
-        axis=u'both',
-        which=u'both',
-        length=0)
+    ax1.tick_params(labelbottom=False,
+                    labelleft=False,
+                    axis=u'both',
+                    which=u'both',
+                    length=0)
 
     # Put scale bar on the image
     (img_size_x, img_size_y) = img.shape
@@ -1145,22 +1410,24 @@ def display_single(img,
             scale_bar_text = r'$%d^{\prime\prime}$' % int(scale_bar_length)
         scale_bar_text_size = scale_bar_fontsize
 
-        ax1.plot(
-            [scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
-            linewidth=3,
-            c=scale_bar_color,
-            alpha=1.0)
-        ax1.text(
-            scale_bar_text_x,
-            scale_bar_text_y,
-            scale_bar_text,
-            fontsize=scale_bar_text_size,
-            horizontalalignment='center',
-            color=scale_bar_color)
+        ax1.plot([scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
+                 linewidth=3,
+                 c=scale_bar_color,
+                 alpha=1.0)
+        ax1.text(scale_bar_text_x,
+                 scale_bar_text_y,
+                 scale_bar_text,
+                 fontsize=scale_bar_text_size,
+                 horizontalalignment='center',
+                 color=scale_bar_color)
     if add_text is not None:
-        text_x_0 = int(img_size_x*0.08)
-        text_y_0 = int(img_size_y*0.80)
-        ax1.text(text_x_0, text_y_0, r'$\mathrm{'+add_text+'}$', fontsize=text_fontsize, color=text_color)
+        text_x_0 = int(img_size_x * 0.08)
+        text_y_0 = int(img_size_y * 0.80)
+        ax1.text(text_x_0,
+                 text_y_0,
+                 r'$\mathrm{' + add_text + '}$',
+                 fontsize=text_fontsize,
+                 color=text_color)
 
     # Put a color bar on the image
     if color_bar:
@@ -1169,29 +1436,40 @@ def display_single(img,
                              height=color_bar_height,
                              loc=color_bar_loc)
         if ax is None:
-            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax1,
+                                cax=ax_cbar,
                                 orientation='horizontal')
         else:
-            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax,
+                                cax=ax_cbar,
                                 orientation='horizontal')
 
         cbar.ax.xaxis.set_tick_params(color=color_bar_color)
         cbar.ax.yaxis.set_tick_params(color=color_bar_color)
         cbar.outline.set_edgecolor(color_bar_color)
         plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
 
     if ax is None:
         return fig
     return ax1
 
 
-def display_isophote(img, x0, y0, sma, ell, pa, ax):
+def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
     """Visualize the isophotes."""
 
-    display_single(img, ax=ax, scale_bar=True, pixel_scale=0.259, cmap='Greys_r', scale_bar_length = 30)
+    display_single(img,
+                   ax=ax,
+                   scale_bar=True,
+                   pixel_scale=pixel_size,
+                   cmap='Greys_r',
+                   scale_bar_length=1)
 
     for k in range(len(sma)):
         if k % 2 == 0:
@@ -1204,9 +1482,9 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax):
             e.set_alpha(1)
             e.set_linewidth(1.5)
             ax.add_artist(e)
-            
+
     for k in range(len(sma)):
-        if np.logical_and(k % 5 == 0, k>200):
+        if np.logical_and(k % 5 == 0, k > 200):
             e = Ellipse(xy=(x0, y0),
                         height=sma[k] * 2.0,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
@@ -1217,9 +1495,9 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax):
             e.set_linewidth(2)
             e.set_linestyle('-')
             ax.add_artist(e)
-            
+
     for k in range(len(sma)):
-        if np.logical_and(k % 15 == 0, k<=200):
+        if np.logical_and(k % 15 == 0, k <= 200):
             e = Ellipse(xy=(x0, y0),
                         height=sma[k] * 2.0,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
@@ -1231,17 +1509,63 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax):
             e.set_linestyle('-')
             ax.add_artist(e)
 
+def display_isophote_LSB(ax, img, x0, y0, sma, ell, pa, noise, pixel_size=0.259, scale_bar_length = 50):
+    """Visualize the isophotes."""
+
+    display_single(img,
+                   ax=ax,
+                   scale_bar=True,
+                   pixel_scale=pixel_size,
+                   cmap='Greys_r',
+                   scale_bar_length=scale_bar_length)
+
+    LSBImage(ax=ax, dat = img, noise=noise, pixel_size=pixel_size, bar_length = scale_bar_length)
+
+    for k in range(len(sma)):
+        if k % 2 == 0:
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#FF2E63')
+            e.set_alpha(1)
+            e.set_linewidth(1.5)
+            ax.add_artist(e)
+
+    for k in range(len(sma)):
+        if np.logical_and(k % 5 == 0, k > 200):
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            #e.set_edgecolor('#30E3CA')
+            e.set_edgecolor('magenta')
+            e.set_alpha(1)
+            e.set_linewidth(2)
+            e.set_linestyle('-')
+            ax.add_artist(e)
+
+    for k in range(len(sma)):
+        if np.logical_and(k % 15 == 0, k <= 200):
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#08D9D6')
+            e.set_alpha(1)
+            e.set_linewidth(1)
+            e.set_linestyle('-')
+            ax.add_artist(e)
+
+
 if __name__ == '__main__':
     test_pa = -50
 
     lll = normalize_angle(test_pa, 0, 180)
 
-    print('normlize pa:', lll)
-
-    xxx = calculateSky('NGC6754')
-    print(xxx)
-
-
-
+    print(lll)
 
 
