@@ -34,9 +34,11 @@ def getgalName(galaxy_name):
 
     return np.array([galName, galnamesep])
 
-def getinforHua(galaxy_name):
+def getinforHua(galaxy_name, file_path):
     """
     get the basis CGS information calculated by Hua.
+
+    'file_path' is the path not including file name. Just tell where the file is. So this should be a string.
     """
 
     name_arr = getgalName(galaxy_name)
@@ -46,8 +48,8 @@ def getinforHua(galaxy_name):
         galnamesep = ['NGC', '4373A']
 
     # table from Hua
-    coor_data = ascii.read('../para_file/bul_cen.dat', names=['name1','name2','x0','y0'])
-    geo_data = ascii.read('../para_file/bul_struct_param.bin',names=['name1','name2','mtotal','mt_err','BT','BT_err',
+    coor_data = ascii.read('{0}/para_file/bul_cen.dat'.format(file_path), names=['name1','name2','x0','y0'])
+    geo_data = ascii.read('{0}/para_file/bul_struct_param.bin'.format(file_path),names=['name1','name2','mtotal','mt_err','BT','BT_err',
                         'mue','mue_err','n','n_err','re','re_err','ellip','ellip_err','pa','pa_err','DT','bT','BL'])
     index_coor = (coor_data['name1']==galnamesep[0]) & (coor_data['name2']==galnamesep[1])
     index_geo = (geo_data['name1']==galnamesep[0]) & (geo_data['name2']==galnamesep[1])
@@ -322,7 +324,16 @@ def subtract_sky_cgs(input_file, mask_file, sky_value):
 
     hdul.writeto(modfile) 
     
-    maskFitsTool(modfile, mask_file)                                                                                     
+    maskFitsTool(modfile, mask_file)                   
+
+def getzpt0(fits_header):
+    phot = fits_header['phot']
+    if phot == 'Y':
+        zpt0 = fits_header['zpt_lan']
+    else:
+        zpt0 = fits_header['zpt_gsc']
+    
+    return zpt0
 
 # test part
 if __name__ == '__main__':
