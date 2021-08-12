@@ -118,7 +118,7 @@ def pospa(pa):
 
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
-    texp = 1
+    texp = texp
     A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
@@ -415,6 +415,7 @@ def PyrafEllipse(input_img,
                  intemode='median',
                  step=0.1,
                  sky_err=0,
+                 sky_value = 0,
                  maxgerr=0.5,
                  harmonics=False,
                  texp=1,
@@ -523,8 +524,8 @@ def PyrafEllipse(input_img,
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0, texp, pixel_size)
-    mu_err = easy_propagate_err_mu(np.array(intens),
+    mu = bright_to_mag(intens-sky_value, zpt0, texp, pixel_size)
+    mu_err = easy_propagate_err_mu(np.array(intens)-sky_value,
                                    intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
@@ -533,7 +534,7 @@ def PyrafEllipse(input_img,
     return ellipse_data
 
 
-def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, texp=1):
+def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # read the data
     ellipse_data = Table.read(outDat, format='ascii.no_header')
@@ -599,8 +600,8 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, texp=1):
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens, zpt0, pixel_size=pixel_size,texp=texp)
-    mu_err = easy_propagate_err_mu(np.array(intens),
+    mu = bright_to_mag(intens-sky_value, zpt0, pixel_size=pixel_size,texp=texp)
+    mu_err = easy_propagate_err_mu(np.array(intens)-sky_value,
                                    intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
@@ -922,6 +923,35 @@ def cs(h_arr):
 
     return (cs_arr, cs_min_loca, cs_min, cs_max_loca, cs_max, cs_diff)
 
+def get_local_h_2order(r, mu_obs):
+    local_h_arr_fd = []
+    #h_err_2order = []
+    dx = r[1] - r[0]
+    for i in range(len(r)):
+        if i-1<0:
+
+            deltayx = (-3*mu_obs[i]+4*mu_obs[i+1]-mu_obs[i+2])/(2*dx)
+            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i+2]**2)
+
+        elif i - (len(r)-1)>-1:
+
+            deltayx = (3*mu_obs[i]-4*mu_obs[i-1]+mu_obs[i-2])
+            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i-1]**2+1/4/dx**2*mu_err[i-2]**2)
+        else:
+
+            # calculate the deviation using finite difference
+            #deltayx = (-mu_obs[i+2]+8*mu_obs[i+1]-8*mu_obs[i-1]+mu_obs[i-2])/(12*dx)
+            deltayx = (mu_obs[i+1]-mu_obs[i-1])/(2*dx)
+
+            #err_temp = np.sqrt(1/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i-1]**2)
+    
+        #print(m)
+        h_local_temp = 1.086/deltayx
+        local_h_arr_fd.append(h_local_temp)
+        #h_err_2order.append(err_temp)
+    
+    return np.array(local_h_arr_fd)
+
 
 def cs_bootstrap(h_arr, bootstrap_size):
     origi_cs_diff = cs(h_arr)[-1]
@@ -1127,7 +1157,7 @@ def plot_SBP(ax,
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
     else:
-        ax.set_ylim(np.min(mu) - 0.5, np.max(mu) + 0.5)
+        ax.set_ylim(np.nanmin(mu) - 0.5, np.nanmax(mu) + 0.5)
 
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
