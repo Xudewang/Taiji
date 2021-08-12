@@ -27,6 +27,7 @@ from matplotlib.patches import Ellipse, Circle
 from astropy.stats import bootstrap
 from sklearn.utils import resample
 from scipy import signal
+from scipy.interpolate import interp1d
 
 from matplotlib import colors
 from matplotlib.ticker import AutoMinorLocator
@@ -415,7 +416,7 @@ def PyrafEllipse(input_img,
                  intemode='median',
                  step=0.1,
                  sky_err=0,
-                 sky_value = 0,
+                 sky_value=0,
                  maxgerr=0.5,
                  harmonics=False,
                  texp=1,
@@ -524,9 +525,9 @@ def PyrafEllipse(input_img,
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens-sky_value, zpt0, texp, pixel_size)
-    mu_err = easy_propagate_err_mu(np.array(intens)-sky_value,
-                                   intens_err_removeindef_sky)
+    mu = bright_to_mag(intens - sky_value, zpt0, texp, pixel_size)
+    mu_err = easy_propagate_err_mu(
+        np.array(intens) - sky_value, intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -600,9 +601,12 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens-sky_value, zpt0, pixel_size=pixel_size,texp=texp)
-    mu_err = easy_propagate_err_mu(np.array(intens)-sky_value,
-                                   intens_err_removeindef_sky)
+    mu = bright_to_mag(intens - sky_value,
+                       zpt0,
+                       pixel_size=pixel_size,
+                       texp=texp)
+    mu_err = easy_propagate_err_mu(
+        np.array(intens) - sky_value, intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -871,36 +875,94 @@ def round_up_to_odd(f):
     return f - 1 if f % 2 == 0 else f
 
 
-# I want to calculate the scale length using finite diff.
-def get_local_h(r, sbp):
-    mu_obs = sbp
-    local_h_arr = []
-    for i in range(len(r)):
-        if i - 2 < 0:
-            temp_r = r[0:i + 3]
-            temp_mu = mu_obs[0:i + 3]
-        else:
-            temp_r = r[i - 2:i + 3]
-            temp_mu = mu_obs[i - 2:i + 3]
-
-        #print(temp_r,temp_mu)
-
-        # calculate the deviation using finite difference
-        deltayx = (temp_mu[-1] + temp_mu[-2] - temp_mu[1] - temp_mu[0]) / (6 *
-                                                                           1)
-
-        #print(m)
-        h_local_temp = 1.086 / deltayx
-        local_h_arr.append(h_local_temp)
-        #print(h_local_temp)
-    return local_h_arr
-
-
-def medfil_h(local_h, frac_rad):
+def medfil_h_old(local_h, frac_rad=0.1):
     kernel_size = round_up_to_odd(frac_rad * local_h.size)
 
     return signal.medfilt(local_h, kernel_size)
 
+
+def median_kernel_size_old(h_arr, length_h, frac):
+    kernel_size_temp = int(length_h * frac)
+
+    if (kernel_size_temp % 2) == 0:
+        kernel_size = kernel_size_temp - 1
+
+    else:
+        kernel_size = kernel_size_temp
+
+    return kernel_size
+
+
+def median_kernel_size(length_h, frac):
+    '''
+    This function is to get the median size of the smoothing. Basically it should be a odd number and considering the fraction.
+    '''
+    kernel_size_temp = length_h * frac
+
+    kernel_size = round_up_to_odd(kernel_size_temp)
+
+    return kernel_size
+
+
+def median_smooth_h(local_h_arr, length_h, frac):
+    '''
+    This is a simple function to perform the median filter to the local scale length profile.
+    ----------------------
+    Parameters:
+    local_h_arr: the array should be median smoothed.
+
+    length_h: the length of the local scale length array, but should note that this value should be a physical and real observation value not the the number of array with interpolation.
+
+    frac: what fraction of the length to give the kernel size.
+    '''
+    kernel_size = median_kernel_size(length_h=length_h, frac=frac)
+
+    return signal.medfilt(local_h_arr, kernel_size)
+
+
+def get_local_h_2order(r, mu_obs):
+    local_h_arr_fd = []
+    #h_err_2order = []
+    dx = r[1] - r[0]
+    for i in range(len(r)):
+        if i - 1 < 0:
+
+            deltayx = (-3 * mu_obs[i] + 4 * mu_obs[i + 1] -
+                       mu_obs[i + 2]) / (2 * dx)
+            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i+2]**2)
+
+        elif i - (len(r) - 1) > -1:
+
+            deltayx = (3 * mu_obs[i] - 4 * mu_obs[i - 1] + mu_obs[i - 2])
+            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i-1]**2+1/4/dx**2*mu_err[i-2]**2)
+        else:
+
+            # calculate the deviation using finite difference
+            #deltayx = (-mu_obs[i+2]+8*mu_obs[i+1]-8*mu_obs[i-1]+mu_obs[i-2])/(12*dx)
+            deltayx = (mu_obs[i + 1] - mu_obs[i - 1]) / (2 * dx)
+
+            #err_temp = np.sqrt(1/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i-1]**2)
+
+        #print(m)
+        h_local_temp = 1.086 / deltayx
+        local_h_arr_fd.append(h_local_temp)
+        #h_err_2order.append(err_temp)
+
+    return np.array(local_h_arr_fd)
+
+
+def Get_localh_withmedian(sma, mu, length_h, frac):
+
+    f = interp1d(sma, mu)
+
+    xnew = np.arange(np.ceil(np.min(sma)), np.floor(np.max(sma)), 1)
+
+    ynew = f(xnew)
+
+    local_h = get_local_h_2order(xnew, ynew)
+    local_h_medfil = median_smooth_h(local_h, length_h=length_h, frac=frac)
+
+    return np.array([xnew, local_h, local_h_medfil])
 
 def cs(h_arr):
     h_mean = np.mean(h_arr)
@@ -922,35 +984,6 @@ def cs(h_arr):
     cs_diff = cs_max - cs_min
 
     return (cs_arr, cs_min_loca, cs_min, cs_max_loca, cs_max, cs_diff)
-
-def get_local_h_2order(r, mu_obs):
-    local_h_arr_fd = []
-    #h_err_2order = []
-    dx = r[1] - r[0]
-    for i in range(len(r)):
-        if i-1<0:
-
-            deltayx = (-3*mu_obs[i]+4*mu_obs[i+1]-mu_obs[i+2])/(2*dx)
-            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i+2]**2)
-
-        elif i - (len(r)-1)>-1:
-
-            deltayx = (3*mu_obs[i]-4*mu_obs[i-1]+mu_obs[i-2])
-            #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i-1]**2+1/4/dx**2*mu_err[i-2]**2)
-        else:
-
-            # calculate the deviation using finite difference
-            #deltayx = (-mu_obs[i+2]+8*mu_obs[i+1]-8*mu_obs[i-1]+mu_obs[i-2])/(12*dx)
-            deltayx = (mu_obs[i+1]-mu_obs[i-1])/(2*dx)
-
-            #err_temp = np.sqrt(1/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i-1]**2)
-    
-        #print(m)
-        h_local_temp = 1.086/deltayx
-        local_h_arr_fd.append(h_local_temp)
-        #h_err_2order.append(err_temp)
-    
-    return np.array(local_h_arr_fd)
 
 
 def cs_bootstrap(h_arr, bootstrap_size):
@@ -1272,17 +1305,28 @@ def random_cmap(ncolors=256, background_color='white'):
 
     return colors.ListedColormap(rgb)
 
-def LSBImage(ax, dat, noise, pixel_size = 0.259, bar_length=50):
-    ax.imshow(dat, origin = 'lower', cmap = 'Greys',
-               norm = ImageNormalize(stretch=HistEqStretch(dat))) 
+
+def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50):
+    ax.imshow(dat,
+              origin='lower',
+              cmap='Greys',
+              norm=ImageNormalize(stretch=HistEqStretch(dat)))
     my_cmap = cm.Greys_r
     my_cmap.set_under('k', alpha=0)
-    ax.imshow(np.clip(dat,a_min = noise, a_max = None),
-               origin = 'lower', cmap = my_cmap,
-               norm = ImageNormalize(stretch=LogStretch(), clip = False),
-               clim = [3*noise, None], vmin = 3*noise) 
-    scalebar = ScaleBar(pixel_size, "''",dimension = ANGLE,color='black',box_alpha=1, font_properties={'size':25},
-                    location = 'lower left', fixed_value= bar_length)
+    ax.imshow(np.clip(dat, a_min=noise, a_max=None),
+              origin='lower',
+              cmap=my_cmap,
+              norm=ImageNormalize(stretch=LogStretch(), clip=False),
+              clim=[3 * noise, None],
+              vmin=3 * noise)
+    scalebar = ScaleBar(pixel_size,
+                        "''",
+                        dimension=ANGLE,
+                        color='black',
+                        box_alpha=1,
+                        font_properties={'size': 25},
+                        location='lower left',
+                        fixed_value=bar_length)
     plt.gca().add_artist(scalebar)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -1539,7 +1583,17 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
             e.set_linestyle('-')
             ax.add_artist(e)
 
-def display_isophote_LSB(ax, img, x0, y0, sma, ell, pa, noise, pixel_size=0.259, scale_bar_length = 50):
+
+def display_isophote_LSB(ax,
+                         img,
+                         x0,
+                         y0,
+                         sma,
+                         ell,
+                         pa,
+                         noise,
+                         pixel_size=0.259,
+                         scale_bar_length=50):
     """Visualize the isophotes."""
 
     display_single(img,
@@ -1549,7 +1603,11 @@ def display_isophote_LSB(ax, img, x0, y0, sma, ell, pa, noise, pixel_size=0.259,
                    cmap='Greys_r',
                    scale_bar_length=scale_bar_length)
 
-    LSBImage(ax=ax, dat = img, noise=noise, pixel_size=pixel_size, bar_length = scale_bar_length)
+    LSBImage(ax=ax,
+             dat=img,
+             noise=noise,
+             pixel_size=pixel_size,
+             bar_length=scale_bar_length)
 
     for k in range(len(sma)):
         if k % 2 == 0:
@@ -1597,5 +1655,3 @@ if __name__ == '__main__':
     lll = normalize_angle(test_pa, 0, 180)
 
     print(lll)
-
-
