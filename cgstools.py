@@ -6,7 +6,6 @@ from astropy.io import ascii
 import numpy as np
 import os
 
-from Taiji.imtools import maskFitsTool
 from Taiji.imtools import readGalfitInput
 from Taiji.imtools import subtract_sky
 from Taiji.imtools import Remove_file
@@ -324,7 +323,7 @@ def subtract_sky_cgs(input_file, mask_file, sky_value):
 
     hdul.writeto(modfile) 
     
-    maskFitsTool(modfile, mask_file)                   
+    #maskFitsTool(modfile, mask_file)                   
 
 def getzpt0(fits_header):
     phot = fits_header['phot']
