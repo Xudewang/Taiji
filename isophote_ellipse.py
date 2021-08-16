@@ -1,4 +1,6 @@
 from pyraf import iraf
+import os
+from astropy.table import Table
 
 iraf.stsdas()
 iraf.analysis()
@@ -162,4 +164,5 @@ def PyrafEllipse(input_img,
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
 
     return ellipse_data
+
 
