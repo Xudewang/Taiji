@@ -1,6 +1,12 @@
 from pyraf import iraf
 import os
 from astropy.table import Table
+import numpy as np
+from astropy.table import Table, Column
+
+from Taiji.imtools import removeellipseIndef
+from Taiji.imtools import bright_to_mag
+from Taiji.imtools import easy_propagate_err_mu
 
 iraf.stsdas()
 iraf.analysis()
