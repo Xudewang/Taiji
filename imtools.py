@@ -38,6 +38,7 @@ from astropy.visualization import ZScaleInterval
 import matplotlib.patches as mpatches
 from matplotlib.patches import Ellipse
 
+
 def muRe_to_intenRe(muRe, zpt):
     intenRe = 10**((zpt - muRe) / 2.5) * 0.259**2
     return intenRe
@@ -327,6 +328,7 @@ def normalize_angle(num, lower=0, upper=360, b=False):
 
     return res
 
+
 def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # read the data
@@ -404,6 +406,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
 
     return ellipse_data
+
 
 def readGalfitInput(input_file):
     with open(input_file) as f:
@@ -560,8 +563,10 @@ def calculateSky(galaxy_name, maxis=1200):
     elif os.path.exists(imageFile_fits):
         imageFile = imageFile_fits
     data_fits_file = imageFile
-    cleandata_fits_file = '/home/dewang/data/CGS/' + galaxy_name + '/R/' + galaxy_name + '_R_reg_clean.fits'
-    mask_fits_file = '/home/dewang/data/CGS/' + galaxy_name + '/R/' + galaxy_name + '_R_reg_mm.fits'
+    cleandata_fits_file = '/home/dewang/data/CGS/' + \
+        galaxy_name + '/R/' + galaxy_name + '_R_reg_clean.fits'
+    mask_fits_file = '/home/dewang/data/CGS/' + \
+        galaxy_name + '/R/' + galaxy_name + '_R_reg_mm.fits'
 
     datahdu = fits.open(data_fits_file)
     parafile_from_header = fits.getheader(data_fits_file)
@@ -589,9 +594,9 @@ def calculateSky(galaxy_name, maxis=1200):
     #PA = 170
     PAs = PA * np.pi / 180
 
-    maxis = maxis  #4*parafile_from_header['R80']/0.259
+    maxis = maxis  # 4*parafile_from_header['R80']/0.259
     b = np.sqrt(maxis**2 * (1 - e**2))
-    c = maxis * e  #np.sqrt(maxis**2-b**2)
+    c = maxis * e  # np.sqrt(maxis**2-b**2)
     print(e)
     print(maxis)
     print(PA)
@@ -620,8 +625,8 @@ def calculateSky(galaxy_name, maxis=1200):
     plt.axis('scaled')
     plt.axis(
         'equal'
-    )  #changes limits of x or y axis so that equal increments of x and y have the same length
-    #plt.axis('off')
+    )  # changes limits of x or y axis so that equal increments of x and y have the same length
+    # plt.axis('off')
     plt.show()
 
     # imagemm = np.zeros_like(image)
@@ -912,7 +917,7 @@ def plot_completeSBP(sma,
 
     if save_file:
         plt.savefig(save_file, dpi=200, bbox_inches='tight')
-    #plt.show()
+    # plt.show()
 
 
 def random_cmap(ncolors=256, background_color='white'):
@@ -1275,7 +1280,7 @@ def display_isophote_LSB(ax,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
                         angle=pa[k])
             e.set_facecolor('none')
-            #e.set_edgecolor('#30E3CA')
+            # e.set_edgecolor('#30E3CA')
             e.set_edgecolor('magenta')
             e.set_alpha(1)
             e.set_linewidth(2)

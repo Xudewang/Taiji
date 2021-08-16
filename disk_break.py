@@ -38,6 +38,7 @@ from astropy.visualization import ZScaleInterval
 import matplotlib.patches as mpatches
 from matplotlib.patches import Ellipse
 
+
 def round_up_to_odd(f):
     f = int(np.ceil(f))
     return f - 1 if f % 2 == 0 else f
@@ -111,10 +112,10 @@ def get_local_h_2order(r, mu_obs):
 
             #err_temp = np.sqrt(1/4/dx**2*mu_err[i+1]**2+1/4/dx**2*mu_err[i-1]**2)
 
-        #print(m)
+        # print(m)
         h_local_temp = 1.086 / deltayx
         local_h_arr_fd.append(h_local_temp)
-        #h_err_2order.append(err_temp)
+        # h_err_2order.append(err_temp)
 
     return np.array(local_h_arr_fd)
 
@@ -131,6 +132,7 @@ def Get_localh_withmedian(sma, mu, length_h, frac):
     local_h_medfil = median_smooth_h(local_h, length_h=length_h, frac=frac)
 
     return np.array([xnew, local_h, local_h_medfil])
+
 
 def cs(h_arr):
     h_mean = np.mean(h_arr)
@@ -181,6 +183,7 @@ def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace=True):
 
     return (confidence, origi_cs_diff, cs_diff_arr)
 
+
 def cs_bootstrap_savecs(h_arr, bootstrap_size):
     origi_cs_diff = cs(h_arr)[-1]
     bootresult = bootstrap(h_arr, bootstrap_size)
@@ -189,31 +192,34 @@ def cs_bootstrap_savecs(h_arr, bootstrap_size):
     cs_diff_small = cs_diff_arr[cs_diff_arr < origi_cs_diff]
 
     confidence = len(cs_diff_small)/bootstrap_size
-    
+
     cs_boot_arr = [cs(bootresult[i])[0] for i in range(len(bootresult))]
 
     return (confidence, origi_cs_diff, cs_diff_arr, cs_boot_arr)
 
+
 def find_max(cs_result):
     """
     This function is to find the maximum of the cs.
-    
+
     input: the results of cs function.
-    
+
     output: the location of the maximum. And this maximum represents the change point, i.e., the localtion of disk break.
-    
+
     """
     cs_arr = cs_result[0]
-    
+
     cs_abs_arr = np.abs(cs_arr)
     cs_abs_max = np.max(cs_abs_arr)
     cs_max_loca = np.argmax(cs_abs_arr)
-    
+
     return cs_max_loca
 
-def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace = False):
+
+def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace=False):
     origi_cs_diff = cs(h_arr)[-1]
-    bootresult = np.array([resample(h_arr, n_samples=len(h_arr), replace=replace) for i in range(bootstrap_size)])
+    bootresult = np.array([resample(h_arr, n_samples=len(
+        h_arr), replace=replace) for i in range(bootstrap_size)])
 
     cs_diff_arr = [cs(bootresult[i])[-1] for i in range(len(bootresult))]
     cs_diff_arr = np.array(cs_diff_arr)
@@ -223,36 +229,37 @@ def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace = False):
 
     return (confidence, origi_cs_diff, cs_diff_arr)
 
+
 def find_sigma(hprofile_ori, hprofile, rb, R, p1, p2):
     rplus1 = rb + int(p1*R)
     rplus2 = rb + int(p2*R)
-    
+
     rminus1 = rb - int(p1*R)
     rminus2 = rb - int(p2*R)
-    
+
     maxr2 = np.max(hprofile[rminus2:rplus2])
     minr2 = np.min(hprofile[rminus2:rplus2])
-    
+
     deltah = np.abs(maxr2 - minr2)
     sigmaleft = np.std(hprofile_ori[rminus2:rminus1])
     sigmaright = np.std(hprofile_ori[rplus1:rplus2])
-    
+
     plt.figure()
-    plt.plot(r, hprofile_ori, 'o', label='Local scale length derived by finite difference', color='black')
+    plt.plot(r, hprofile_ori, 'o',
+             label='Local scale length derived by finite difference', color='black')
     plt.plot(r, hprofile, label='Local scale length after median filter', color='red')
-    plt.axvline(rplus1, color='blue',ls='-.', label=r'$5\%$ and $10\%$ apart from the break radius', alpha=0.5)
-    plt.axvline(rplus2, color='blue',ls='-.', alpha=0.5)
-    plt.axvline(rminus1, color='blue',ls='-.', alpha=0.5)
-    plt.axvline(rminus2, color='blue',ls='-.', alpha=0.5)
-    plt.xlabel('R',fontsize=30)
-    plt.ylabel(r'$h_\mathrm{local}$',fontsize=30)
-    plt.ylim(6,35)
-    plt.axvline(rb, color='gray',ls='--',lw=3, label='Disk break')
+    plt.axvline(rplus1, color='blue', ls='-.',
+                label=r'$5\%$ and $10\%$ apart from the break radius', alpha=0.5)
+    plt.axvline(rplus2, color='blue', ls='-.', alpha=0.5)
+    plt.axvline(rminus1, color='blue', ls='-.', alpha=0.5)
+    plt.axvline(rminus2, color='blue', ls='-.', alpha=0.5)
+    plt.xlabel('R', fontsize=30)
+    plt.ylabel(r'$h_\mathrm{local}$', fontsize=30)
+    plt.ylim(6, 35)
+    plt.axvline(rb, color='gray', ls='--', lw=3, label='Disk break')
     plt.legend()
-    plt.savefig('/Users/xu/Astronomy/Disk_break/figure/deltah_sigma_{}.pdf'.format(rb))
+    plt.savefig(
+        '/Users/xu/Astronomy/Disk_break/figure/deltah_sigma_{}.pdf'.format(rb))
     plt.show()
-    
+
     return np.array([deltah, sigmaleft, sigmaright])
-
-
-
