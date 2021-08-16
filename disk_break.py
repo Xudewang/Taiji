@@ -216,21 +216,7 @@ def find_max(cs_result):
     return cs_max_loca
 
 
-def cs_bootstrap_woreplace(h_arr, bootstrap_size, replace=False):
-    origi_cs_diff = cs(h_arr)[-1]
-    bootresult = np.array([resample(h_arr, n_samples=len(
-        h_arr), replace=replace) for i in range(bootstrap_size)])
-
-    cs_diff_arr = [cs(bootresult[i])[-1] for i in range(len(bootresult))]
-    cs_diff_arr = np.array(cs_diff_arr)
-    cs_diff_small = cs_diff_arr[cs_diff_arr < origi_cs_diff]
-
-    confidence = len(cs_diff_small)/bootstrap_size
-
-    return (confidence, origi_cs_diff, cs_diff_arr)
-
-
-def find_sigma(hprofile_ori, hprofile, rb, R, p1, p2):
+def find_sigma(hprofile_ori, hprofile, rb, R, p1, p2, savefile=''):
     rplus1 = rb + int(p1*R)
     rplus2 = rb + int(p2*R)
 
@@ -258,8 +244,11 @@ def find_sigma(hprofile_ori, hprofile, rb, R, p1, p2):
     plt.ylim(6, 35)
     plt.axvline(rb, color='gray', ls='--', lw=3, label='Disk break')
     plt.legend()
-    plt.savefig(
-        '/Users/xu/Astronomy/Disk_break/figure/deltah_sigma_{}.pdf'.format(rb))
+
+    if savefile:
+        plt.savefig(
+            savefile)
+            
     plt.show()
 
     return np.array([deltah, sigmaleft, sigmaright])
