@@ -145,28 +145,24 @@ def GrowthCurve(sma, ellip, isoInten):
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
+
 # firstly, I should judge the file is fits or fit.
 
 
-def subtract_sky(input_file, mask_file, sky_value):
+def subtract_sky(input_file, sky_value, subtract_sky_file):
     '''
-    This function is to subtract the sky value form the original image and meanwhile copy the mask file for it.
-    It is to be modifed, use another way to write just the data into the file. Then we do not 
-    need consider the header.
+    This function is to subtract the sky value form the original image.
+    It is to be modifed, use the easy way to write just the data into the file. Then we do not need consider the header.
     '''
 
-    modfile = input_file.replace('.fit', '_sky.fit')
-    Remove_file(modfile)
+    Remove_file(subtract_sky_file)
 
     hdul = fits.open(input_file)
-    header_list = hdul[0].header
     data_list = hdul[0].data
 
     data_list -= sky_value
 
-    hdul.writeto(modfile)
-
-    #maskFitsTool(modfile, mask_file)
+    hdul.writeto(subtract_sky_file)
 
 
 def easy_propagate_err_mu(intens, intens_err):
