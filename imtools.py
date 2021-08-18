@@ -1297,6 +1297,22 @@ def display_isophote_LSB(ax,
             ax.add_artist(e)
 
 
+def easy_saveData_Tofits(data, savefile):
+    hdu = fits.PrimaryHDU(data)
+
+    hdul = fits.HDUList(hdu)
+    hdul.writeto(savefile, overwrite=True)
+
+def exptime_modify(data, exptime, savefile, opper='divide'):
+    if opper == 'divide':
+        data/=exptime
+    elif opper == 'multiply':
+        data*=exptime
+    
+    easy_saveData_Tofits(data, savefile=savefile)
+    print(opper+' exposure time. Finished!')
+
+
 if __name__ == '__main__':
     test_pa = -50
 
