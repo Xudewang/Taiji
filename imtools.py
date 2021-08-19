@@ -183,7 +183,6 @@ def removeellipseIndef(arr):
 
 
 def imageMax(image_data_temp, mask_data_temp):
-
     # combine the image and mask
     image_data_temp[mask_data_temp > 0] = np.nan
     image_value_max = np.nanmax(image_data_temp)
