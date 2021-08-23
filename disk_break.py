@@ -26,7 +26,6 @@ from matplotlib.patches import Ellipse, Circle
 from astropy.stats import bootstrap
 from sklearn.utils import resample
 from scipy import signal
-from scipy.interpolate import interp1d
 
 from matplotlib import colors
 from matplotlib.ticker import AutoMinorLocator
