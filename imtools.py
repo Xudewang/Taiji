@@ -699,8 +699,6 @@ def getOuterBound(ellipse_data, sky_err, alter=0.2):
     return sma[index][-1]
 
 def getBound(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
-    sma = sma
-    intens = intens
     mu = bright_to_mag(intens=intens, zpt0=zpt0, texp=texp, pixel_size=pixel_size)
     mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
 
