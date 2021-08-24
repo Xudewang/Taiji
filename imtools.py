@@ -165,6 +165,24 @@ def subtract_sky(input_file, sky_value, subtract_sky_file):
     hdul.writeto(subtract_sky_file)
 
 
+def subtract_sky_woheader(input_file, sky_value, subtract_sky_file):
+    '''
+    This function is to subtract the sky value form the original image.
+    It is to be modifed, use the easy way to write just the data into the file. Then we do not need consider the header.
+
+    This function is especially for those fits whose header has some conflicts.
+    '''
+
+    Remove_file(subtract_sky_file)
+
+    hdul = fits.open(input_file)
+    data_list = hdul[0].data
+
+    data_list -= sky_value
+
+    easy_saveData_Tofits(data_list, savefile=subtract_sky_file)
+
+
 def easy_propagate_err_mu(intens, intens_err):
 
     return np.array(2.5 / np.log(10) * intens_err / intens)
