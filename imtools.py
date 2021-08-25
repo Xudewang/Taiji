@@ -979,7 +979,7 @@ def random_cmap(ncolors=256, background_color='white'):
     return colors.ListedColormap(rgb)
 
 
-def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50):
+def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
     ax.imshow(dat,
               origin='lower',
               cmap='Greys',
@@ -996,9 +996,10 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50):
                         "''",
                         dimension=ANGLE,
                         color='black',
-                        box_alpha=1,
+                        box_alpha= box_alpha,
                         font_properties={'size': 25},
                         location='lower left',
+                        length_fraction = pixel_size,
                         fixed_value=bar_length)
     plt.gca().add_artist(scalebar)
     ax.set_xticks([])
