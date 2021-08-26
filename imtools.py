@@ -1338,7 +1338,7 @@ def exptime_modify(data, exptime, savefile, opper='divide'):
     easy_saveData_Tofits(data, savefile=savefile)
     print(opper+' exposure time. Finished!')
 
-def get_galfit_bulge_geo(input_file):
+def get_bulge_geo(input_file):
 
     with open(input_file) as f:
         input_data = f.read()
@@ -1355,7 +1355,11 @@ def get_galfit_bulge_geo(input_file):
     sersicn = re.search('.*(?=\s[0-9])', sersicn_t)[0]
     print('sersic index = ', sersicn)
 
-    return np.array([mue, Re, sersicn], dtype=str)
+    sky_value_t = re.search('(?<=1\)\s).*(?=#\s\sSky)', input_data)[0]
+    sky_value = re.search('.*(?=\s[0-9])', sky_value_t)[0]
+    print('sky value = ', sky_value)
+
+    return np.array([mue, Re, sersicn, sky_value], dtype=str)
 
 
 if __name__ == '__main__':
