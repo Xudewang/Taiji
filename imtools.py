@@ -1338,6 +1338,25 @@ def exptime_modify(data, exptime, savefile, opper='divide'):
     easy_saveData_Tofits(data, savefile=savefile)
     print(opper+' exposure time. Finished!')
 
+def get_galfit_bulge_geo(input_file):
+
+    with open(input_file) as f:
+        input_data = f.read()
+
+    mue_t = re.search('(?<=3\)\s).*(?=#\s\sSurface)', input_data)[0]
+    mue = re.search('.*(?=\s[0-9])', mue_t)[0]
+    print('mue = ', mue)
+
+    Re_t = re.search('(?<=4\)\s).*(?=#\s\sR_e)', input_data)[0]
+    Re = re.search('.*(?=\s[0-9])', Re_t)[0]
+    print('Re = ', Re)
+
+    sersicn_t = re.search('(?<=5\)\s).*(?=#\s\sSersic)', input_data)[0]
+    sersicn = re.search('.*(?=\s[0-9])', sersicn_t)[0]
+    print('sersic index = ', sersicn)
+
+    return np.array([mue, Re, sersicn], dtype=str)
+
 
 if __name__ == '__main__':
     test_pa = -50
