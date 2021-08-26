@@ -1338,7 +1338,7 @@ def exptime_modify(data, exptime, savefile, opper='divide'):
     easy_saveData_Tofits(data, savefile=savefile)
     print(opper+' exposure time. Finished!')
 
-def get_bulge_geo(input_file):
+def get_bulge_geo_galfit_input(input_file):
 
     with open(input_file) as f:
         input_data = f.read()
