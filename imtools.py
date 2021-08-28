@@ -40,6 +40,15 @@ from matplotlib.patches import Ellipse
 
 
 def muRe_to_intenRe(muRe, zpt):
+    """[summary]
+
+    Args:
+        muRe ([type]): [description]
+        zpt ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     intenRe = 10**((zpt - muRe) / 2.5) * 0.259**2
     return intenRe
 
