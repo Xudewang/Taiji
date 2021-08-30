@@ -47,6 +47,7 @@ def getinforHua(galaxy_name, file_path):
         galnamesep = ['NGC', '4373A']
 
     # table from Hua
+    #TODO: in some codes, the file path is still not including '/'.
     coor_data = ascii.read('{0}/para_file/bul_cen.dat'.format(file_path), names=['name1','name2','x0','y0'])
     geo_data = ascii.read('{0}/para_file/bul_struct_param.bin'.format(file_path),names=['name1','name2','mtotal','mt_err','BT','BT_err',
                         'mue','mue_err','n','n_err','re','re_err','ellip','ellip_err','pa','pa_err','DT','bT','BL'])
