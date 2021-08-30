@@ -4,11 +4,11 @@
 if (defpar ("logver"))
     logver = "IRAF V2.16 March 2012"
 
-set	home		= "/home/dewang/python_code/Taiji/"
-set	imdir		= "/tmp/dewang/"
+set	home		= "/Users/xu/Astronomy/Taiji/"
+set	imdir		= "/tmp/xu/"
 set	cache		= "U_CACHEDIR"
 set	uparm		= "home$uparm/"
-set	userid		= "dewang"
+set	userid		= "xu"
 
 # Set the terminal type.  We assume the user has defined this correctly 
 # when issuing the MKIRAF and no longer key off the unix TERM to set a
