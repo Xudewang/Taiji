@@ -725,9 +725,13 @@ def getOuterBound(ellipse_data, sky_err, alter=0.2):
 
     return sma[index][-1]
 
-def getBound(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
-    mu = bright_to_mag(intens=intens, zpt0=zpt0, texp=texp, pixel_size=pixel_size)
-    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
+
+def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
+    mu = bright_to_mag(intens=intens,
+                       zpt0=zpt0,
+                       texp=texp,
+                       pixel_size=pixel_size)
+    mu_err = easy_propagate_err_mu(intens=intens, intens_err=int_err)
 
     index = mu_err <= alter
 
@@ -1005,10 +1009,10 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
                         "''",
                         dimension=ANGLE,
                         color='black',
-                        box_alpha= box_alpha,
+                        box_alpha=box_alpha,
                         font_properties={'size': 25},
                         location='lower left',
-                        length_fraction = pixel_size,
+                        length_fraction=pixel_size,
                         fixed_value=bar_length)
     plt.gca().add_artist(scalebar)
     ax.set_xticks([])
@@ -1338,14 +1342,16 @@ def easy_saveData_Tofits(data, savefile):
     hdul = fits.HDUList(hdu)
     hdul.writeto(savefile, overwrite=True)
 
+
 def exptime_modify(data, exptime, savefile, opper='divide'):
     if opper == 'divide':
-        data/=exptime
+        data /= exptime
     elif opper == 'multiply':
-        data*=exptime
-    
+        data *= exptime
+
     easy_saveData_Tofits(data, savefile=savefile)
-    print(opper+' exposure time. Finished!')
+    print(opper + ' exposure time. Finished!')
+
 
 def get_bulge_geo_galfit_input(input_file):
 
@@ -1370,6 +1376,7 @@ def get_bulge_geo_galfit_input(input_file):
 
     return np.array([mue, Re, sersicn, sky_value], dtype=str)
 
+
 def get_disk_geo_galfit_output(input_file):
     '''
     input: the Galfit input/output file.
@@ -1377,14 +1384,16 @@ def get_disk_geo_galfit_output(input_file):
     return: ellipticity and position angle. data_type: float value of a numpy array.
     '''
 
-
     with open(input_file) as f:
         input_data = f.read()
 
-    disk_geo_data = re.search('(?<=0\)\sexpdisk).*(?=#\s\sPosition)', input_data, re.DOTALL)[0]
+    disk_geo_data = re.search('(?<=0\)\sexpdisk).*(?=#\s\sPosition)',
+                              input_data, re.DOTALL)[0]
     #print(disk_geo_data)
-    axisratio_disk_data = re.search('(?<=9\)\s).*(?=#\s\sAxis)', disk_geo_data)[0]
-    axisratio_disk_galfit = float(re.search('.*(?=\s[0-9])', axisratio_disk_data)[0])
+    axisratio_disk_data = re.search('(?<=9\)\s).*(?=#\s\sAxis)',
+                                    disk_geo_data)[0]
+    axisratio_disk_galfit = float(
+        re.search('.*(?=\s[0-9])', axisratio_disk_data)[0])
     e_disk_galfit = 1 - axisratio_disk_galfit
     pa_disk_data = re.search('(?<=10\)).*', disk_geo_data)[0]
     pa_disk_galfit = float(re.search('.*(?=\s[0-9])', pa_disk_data)[0])
