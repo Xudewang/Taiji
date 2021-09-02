@@ -10,7 +10,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
 from matplotlib import cm
 from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.visualization import HistEqStretch, LogStretch
+from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval
 from matplotlib.colors import LogNorm
 from astropy.io import ascii
 from astropy.modeling.models import custom_model
