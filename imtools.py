@@ -1403,6 +1403,28 @@ def get_disk_geo_galfit_output(input_file):
 
     return np.array([e_disk_galfit, pa_disk_galfit], dtype=float)
 
+def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
+    """This function is designed especially for inner disk break project. Because just for inner disk break project, its inner part of SBP will be large.
+
+    Args:
+        sma (numpy.array): raidal radius array along major axis
+        intens (numpy.array): the intensity array
+        int_err (numpy.array): the intensity err, basically, this should consider the contribution of both background uncertainty and IRAF ellipse poisson noise.
+        zpt0 (float): zero point magnitude.
+        pixel_size (float, optional): the CCD pixel scale. Defaults to 0.259.
+        texp (int, optional): exposure time; when the images do not normalize the exp time, you also do not normalize this first for the images, you should change this parameter for your surface brightness profiles. Defaults to 1.
+        alter (float, optional): altering magnitude. Defaults to 0.2.
+
+    Returns:
+        [type]: [description]
+    """
+    mu = bright_to_mag(intens=intens, zpt0=zpt0, texp=texp, pixel_size=pixel_size)
+    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
+
+    index = (mu_err <= alter)
+
+    return np.array([sma[index][0], sma[index][-1]], dtype=float)
+
 
 if __name__ == '__main__':
     test_pa = -50
