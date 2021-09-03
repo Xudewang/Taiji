@@ -733,7 +733,7 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
                        pixel_size=pixel_size)
     mu_err = easy_propagate_err_mu(intens=intens, intens_err=int_err)
 
-    index = mu_err <= alter
+    index = np.abs(mu_err) <= alter
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
@@ -1418,10 +1418,9 @@ def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259
     Returns:
         [type]: [description]
     """
-    mu = bright_to_mag(intens=intens, zpt0=zpt0, texp=texp, pixel_size=pixel_size)
     mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
 
-    index = (mu_err <= alter)
+    index = (np.abs(mu_err) <= alter)
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
