@@ -785,6 +785,52 @@ def plot_ellip(ax,
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     ax.legend()
 
+def plot_axisRatio(ax,
+               sma,
+               axisratio,
+               axisratio_err,
+               pixel_size=0.259,
+               plot_style='fill',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label=''):
+    '''
+    This function is a templete to plot the ellipticity profile.
+    '''
+
+    if plot_style == 'errorbar':
+        ax.errorbar(sma * pixel_size,
+                    axisratio,
+                    yerr=axisratio_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
+    elif plot_style == 'fill':
+        ax.plot(sma * pixel_size, axisratio, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        axisratio + axisratio_err,
+                        axisratio - axisratio_err,
+                        color=color,
+                        alpha=0.5)
+
+    if ylimax:
+        ax.set_ylim(ylimin, ylimax)
+    else:
+        ax.set_ylim(np.nanmin(axisratio) - 0.05, np.nanmax(axisratio) + 0.05)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+    ax.set_ylabel(r'$b/a$')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.legend()
 
 def plot_pa(ax,
             sma,
