@@ -132,7 +132,7 @@ def Get_localh_withmedian_old(sma, mu, length_h, frac):
 
     return np.array([xnew, local_h, local_h_medfil])
 
-def Get_localh_withmedian(sma, mu, step, frac):
+def Get_localh_withmedian(sma, mu, step=1, frac=0.1):
     """This function is to get the local scale length, then median smooth the local h profile.
 
     Args:
