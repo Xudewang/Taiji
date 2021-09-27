@@ -224,7 +224,7 @@ def cs_bootstrap_savecs(h_arr, bootstrap_size):
     return (confidence, origi_cs_diff, cs_diff_arr, cs_boot_arr)
 
 
-def find_max(cs_result):
+def find_max(sma, cs_arr):
     """
     This function is to find the maximum of the cs.
 
@@ -233,13 +233,13 @@ def find_max(cs_result):
     output: the location of the maximum. And this maximum represents the change point, i.e., the localtion of disk break.
 
     """
-    cs_arr = cs_result[0]
+    cs_arr = cs_arr
 
     cs_abs_arr = np.abs(cs_arr)
     cs_abs_max = np.max(cs_abs_arr)
     cs_max_loca = np.argmax(cs_abs_arr)
 
-    return cs_max_loca
+    return sma[cs_max_loca]
 
 
 def find_sigma(hprofile_ori, hprofile, rb, R, p1, p2, savefile=''):
