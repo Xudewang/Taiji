@@ -119,7 +119,7 @@ def get_local_h_2order(r, mu_obs):
     return np.array(local_h_arr_fd)
 
 
-def Get_localh_withmedian(sma, mu, length_h, frac):
+def Get_localh_withmedian_old(sma, mu, length_h, frac):
 
     f = interp1d(sma, mu)
 
@@ -128,6 +128,33 @@ def Get_localh_withmedian(sma, mu, length_h, frac):
     ynew = f(xnew)
 
     local_h = get_local_h_2order(xnew, ynew)
+    local_h_medfil = median_smooth_h(local_h, length_h=length_h, frac=frac)
+
+    return np.array([xnew, local_h, local_h_medfil])
+
+def Get_localh_withmedian(sma, mu, step, frac):
+    """This function is to get the local scale length, then median smooth the local h profile.
+
+    Args:
+        sma (numpy array): the input radial radius. Units: pixel
+        mu ([type]): [description]
+        step (float): the step of interpolation. Unit: pixel, it is 1 pixel by default.
+        frac ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+    f = interp1d(sma, mu)
+
+    xnew = np.arange(np.ceil(np.min(sma)), np.floor(np.max(sma)), step)
+
+    ynew = f(xnew)
+
+    local_h = get_local_h_2order(xnew, ynew)
+
+    # to get the length of xnew, finally I think the kernel size should use this length, because this actually the radial length of new profile.
+    length_h = xnew[-1] - xnew[0]
     local_h_medfil = median_smooth_h(local_h, length_h=length_h, frac=frac)
 
     return np.array([xnew, local_h, local_h_medfil])
