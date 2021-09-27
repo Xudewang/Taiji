@@ -161,6 +161,7 @@ def Get_localh_withmedian(sma, mu, step=1, frac=0.1):
 
 
 def cs(h_arr):
+    #TODO: combine this cs function and find_max function.
     h_mean = np.mean(h_arr)
     cs0 = 0
 
