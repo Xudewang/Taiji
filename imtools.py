@@ -26,7 +26,6 @@ from matplotlib.patches import Ellipse, Circle
 from astropy.stats import bootstrap
 from sklearn.utils import resample
 from scipy import signal
-from scipy.interpolate import interp1d
 
 from matplotlib import colors
 from matplotlib.ticker import AutoMinorLocator
@@ -234,6 +233,15 @@ def GrowthCurve(sma, ellip, isoInten):
 
 # firstly, I should judge the file is fits or fit.
 
+def get_Rpercent(sma, cog, maxFlux, percent):
+
+    cog_percent = maxFlux*percent
+
+    f = interp1d(cog, sma)
+
+    Rpercent = f(cog_percent)
+
+    return Rpercent
 
 def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
     """
