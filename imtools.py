@@ -142,22 +142,6 @@ def inten_tomag_err(inten, err):
     return detup_residual, detdown_residual
 
 
-def GrowthCurve(sma, ellip, isoInten):
-    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
-    isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
-    curveOfGrowth = list(
-        map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
-
-    indexMax = np.argmax(curveOfGrowth)
-    maxIsoSma = sma[indexMax]
-    maxIsoFlux = curveOfGrowth[indexMax]
-
-    return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
-
-
-# firstly, I should judge the file is fits or fit.
-
-
 def subtract_sky(input_file, sky_value, subtract_sky_file):
     '''
     This function is to subtract the sky value form the original image.
@@ -243,6 +227,21 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     maxIsoFlux = curveOfGrowth[indexMax]
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
+
+def GrowthCurve(sma, ellip, isoInten):
+    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
+    isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
+    curveOfGrowth = list(
+        map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
+
+    indexMax = np.argmax(curveOfGrowth)
+    maxIsoSma = sma[indexMax]
+    maxIsoFlux = curveOfGrowth[indexMax]
+
+    return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
+
+
+# firstly, I should judge the file is fits or fit.
 
 
 def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
