@@ -62,25 +62,6 @@ def all_ninety_pa(pa):
 
     return temp
 
-
-def galaxy_model(x0, y0, PA, ell, I_e, r_e, n):
-    model = pyimfit.SimpleModelDescription()
-    # define the limits on X0 and Y0 as +/-10 pixels relative to initial values
-    model.x0.setValue(x0, [x0 - 10, x0 + 10])
-    model.y0.setValue(y0, [y0 - 10, y0 + 10])
-
-    bulge = pyimfit.make_imfit_function('Sersic', label='bulge')
-    bulge.I_e.setValue(I_e, [1e-33, 10 * I_e])
-    bulge.r_e.setValue(r_e, [1e-33, 10 * r_e])
-    bulge.n.setValue(n, [0.5, 5])
-    bulge.PA.setValue(PA, [0, 180])
-    bulge.ell.setValue(ell, [0, 1])
-
-    model.addFunction(bulge)
-
-    return model
-
-
 def Ser_kappa(n):
     if n > 0.36:
         bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
@@ -229,6 +210,16 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
 def GrowthCurve(sma, ellip, isoInten):
+    """THis function is to derive the curve of growth by integrating the isophotes.
+
+    Args:
+        sma (numpy array): The radial radius array.
+        ellip (float): the fixed ellipticity.
+        isoInten (numpy array): the intensity array at each radius.
+
+    Returns:
+        [type]: [description]
+    """
     ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
     curveOfGrowth = list(
