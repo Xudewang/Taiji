@@ -779,8 +779,8 @@ def plot_ellip(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'Ellipticity')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'Ellipticity', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
 def plot_axisRatio(ax,
@@ -826,8 +826,8 @@ def plot_axisRatio(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'$b/a$')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'$b/a$', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
 def plot_pa(ax,
@@ -877,8 +877,8 @@ def plot_pa(ax,
 #     else:
 #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
 
-    ax.set_ylabel(r'PA\, (deg)')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'PA\, (deg)', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
 
@@ -926,8 +926,8 @@ def plot_SBP(ax,
         ax.set_xlim(xlimin, xlimax)
 
     ax.legend()
-    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     plt.gca().invert_yaxis()
 
 
