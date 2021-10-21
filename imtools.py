@@ -1468,6 +1468,33 @@ def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
+def arcsec2kpc(x):
+    """This function is for secondary axis to show the physical units, kpc.
+       Note: when use this function, we should predefine a D, D is the distance of the objects.
+
+    Args:
+        x (acutually the theta): radius/arcsec
+
+    Returns:
+        [type]: [description]
+    """
+    Rkpc = (x*np.pi*D)/(18*36)
+
+    return Rkpc
+
+def kpc2arcsec(x):
+    """The inverse function of the [arcsec2kpc] for secondary axis.
+
+    Args:
+        x ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    Rsec = (x*18*36)/(np.pi*D)
+
+    return Rsec
+
 
 if __name__ == '__main__':
     test_pa = -50
