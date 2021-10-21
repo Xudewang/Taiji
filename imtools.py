@@ -926,7 +926,7 @@ def plot_SBP(ax,
         ax.set_xlim(xlimin, xlimax)
 
     ax.legend()
-    ax.set_ylabel(r'$\Sigma_R\ (\mathrm{mag\ arcsec^{-2}})$')
+    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$')
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     plt.gca().invert_yaxis()
 
