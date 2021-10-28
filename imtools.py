@@ -212,7 +212,7 @@ def GrowthCurve(sma, ellip, isoInten):
     """THis function is to derive the curve of growth by integrating the isophotes.
 
     Args:
-        sma (numpy array): The radial radius array.
+        sma (numpy array): The radial radius array. The unit should be arcsec?
         ellip (float): the fixed ellipticity.
         isoInten (numpy array): the intensity array at each radius.
 
