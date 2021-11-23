@@ -157,7 +157,7 @@ def Get_localh_withmedian(sma, mu, step=1, frac=0.1):
     length_h = xnew[-1] - xnew[0]
     local_h_medfil = median_smooth_h(local_h, length_h=length_h, frac=frac)
 
-    return np.array([xnew, local_h, local_h_medfil])
+    return np.array([xnew, ynew, local_h, local_h_medfil])
 
 
 def cs(h_arr):
