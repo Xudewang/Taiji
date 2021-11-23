@@ -10,7 +10,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
 from matplotlib import cm
 from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.visualization import HistEqStretch, LogStretch
+from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval
 from matplotlib.colors import LogNorm
 from astropy.io import ascii
 from astropy.modeling.models import custom_model
@@ -26,7 +26,6 @@ from matplotlib.patches import Ellipse, Circle
 from astropy.stats import bootstrap
 from sklearn.utils import resample
 from scipy import signal
-from scipy.interpolate import interp1d
 
 from matplotlib import colors
 from matplotlib.ticker import AutoMinorLocator
@@ -61,25 +60,6 @@ def all_ninety_pa(pa):
         temp = pa
 
     return temp
-
-
-def galaxy_model(x0, y0, PA, ell, I_e, r_e, n):
-    model = pyimfit.SimpleModelDescription()
-    # define the limits on X0 and Y0 as +/-10 pixels relative to initial values
-    model.x0.setValue(x0, [x0 - 10, x0 + 10])
-    model.y0.setValue(y0, [y0 - 10, y0 + 10])
-
-    bulge = pyimfit.make_imfit_function('Sersic', label='bulge')
-    bulge.I_e.setValue(I_e, [1e-33, 10 * I_e])
-    bulge.r_e.setValue(r_e, [1e-33, 10 * r_e])
-    bulge.n.setValue(n, [0.5, 5])
-    bulge.PA.setValue(PA, [0, 180])
-    bulge.ell.setValue(ell, [0, 1])
-
-    model.addFunction(bulge)
-
-    return model
-
 
 def Ser_kappa(n):
     if n > 0.36:
@@ -140,22 +120,6 @@ def inten_tomag_err(inten, err):
     detdown_residual = 2.5 * np.log10(inten / (inten - err))
 
     return detup_residual, detdown_residual
-
-
-def GrowthCurve(sma, ellip, isoInten):
-    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
-    isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
-    curveOfGrowth = list(
-        map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
-
-    indexMax = np.argmax(curveOfGrowth)
-    maxIsoSma = sma[indexMax]
-    maxIsoFlux = curveOfGrowth[indexMax]
-
-    return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
-
-
-# firstly, I should judge the file is fits or fit.
 
 
 def subtract_sky(input_file, sky_value, subtract_sky_file):
@@ -244,6 +208,40 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
+def GrowthCurve(sma, ellip, isoInten):
+    """THis function is to derive the curve of growth by integrating the isophotes.
+
+    Args:
+        sma (numpy array): The radial radius array. The unit should be arcsec?
+        ellip (float): the fixed ellipticity.
+        isoInten (numpy array): the intensity array at each radius.
+
+    Returns:
+        [type]: [description]
+    """
+    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
+    isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
+    curveOfGrowth = list(
+        map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
+
+    indexMax = np.argmax(curveOfGrowth)
+    maxIsoSma = sma[indexMax]
+    maxIsoFlux = curveOfGrowth[indexMax]
+
+    return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
+
+
+# firstly, I should judge the file is fits or fit.
+
+def get_Rpercent(sma, cog, maxFlux, percent):
+
+    cog_percent = maxFlux*percent
+
+    f = interp1d(cog, sma)
+
+    Rpercent = f(cog_percent)
+
+    return Rpercent
 
 def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
     """
@@ -725,11 +723,15 @@ def getOuterBound(ellipse_data, sky_err, alter=0.2):
 
     return sma[index][-1]
 
-def getBound(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
-    mu = bright_to_mag(intens=intens, zpt0=zpt0, texp=texp, pixel_size=pixel_size)
-    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
 
-    index = mu_err <= alter
+def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
+    mu = bright_to_mag(intens=intens,
+                       zpt0=zpt0,
+                       texp=texp,
+                       pixel_size=pixel_size)
+    mu_err = easy_propagate_err_mu(intens=intens, intens_err=int_err)
+
+    index = np.abs(mu_err) <= alter
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
@@ -777,10 +779,56 @@ def plot_ellip(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'Ellipticity')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'Ellipticity', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
+def plot_axisRatio(ax,
+               sma,
+               axisratio,
+               axisratio_err,
+               pixel_size=0.259,
+               plot_style='fill',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label=''):
+    '''
+    This function is a templete to plot the ellipticity profile.
+    '''
+
+    if plot_style == 'errorbar':
+        ax.errorbar(sma * pixel_size,
+                    axisratio,
+                    yerr=axisratio_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
+    elif plot_style == 'fill':
+        ax.plot(sma * pixel_size, axisratio, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        axisratio + axisratio_err,
+                        axisratio - axisratio_err,
+                        color=color,
+                        alpha=0.5)
+
+    if ylimax:
+        ax.set_ylim(ylimin, ylimax)
+    else:
+        ax.set_ylim(np.nanmin(axisratio) - 0.05, np.nanmax(axisratio) + 0.05)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+    ax.set_ylabel(r'$b/a$', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.legend()
 
 def plot_pa(ax,
             sma,
@@ -829,8 +877,8 @@ def plot_pa(ax,
 #     else:
 #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
 
-    ax.set_ylabel(r'PA\, (deg)')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'PA\, (deg)', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
 
@@ -878,8 +926,8 @@ def plot_SBP(ax,
         ax.set_xlim(xlimin, xlimax)
 
     ax.legend()
-    ax.set_ylabel(r'$\Sigma_R\ (\mathrm{mag\ arcsec^{-2}})$')
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     plt.gca().invert_yaxis()
 
 
@@ -1005,10 +1053,10 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
                         "''",
                         dimension=ANGLE,
                         color='black',
-                        box_alpha= box_alpha,
+                        box_alpha=box_alpha,
                         font_properties={'size': 25},
                         location='lower left',
-                        length_fraction = pixel_size,
+                        length_fraction=pixel_size,
                         fixed_value=bar_length)
     plt.gca().add_artist(scalebar)
     ax.set_xticks([])
@@ -1338,14 +1386,16 @@ def easy_saveData_Tofits(data, savefile):
     hdul = fits.HDUList(hdu)
     hdul.writeto(savefile, overwrite=True)
 
+
 def exptime_modify(data, exptime, savefile, opper='divide'):
     if opper == 'divide':
-        data/=exptime
+        data /= exptime
     elif opper == 'multiply':
-        data*=exptime
-    
+        data *= exptime
+
     easy_saveData_Tofits(data, savefile=savefile)
-    print(opper+' exposure time. Finished!')
+    print(opper + ' exposure time. Finished!')
+
 
 def get_bulge_geo_galfit_input(input_file):
 
@@ -1370,6 +1420,7 @@ def get_bulge_geo_galfit_input(input_file):
 
     return np.array([mue, Re, sersicn, sky_value], dtype=str)
 
+
 def get_disk_geo_galfit_output(input_file):
     '''
     input: the Galfit input/output file.
@@ -1377,14 +1428,16 @@ def get_disk_geo_galfit_output(input_file):
     return: ellipticity and position angle. data_type: float value of a numpy array.
     '''
 
-
     with open(input_file) as f:
         input_data = f.read()
 
-    disk_geo_data = re.search('(?<=0\)\sexpdisk).*(?=#\s\sPosition)', input_data, re.DOTALL)[0]
+    disk_geo_data = re.search('(?<=0\)\sexpdisk).*(?=#\s\sPosition)',
+                              input_data, re.DOTALL)[0]
     #print(disk_geo_data)
-    axisratio_disk_data = re.search('(?<=9\)\s).*(?=#\s\sAxis)', disk_geo_data)[0]
-    axisratio_disk_galfit = float(re.search('.*(?=\s[0-9])', axisratio_disk_data)[0])
+    axisratio_disk_data = re.search('(?<=9\)\s).*(?=#\s\sAxis)',
+                                    disk_geo_data)[0]
+    axisratio_disk_galfit = float(
+        re.search('.*(?=\s[0-9])', axisratio_disk_data)[0])
     e_disk_galfit = 1 - axisratio_disk_galfit
     pa_disk_data = re.search('(?<=10\)).*', disk_geo_data)[0]
     pa_disk_galfit = float(re.search('.*(?=\s[0-9])', pa_disk_data)[0])
@@ -1393,6 +1446,68 @@ def get_disk_geo_galfit_output(input_file):
     # print('galfit disk PA of {0} = '.format(galaxy_name), pa_disk_galfit)
 
     return np.array([e_disk_galfit, pa_disk_galfit], dtype=float)
+
+def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
+    """This function is designed especially for inner disk break project. Because just for inner disk break project, its inner part of SBP will be large.
+
+    Args:
+        sma (numpy.array): raidal radius array along major axis
+        intens (numpy.array): the intensity array
+        int_err (numpy.array): the intensity err, basically, this should consider the contribution of both background uncertainty and IRAF ellipse poisson noise.
+        zpt0 (float): zero point magnitude.
+        pixel_size (float, optional): the CCD pixel scale. Defaults to 0.259.
+        texp (int, optional): exposure time; when the images do not normalize the exp time, you also do not normalize this first for the images, you should change this parameter for your surface brightness profiles. Defaults to 1.
+        alter (float, optional): altering magnitude. Defaults to 0.2.
+
+    Returns:
+        [type]: [description]
+    """
+    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
+
+    index = (np.abs(mu_err) <= alter)
+
+    return np.array([sma[index][0], sma[index][-1]], dtype=float)
+
+def arcsec2kpc(x):
+    """This function is for secondary axis to show the physical units, kpc.
+       Note: when use this function, we should predefine a D, D is the distance of the objects.
+
+    Args:
+        x (acutually the theta): radius/arcsec
+
+    Returns:
+        [type]: [description]
+    """
+    Rkpc = (x*np.pi*D)/(18*36)
+
+    return Rkpc
+
+def kpc2arcsec(x):
+    """The inverse function of the [arcsec2kpc] for secondary axis.
+
+    Args:
+        x ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    Rsec = (x*18*36)/(np.pi*D)
+
+    return Rsec
+
+def M2LToMass(BV, Mag_gal, Dist):
+    # This function if for K band.
+    logM2L = 1.055*(BV) - 0.9402
+    print('ML', logM2L)
+    
+    Mag_sun = 3.27
+    
+    logL_gal = (Mag_gal - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 # the unit of L_gal is L_sun
+    print('logL', logL_gal)
+    
+    logM_gal = logM2L + logL_gal # M_gal unit is M_sun
+    
+    return logM_gal
 
 
 if __name__ == '__main__':
