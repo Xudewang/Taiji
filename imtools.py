@@ -404,7 +404,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # remove the indef
     intens = ellipse_data['intens']
-    intens_modif = removeellipseIndef(intens) + sky_value
+    intens_modif = np.array(removeellipseIndef(intens)) + sky_value
     ellipse_data['intens'] = intens_modif
     intens_err = ellipse_data['int_err']
     intens_err_removeindef = removeellipseIndef(intens_err)
