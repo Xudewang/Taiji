@@ -404,6 +404,8 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # remove the indef
     intens = ellipse_data['intens']
+    intens_modif = removeellipseIndef(intens) + sky_value
+    ellipse_data['intens'] = intens_modif
     intens_err = ellipse_data['int_err']
     intens_err_removeindef = removeellipseIndef(intens_err)
 
@@ -415,12 +417,11 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
-    mu = bright_to_mag(intens - sky_value,
+    mu = bright_to_mag(intens_modif,
                        zpt0,
                        pixel_size=pixel_size,
                        texp=texp)
-    mu_err = easy_propagate_err_mu(
-        np.array(intens) - sky_value, intens_err_removeindef_sky)
+    mu_err = easy_propagate_err_mu(intens_modif, intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
