@@ -74,14 +74,16 @@ def getinforHua(galaxy_name, file_path):
     BT = geo_data[index_geo]['BT']
     bT = geo_data[index_geo]['bT']
     DT = geo_data[index_geo]['DT']
+    BT_err = geo_data[index_geo]['BT_err']
     
-    print(mue[0], mue_err[0], Re[0], Re_err[0], n[0], n_err[0], x0[0], y0[0], pa[0], ell[0])
+    #print(mue[0], mue_err[0], Re[0], Re_err[0], n[0], n_err[0], x0[0], y0[0], pa[0], ell[0])
 
     dict_info = {'mue':mue[0], 'mue_err':mue_err[0], 'Re':Re[0], 'Re_err':Re_err[0], 'n':n[0], 'n_err':n_err[0],\
-     'x0':x0[0], 'y0':y0[0],'pa':pa[0], 'ell':ell[0]}
+     'x0':x0[0], 'y0':y0[0],'pa':pa[0], 'ell':ell[0], 'BT':BT[0], 'BT_err':BT_err[0], 'bT':bT[0]}
 
     return dict_info
 
+ 
 def getGalfitSky(galaxy_name):
 
     # image path and data
