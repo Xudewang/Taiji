@@ -156,7 +156,7 @@ def subtract_sky_woheader(input_file, sky_value, subtract_sky_file):
     easy_saveData_Tofits(data_list, savefile=subtract_sky_file)
 
 
-def easy_propagate_err_mu(intens, intens_err):
+def easy_propagate_err_mu(intens, intens_err, zpt0):
 
     return np.array(2.5 / np.log(10) * intens_err / intens)
 
@@ -421,7 +421,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
                        zpt0,
                        pixel_size=pixel_size,
                        texp=texp)
-    mu_err = easy_propagate_err_mu(intens_modif, intens_err_removeindef_sky)
+    mu_err = easy_propagate_err_mu(intens_modif, intens_err_removeindef_sky, zpt0)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -718,7 +718,7 @@ def getOuterBound(ellipse_data, sky_err, alter=0.2):
     mu = ellipse_data['mu']
     mu_err = ellipse_data['mu_err']
 
-    mu_err_justsky = easy_propagate_err_mu(intens, sky_err)
+    mu_err_justsky = easy_propagate_err_mu(intens, sky_err, zpt0)
 
     index = mu_err_justsky <= alter
 
@@ -730,7 +730,7 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
                        zpt0=zpt0,
                        texp=texp,
                        pixel_size=pixel_size)
-    mu_err = easy_propagate_err_mu(intens=intens, intens_err=int_err)
+    mu_err = easy_propagate_err_mu(intens=intens, intens_err=int_err, zpt0=zpt0)
 
     index = np.abs(mu_err) <= alter
 
@@ -1463,7 +1463,7 @@ def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259
     Returns:
         [type]: [description]
     """
-    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err)
+    mu_err = easy_propagate_err_mu(intens = intens, intens_err=int_err, zpt0=zpt0)
 
     index = (np.abs(mu_err) <= alter)
 
