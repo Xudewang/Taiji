@@ -115,12 +115,16 @@ def inten_to_mag(intens, zpt0):
     return -2.5 * np.log10(intens) + zpt0
 
 
-def inten_tomag_err(inten, err):
+def asymmetry_propagate_err_mu(inten, err):
     detup_residual = 2.5 * np.log10((inten + err) / inten)
     detdown_residual = 2.5 * np.log10(inten / (inten - err))
 
     return detup_residual, detdown_residual
 
+def symmetry_propagate_err_mu(intens, intens_err, zpt0):
+    #TODO: here for CGS, for other survey maybe I need add some parameters.
+
+    return np.array(2.5 / np.log(10) * intens_err / intens)
 
 def subtract_sky(input_file, sky_value, subtract_sky_file):
     '''
@@ -154,12 +158,6 @@ def subtract_sky_woheader(input_file, sky_value, subtract_sky_file):
     data_list -= sky_value
 
     easy_saveData_Tofits(data_list, savefile=subtract_sky_file)
-
-
-def symmetry_propagate_err_mu(intens, intens_err, zpt0):
-
-    return np.array(2.5 / np.log(10) * intens_err / intens)
-
 
 def removeellipseIndef(arr):
 
