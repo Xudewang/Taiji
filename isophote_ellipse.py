@@ -6,7 +6,7 @@ from astropy.table import Table, Column
 
 from Taiji.imtools import removeellipseIndef
 from Taiji.imtools import bright_to_mag
-from Taiji.imtools import easy_propagate_err_mu
+from Taiji.imtools import symmetry_propagate_err_mu
 
 iraf.stsdas()
 iraf.analysis()
@@ -163,8 +163,8 @@ def PyrafEllipse(input_img,
     intens_err_removeindef_sky = np.sqrt(
         np.array(intens_err_removeindef)**2 + sky_err**2)
     mu = bright_to_mag(intens - sky_value, zpt0, texp, pixel_size)
-    mu_err = easy_propagate_err_mu(
-        np.array(intens) - sky_value, intens_err_removeindef_sky)
+    mu_err = symmetry_propagate_err_mu(
+        np.array(intens) - sky_value, intens_err_removeindef_sky, zpt0=zpt0)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
