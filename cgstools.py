@@ -30,6 +30,9 @@ def getgalName(galaxy_name):
         galnamesep[1] = galnamesep2[1]+'-G'+galnamesep2[2]
     
     galName = galnamesep[0]+' '+galnamesep[1]
+    
+    if len(galnamesep)>2:
+        galName = galnamesep[0]+' '+galnamesep[1]+galnamesep[2]
 
     return np.array([galName, galnamesep])
 
