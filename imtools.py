@@ -1495,7 +1495,7 @@ def kpc2arcsec(x):
     return Rsec
 
 def M2LToMass(BV, Mag_gal, Dist):
-    # This function if for K band.
+    # This function if for K band. the parameter is from KH13.
     logM2L = 1.055*(BV) - 0.9402
     print('ML', logM2L)
     
@@ -1507,6 +1507,10 @@ def M2LToMass(BV, Mag_gal, Dist):
     logM_gal = logM2L + logL_gal # M_gal unit is M_sun
     
     return logM_gal
+
+def Ras2Rkpc(D, R_as):
+    
+    return D*1000*R_as*np.pi/180/60/60
 
 
 if __name__ == '__main__':
