@@ -340,6 +340,14 @@ def getzpt0(fits_header):
     
     return zpt0
 
+def Rbari2Rbaro(Rbari, pa_gal, pa_bar, e_gal):
+    delta_pa = pa_gal - pa_bar
+    Rbaro = Rbari / (np.sqrt(
+        np.cos(delta_pa / 180 * np.pi)**2 + (np.sin(delta_pa / 180 * np.pi) /
+                                             (1 - e_gal))**2))
+
+    return Rbaro
+
 # test part
 if __name__ == '__main__':
    q = getgalName('IC4991')
