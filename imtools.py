@@ -1303,7 +1303,7 @@ def color2ML_profile(color, a, b):
     
     return logM2L
 
-def mass_profile(sma, cog_mag, color, a, b, Dist, Mag_sun):
+def mass_profile(sma, cog_mag, logM2L, Dist, Mag_sun):
     """ To get the mass profiles based on stellar surface brightness profiles.
 
     Args:
@@ -1318,8 +1318,6 @@ def mass_profile(sma, cog_mag, color, a, b, Dist, Mag_sun):
     Returns:
         mass: the stellar mass profiles.
     """
-
-    logM2L = color2ML_profile(color, a, b)
     
     logL_gal = (cog_mag - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 #* the unit of L_gal is L_sun 
     
