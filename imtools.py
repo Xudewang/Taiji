@@ -1,41 +1,29 @@
 import numpy as np
-from astropy.io import fits
-import matplotlib.pyplot as plt
 import os
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.image as mpimg
+import re
+
+from matplotlib.patches import Ellipse, Circle
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib.colors import LinearSegmentedColormap
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.patches import Ellipse
 from matplotlib.gridspec import GridSpec
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
 from matplotlib import cm
+
+from scipy.special import gammaincinv
+from scipy.special import gamma
+from scipy.interpolate import interp1d
+
+from astropy.io import fits
+from astropy.visualization import ZScaleInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval
-from matplotlib.colors import LogNorm
 from astropy.io import ascii
-from astropy.modeling.models import custom_model
-from astropy.modeling import models, fitting
-from astropy.modeling.models import Sersic1D
-import re
-from uncertainties import unumpy
 from astropy.table import Table, Column
-import subprocess
-import shutil
-from scipy.interpolate import interp1d
-from matplotlib.patches import Ellipse, Circle
-from astropy.stats import bootstrap
-from sklearn.utils import resample
-from scipy import signal
 
-from matplotlib import colors
-from matplotlib.ticker import AutoMinorLocator
-from matplotlib.colors import LinearSegmentedColormap
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.ticker import NullFormatter
-from matplotlib.ticker import MaxNLocator
-from astropy.visualization import ZScaleInterval
-import matplotlib.patches as mpatches
-from matplotlib.patches import Ellipse
 
 
 def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
@@ -52,6 +40,9 @@ def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
     return intenRe
 
 def Ser_kappa(n):
+    '''
+    # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
+    '''
     if n > 0.36:
         bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
 
@@ -1464,7 +1455,7 @@ def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
-def arcsec2kpc(x):
+def arcsec2kpc(x, D):
     """This function is for secondary axis to show the physical units, kpc.
        Note: when use this function, we should predefine a D, D is the distance of the objects.
 
@@ -1478,7 +1469,7 @@ def arcsec2kpc(x):
 
     return Rkpc
 
-def kpc2arcsec(x):
+def kpc2arcsec(x, D):
     """The inverse function of the [arcsec2kpc] for secondary axis.
 
     Args:
@@ -1506,6 +1497,15 @@ def M2LToMass(BV, Mag_gal, Dist):
     return logM_gal
 
 def Ras2Rkpc(D, R_as):
+    """ Transforme the arcsecond to kpc.
+
+    Args:
+        D (float): distance in Mpc
+        R_as (float): Radius in arcsec.
+
+    Returns:
+        R_kpc: the radius in the unit of kpc.
+    """
     
     return D*1000*R_as*np.pi/180/60/60
 
