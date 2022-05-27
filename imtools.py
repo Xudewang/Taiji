@@ -38,7 +38,7 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Ellipse
 
 
-def muRe_to_intenRe(muRe, zpt):
+def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
     """[summary]
 
     Args:
@@ -48,7 +48,7 @@ def muRe_to_intenRe(muRe, zpt):
     Returns:
         [type]: [description]
     """
-    intenRe = 10**((zpt - muRe) / 2.5) * 0.259**2
+    intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
     return intenRe
 
 def Ser_kappa(n):
