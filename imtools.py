@@ -1298,6 +1298,48 @@ def mean_mue(mue, n):
     """
     return mue - 2.5*np.log10(fn(n))
 
+def color2ML_profile(color, a, b):
+    logM2L = a + b*color
+    
+    return logM2L
+
+def mass_profile(sma, cog_mag, color, a, b, Dist, Mag_sun):
+    """ To get the mass profiles based on stellar surface brightness profiles.
+
+    Args:
+        sma (numpy array): the semi-major axis radius. unit is #! arcsec.
+        cog_mag (numpy array): The curve of growth in mag.
+        color (numpy array): color profiles.
+        a (float): mass-to-light ratio factor a.
+        b (float): M/L facotr b.
+        Dist (float): the distance of the galaxy. #!Notice the unit of Dist is Mpc.
+
+    Returns:
+        mass: the stellar mass profiles.
+    """
+
+    logM2L = color2ML_profile(color, a, b)
+    
+    logL_gal = (cog_mag - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 #* the unit of L_gal is L_sun 
+    
+    logM_gal = logM2L + logL_gal #! M_gal's unit is M_sun
+    
+    return logM_gal
+
+def mass_density_profile(sma, logM_gal, Dist):
+    """Get the mass surface density profiles.
+
+    Args:
+        sma (numpy array): semi-major axis radius in arcsec.
+        logM_gal (numpy array): the stellar mass profiles.
+        Dist (float): distance.
+    """
+    
+    sma_arcsec = sma
+    sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
+    
+    
+
 
 if __name__ == '__main__':
     test_pa = -50
