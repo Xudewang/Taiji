@@ -51,16 +51,6 @@ def muRe_to_intenRe(muRe, zpt):
     intenRe = 10**((zpt - muRe) / 2.5) * 0.259**2
     return intenRe
 
-
-def all_ninety_pa(pa):
-    temp = 0
-    if pa > 90:
-        temp = pa - 180
-    else:
-        temp = pa
-
-    return temp
-
 def Ser_kappa(n):
     if n > 0.36:
         bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
@@ -99,6 +89,14 @@ def pospa(pa):
 
     return temp
 
+def all_ninety_pa(pa):
+    temp = 0
+    if pa > 90:
+        temp = pa - 180
+    else:
+        temp = pa
+
+    return temp
 
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
