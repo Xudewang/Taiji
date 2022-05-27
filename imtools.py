@@ -51,6 +51,20 @@ def Ser_kappa(n):
 
     return bn
 
+def sersic_bn(n):
+    """ Accurate Sersic bn.
+
+    Args:
+        n (float): Sersic index
+
+    Returns:
+        bn: bn in the Sersic function.
+    """
+    
+    bn = gammaincinv(2.*n, 0.5)
+    
+    return bn
+
 def nantozero(data):
     temp = []
     for i in range(len(data)):
@@ -1508,6 +1522,45 @@ def Ras2Rkpc(D, R_as):
     """
     
     return D*1000*R_as*np.pi/180/60/60
+
+def KR(logre, a, b):
+    """Show the kormendy relation. It is a linear function.
+
+    Args:
+        logre (float): log scale of effective radius.
+        a (float): 
+        b (float): 
+
+    Returns:
+        <mue>: the mean effective surface brightness of kormendy relation.
+    """
+    return a*logre + b
+
+def fn(n):
+    """The transformation factor from mue to mean mue.
+
+    Args:
+        n (float): Sersic index.
+
+    Returns:
+        fn: the transformation factor.
+    """
+    b = gammaincinv(2.*n, 0.5)
+
+    fn = n*np.exp(b)/b**(2*n)*gamma(2*n)
+
+    return fn
+
+def mean_mue(mue, n):
+    """ To calculate the mean mue for kormendy relation.
+
+    Args:
+        mue (float): effective surface brightness
+        n (float): Seric index
+    Returns:
+        mean_mue_: mean effective surface brightness.
+    """
+    return mue - 2.5*np.log10(fn(n))
 
 
 if __name__ == '__main__':
