@@ -531,7 +531,7 @@ def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
     plt.xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=20)
 
 
-def getOuterBound(ellipse_data, sky_err, alter=0.2):
+def getOuterBound(ellipse_data, sky_err, zpt0, alter=0.2):
     sma = ellipse_data['sma']
     intens = ellipse_data['intens']
     mu = ellipse_data['mu']
@@ -554,7 +554,6 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
     index = np.abs(mu_err) <= alter
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
-
 
 def plot_ellip(ax,
                sma,
@@ -1205,88 +1204,6 @@ def easy_saveData_Tofits(data, savefile):
 
     hdul = fits.HDUList(hdu)
     hdul.writeto(savefile, overwrite=True)
-
-
-def exptime_modify(data, exptime, savefile, opper='divide'):
-    if opper == 'divide':
-        data /= exptime
-    elif opper == 'multiply':
-        data *= exptime
-
-    easy_saveData_Tofits(data, savefile=savefile)
-    print(opper + ' exposure time. Finished!')
-
-
-def get_bulge_geo_galfit_input(input_file):
-
-    with open(input_file) as f:
-        input_data = f.read()
-
-    mue_t = re.search('(?<=3\)\s).*(?=#\s\sSurface)', input_data)[0]
-    mue = re.search('.*(?=\s[0-9])', mue_t)[0]
-    print('mue = ', mue)
-
-    Re_t = re.search('(?<=4\)\s).*(?=#\s\sR_e)', input_data)[0]
-    Re = re.search('.*(?=\s[0-9])', Re_t)[0]
-    print('Re = ', Re)
-
-    sersicn_t = re.search('(?<=5\)\s).*(?=#\s\sSersic)', input_data)[0]
-    sersicn = re.search('.*(?=\s[0-9])', sersicn_t)[0]
-    print('sersic index = ', sersicn)
-
-    sky_value_t = re.search('(?<=1\)\s).*(?=#\s\sSky)', input_data)[0]
-    sky_value = re.search('.*(?=\s[0-9])', sky_value_t)[0]
-    print('sky value = ', sky_value)
-
-    return np.array([mue, Re, sersicn, sky_value], dtype=str)
-
-
-def get_disk_geo_galfit_output(input_file):
-    '''
-    input: the Galfit input/output file.
-
-    return: ellipticity and position angle. data_type: float value of a numpy array.
-    '''
-
-    with open(input_file) as f:
-        input_data = f.read()
-
-    disk_geo_data = re.search('(?<=0\)\sexpdisk).*(?=#\s\sPosition)',
-                              input_data, re.DOTALL)[0]
-    #print(disk_geo_data)
-    axisratio_disk_data = re.search('(?<=9\)\s).*(?=#\s\sAxis)',
-                                    disk_geo_data)[0]
-    axisratio_disk_galfit = float(
-        re.search('.*(?=\s[0-9])', axisratio_disk_data)[0])
-    e_disk_galfit = 1 - axisratio_disk_galfit
-    pa_disk_data = re.search('(?<=10\)).*', disk_geo_data)[0]
-    pa_disk_galfit = float(re.search('.*(?=\s[0-9])', pa_disk_data)[0])
-
-    # print('galfit disk ell of {0}  = '.format(galaxy_name), e_disk_galfit)
-    # print('galfit disk PA of {0} = '.format(galaxy_name), pa_disk_galfit)
-
-    return np.array([e_disk_galfit, pa_disk_galfit], dtype=float)
-
-def getBound_for_inner_disk_break(sma, intens, int_err, zpt0, pixel_size = 0.259, texp=1, alter=0.2):
-    """This function is designed especially for inner disk break project. Because just for inner disk break project, its inner part of SBP will be large.
-
-    Args:
-        sma (numpy.array): raidal radius array along major axis
-        intens (numpy.array): the intensity array
-        int_err (numpy.array): the intensity err, basically, this should consider the contribution of both background uncertainty and IRAF ellipse poisson noise.
-        zpt0 (float): zero point magnitude.
-        pixel_size (float, optional): the CCD pixel scale. Defaults to 0.259.
-        texp (int, optional): exposure time; when the images do not normalize the exp time, you also do not normalize this first for the images, you should change this parameter for your surface brightness profiles. Defaults to 1.
-        alter (float, optional): altering magnitude. Defaults to 0.2.
-
-    Returns:
-        [type]: [description]
-    """
-    mu_err = symmetry_propagate_err_mu(intens = intens, intens_err=int_err, zpt0=zpt0)
-
-    index = (np.abs(mu_err) <= alter)
-
-    return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
 def arcsec2kpc(x, D):
     """This function is for secondary axis to show the physical units, kpc.
