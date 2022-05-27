@@ -1,15 +1,20 @@
 import sys 
 sys.path.append('../')
 import re
-from astropy.io import fits
-from astropy.io import ascii
 import numpy as np
 import os
+from astropy.io import fits
+from astropy.io import ascii
+from astropy.visualization.mpl_normalize import ImageNormalize
+from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval
+
+from matplotlib.patches import Ellipse, Circle
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 
 from Taiji.imtools import readGalfitInput
 from Taiji.imtools import subtract_sky
 from Taiji.imtools import Remove_file
-
 
 def getgalName(galaxy_name):
     galaxy_name = galaxy_name
@@ -347,6 +352,186 @@ def Rbari2Rbaro(Rbari, pa_gal, pa_bar, e_gal):
                                              (1 - e_gal))**2))
 
     return Rbaro
+
+def notnan(alist):
+    """ Remove the np.nan. TODO: But where I use it. If just calcualte the mean/median values. We can use np.nanmean().
+
+    Args:
+        alist (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    temp = []
+    for i in range(len(alist)):
+        if not np.isnan(alist[i]):
+            temp.append(alist[i])
+    return temp
+
+def maxiscal(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+def bmax(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+def boxbin(img_sky, nbin):
+    '''
+    this function is for box bin (smooth).
+    '''
+    imgR = img_sky.shape[0]
+    imgC = img_sky.shape[1]
+    nPixelR = int(imgR / nbin)
+    nPixelC = int(imgC / nbin)
+    imgRb = nPixelR * nbin
+    imgCb = nPixelC * nbin
+
+    imgb_sky = img_sky[0:imgRb, 0:imgCb]
+    imgBnd_sky = np.zeros([nPixelR, nPixelC])
+    for loopR in range(nPixelR):
+        for loopC in range(nPixelC):
+            R_bin = loopR * nbin
+            R_end = (loopR + 1) * nbin
+            C_bin = loopC * nbin
+            C_end = (loopC + 1) * nbin
+            pixel_temp_sky = imgb_sky[R_bin:R_end, C_bin:C_end]
+
+            flat = pixel_temp_sky.flatten()
+            flat2 = notnan(flat)
+            if len(flat2) == 0:
+                imgBnd_sky[loopR, loopC] = np.nan
+            else:
+                attemp = np.mean(flat2)
+                imgBnd_sky[loopR, loopC] = attemp
+    return imgBnd_sky
+
+
+def subtract_source(image, x0, y0, PAs, c, maxis):
+    xf1 = x0 - c * np.sin(PAs)
+    yf1 = y0 + c * np.cos(PAs)
+    xf2 = x0 + c * np.sin(PAs)
+    yf2 = y0 - c * np.cos(PAs)
+
+    def distance(x, y):
+        return np.sqrt((x - xf1)**2 + (y - yf1)**2) + np.sqrt((x - xf2)**2 +
+                                                              (y - yf2)**2)
+
+    sky = np.zeros_like(image)
+    for m in range(len(image)):
+        for n in range(len(image)):
+            if distance(n, m) >= 2 * maxis:
+                sky[m][n] = image[m][n]
+            else:
+                sky[m][n] = np.nan
+
+    return sky
+
+def calculateSky(galaxy_name, maxis=1200):
+    galaxy_name = galaxy_name
+    imageFile_fit = '/home/dewang/data/CGS/{}/R/{}_R_reg.fit'.format(
+        galaxy_name, galaxy_name)
+    imageFile_fits = '/home/dewang/data/CGS/{}/R/{}_R_reg.fits'.format(
+        galaxy_name, galaxy_name)
+    if os.path.exists(imageFile_fit):
+        imageFile = imageFile_fit
+    elif os.path.exists(imageFile_fits):
+        imageFile = imageFile_fits
+    data_fits_file = imageFile
+    cleandata_fits_file = '/home/dewang/data/CGS/' + \
+        galaxy_name + '/R/' + galaxy_name + '_R_reg_clean.fits'
+    mask_fits_file = '/home/dewang/data/CGS/' + \
+        galaxy_name + '/R/' + galaxy_name + '_R_reg_mm.fits'
+
+    datahdu = fits.open(data_fits_file)
+    parafile_from_header = fits.getheader(data_fits_file)
+    clean_header = fits.getheader(cleandata_fits_file)
+    maskhdu = fits.open(mask_fits_file)
+    image = datahdu[0].data
+    mask = maskhdu[0].data
+    try:
+        x0 = parafile_from_header['CEN_X']
+        y0 = parafile_from_header['CEN_Y']
+        print(x0, y0)
+        ellip = parafile_from_header['ell_e']
+        PA = parafile_from_header['ell_pa']
+    except:
+        x0 = clean_header['CEN_X']
+        y0 = clean_header['CEN_Y']
+        print(x0, y0)
+        ellip = clean_header['ell_e']
+        PA = clean_header['ell_pa']
+
+    # convert ellipticity to ecentricity/PA, sometimes we should give a e by ourself because that the e/PA of header isnt good enough
+    e = np.sqrt((2 - ellip) * ellip)
+    #e = 0.3
+
+    #PA = 170
+    PAs = PA * np.pi / 180
+
+    maxis = maxis  # 4*parafile_from_header['R80']/0.259
+    b = np.sqrt(maxis**2 * (1 - e**2))
+    c = maxis * e  # np.sqrt(maxis**2-b**2)
+    print(e)
+    print(maxis)
+    print(PA)
+
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111)
+
+    image_mask_plot = image * ((mask - 1) * (-1))
+
+    norm = ImageNormalize(stretch=HistEqStretch(image))
+    #norm = ImageNormalize(stretch=LogStretch(), vmin=0)
+
+    ell1 = Ellipse(xy=(x0, y0),
+                   width=2 * b,
+                   height=2 * maxis,
+                   angle=PA,
+                   alpha=0.9,
+                   hatch='',
+                   fill=False,
+                   linestyle='--',
+                   color='red',
+                   linewidth=1.2)
+    ax.imshow(image, origin='lower', norm=norm, cmap='Greys_r')
+    ax.add_patch(ell1)
+
+    plt.axis('scaled')
+    plt.axis(
+        'equal'
+    )  # changes limits of x or y axis so that equal increments of x and y have the same length
+    # plt.axis('off')
+    plt.show()
+
+    # imagemm = np.zeros_like(image)
+    # for m in range(len(image)):
+    #     for n in range(len(image)):
+    #         if mask[m][n] == 0:
+    #             imagemm[m][n] = image[m][n] * 1
+    #         else:
+    #             #imagemm[m][n] = image[m][n]*0
+    #             imagemm[m][n] = np.nan
+
+    image[mask > 0] = np.nan
+
+    imagesky = subtract_source(image, x0, y0, PAs, c, maxis)
+
+    # boxsize = 20, calculated by ZhaoYu.
+    imagesky_bin = boxbin(imagesky, 20)
+
+    sky_flat_bin = imagesky_bin.flatten()
+    sky_flat = imagesky.flatten()
+
+    # sky value and its error
+    skyval = np.nanmean(sky_flat)
+
+    skyerr = np.nanstd(sky_flat)
+    skyerr_bin = np.nanstd(sky_flat_bin)
+
+    print('sky value: ', skyval)
+    print('sky error with box smooth: ', skyerr_bin)
+    print('sky error w/o box smooth: ', skyerr)
+
+    return [skyval, skyerr_bin]
 
 # test part
 if __name__ == '__main__':
