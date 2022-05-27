@@ -70,7 +70,6 @@ def Ser_kappa(n):
 
     return bn
 
-
 def nantozero(data):
     temp = []
     for i in range(len(data)):
