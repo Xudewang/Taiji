@@ -1313,6 +1313,7 @@ def mass_profile(sma, cog_mag, color, a, b, Dist, Mag_sun):
         a (float): mass-to-light ratio factor a.
         b (float): M/L facotr b.
         Dist (float): the distance of the galaxy. #!Notice the unit of Dist is Mpc.
+        Mag_sun (float): the #! absolute magnitude of the Sun.
 
     Returns:
         mass: the stellar mass profiles.
@@ -1326,19 +1327,23 @@ def mass_profile(sma, cog_mag, color, a, b, Dist, Mag_sun):
     
     return logM_gal
 
-def mass_density_profile(sma, logM_gal, Dist):
+def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     """Get the mass surface density profiles.
 
     Args:
         sma (numpy array): semi-major axis radius in arcsec.
         logM_gal (numpy array): the stellar mass profiles.
         Dist (float): distance.
+        ellipticity (float): the ellipticity of galaxy.
     """
     
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
     
+    mass_density_arcsec = logM_gal/(np.pi*sma_arcsec**2*(1-ellipticity))
+    mass_density_kpc = logM_gal/(np.pi*sma_kpc**2*(1-ellipticity))
     
+    return mass_density_arcsec, mass_density_kpc
 
 
 if __name__ == '__main__':
