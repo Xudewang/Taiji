@@ -107,6 +107,20 @@ def bright_to_mag(intens, zpt0, texp, pixel_size):
     A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
+def bright_to_mag_DESI(intens):
+    """transform the flux to magnitude. 
+
+    Args:
+        intens (numpy array): the instensity profiles. #! The unit should be nanomaggie/arecsec2.
+        zpt0 (float): zero point of the DESI AB magnitude system. here is 22.5 for 1 naonomaggie.
+
+    Returns:
+        mu: surface brightness profiles.
+    """
+    mu = -2.5*np.log10(intens) + 22.5
+    
+    return mu
+
 
 def inten_to_mag(intens, zpt0):
     '''
@@ -120,10 +134,21 @@ def asymmetry_propagate_err_mu(inten, err):
 
     return detup_residual, detdown_residual
 
-def symmetry_propagate_err_mu(intens, intens_err, zpt0):
-    #TODO: here for CGS, for other survey maybe I need add some parameters.
+def symmetry_propagate_err_mu(intens, intens_err):
+    #TODO: here for CGS, for other survey maybe I need add some parameters. #!??? why do you need zpt0. 
+    """Get the symmetry magnitude error based on the error propagation formula.
 
-    return np.array(2.5 / np.log(10) * intens_err / intens)
+    Args:
+        intens (numpy array): the isophotal intensity.
+        intens_err (numpy array): the isophotal intensity error.
+
+    Returns:
+        mu_err: the symmetry magnitude error.
+    """
+    
+    mu_err = np.array(2.5 / np.log(10) * intens_err / intens)
+
+    return mu_err
 
 def subtract_sky(input_file, sky_value, subtract_sky_file):
     '''
@@ -418,7 +443,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
                        zpt0,
                        pixel_size=pixel_size,
                        texp=texp)
-    mu_err = symmetry_propagate_err_mu(intens_modif, intens_err_removeindef_sky, zpt0)
+    mu_err = symmetry_propagate_err_mu(intens_modif, intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -537,7 +562,7 @@ def getOuterBound(ellipse_data, sky_err, zpt0, alter=0.2):
     mu = ellipse_data['mu']
     mu_err = ellipse_data['mu_err']
 
-    mu_err_justsky = symmetry_propagate_err_mu(intens, sky_err, zpt0)
+    mu_err_justsky = symmetry_propagate_err_mu(intens, sky_err)
 
     index = mu_err_justsky <= alter
 
@@ -549,7 +574,7 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
                        zpt0=zpt0,
                        texp=texp,
                        pixel_size=pixel_size)
-    mu_err = symmetry_propagate_err_mu(intens=intens, intens_err=int_err, zpt0=zpt0)
+    mu_err = symmetry_propagate_err_mu(intens=intens, intens_err=int_err)
 
     index = np.abs(mu_err) <= alter
 
