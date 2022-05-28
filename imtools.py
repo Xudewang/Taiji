@@ -234,7 +234,7 @@ def GrowthCurve(sma, ellip, isoInten):
     """THis function is to derive the curve of growth by integrating the isophotes.
 
     Args:
-        sma (numpy array): The radial radius array. The unit should be arcsec?
+        sma (numpy array): The radial radius array. The unit should be arcsec? #!for CGS it should be pixel, it depends on the unit of the intensity. The default unit of CGS isophote is ADUs/pixel. 
         ellip (float): the fixed ellipticity.
         isoInten (numpy array): the intensity array at each radius.
 
@@ -1284,6 +1284,10 @@ def Ras2Rkpc(D, R_as):
     
     return D*1000*R_as*np.pi/180/60/60
 
+def Rkpc2Ras(D, R_kpc):
+    
+    return R_kpc*180*60*60/np.pi/D/1000
+
 def KR(logre, a, b):
     """Show the kormendy relation. It is a linear function.
 
@@ -1328,7 +1332,7 @@ def color2ML_profile(color, a, b):
     
     return logM2L
 
-def mass_profile(sma, cog_mag, logM2L, Dist, Mag_sun):
+def mass_profile(cog_mag, logM2L, Dist, Mag_sun):
     """ To get the mass profiles based on stellar surface brightness profiles.
 
     Args:
@@ -1363,10 +1367,9 @@ def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
     
-    mass_density_arcsec = logM_gal/(np.pi*sma_arcsec**2*(1-ellipticity))
-    mass_density_kpc = logM_gal/(np.pi*sma_kpc**2*(1-ellipticity))
+    mass_density_kpc = np.log10(10**logM_gal/(np.pi*sma_kpc**2*(1-ellipticity)))
     
-    return mass_density_arcsec, mass_density_kpc
+    return mass_density_kpc
 
 
 if __name__ == '__main__':
