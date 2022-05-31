@@ -107,6 +107,14 @@ def bright_to_mag(intens, zpt0, texp, pixel_size):
     A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
+def mag2bright(mag, zpt0, texp, pixel_size):
+    
+    A = pixel_size**2
+    
+    bright = texp*A*10**((mag-zpt0)/(-2.5))
+    
+    return bright
+
 def bright_to_mag_DESI(intens):
     """transform the flux to magnitude. 
 
@@ -120,7 +128,6 @@ def bright_to_mag_DESI(intens):
     mu = -2.5*np.log10(intens) + 22.5
     
     return mu
-
 
 def inten_to_mag(intens, zpt0):
     '''
@@ -1271,6 +1278,20 @@ def M2LToMass(BV, Mag_gal, Dist):
     
     return logM_gal
 
+def M2LToMass_R(BR, Mag_gal, Dist):
+    # This function if for K band. the parameter is from KH13.
+    logM2L = 0.683*(BR) - 0.523
+    print('ML', logM2L)
+    
+    Mag_sun = 4.6
+    
+    logL_gal = (Mag_gal - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 # the unit of L_gal is L_sun
+    print('logL', logL_gal)
+    
+    logM_gal = logM2L + logL_gal # M_gal unit is M_sun
+    
+    return logM_gal
+
 def Ras2Rkpc(D, R_as):
     """ Transforme the arcsecond to kpc.
 
@@ -1336,7 +1357,6 @@ def mass_profile(cog_mag, logM2L, Dist, Mag_sun):
     """ To get the mass profiles based on stellar surface brightness profiles.
 
     Args:
-        sma (numpy array): the semi-major axis radius. unit is #! arcsec.
         cog_mag (numpy array): The curve of growth in mag.
         color (numpy array): color profiles.
         a (float): mass-to-light ratio factor a.
