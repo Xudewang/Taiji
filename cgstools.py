@@ -15,6 +15,7 @@ from matplotlib.patches import Ellipse
 from Taiji.imtools import readGalfitInput
 from Taiji.imtools import subtract_sky
 from Taiji.imtools import Remove_file
+from Taiji.imtools import easy_saveData_Tofits
 
 def getgalName(galaxy_name):
     galaxy_name = galaxy_name
@@ -533,13 +534,13 @@ def calculateSky(galaxy_name, maxis=1200):
 
     return [skyval, skyerr_bin]
 
-def exptime_modify(data, exptime, savefile, opper='divide'):
+def exptime_modify(data, header, exptime, savefile, opper='divide'):
     if opper == 'divide':
         data /= exptime
     elif opper == 'multiply':
         data *= exptime
 
-    easy_saveData_Tofits(data, savefile=savefile)
+    easy_saveData_Tofits(data, header, savefile=savefile)
     print(opper + ' exposure time. Finished!')
 
 def get_bulge_geo_galfit_input(input_file):

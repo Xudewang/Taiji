@@ -184,11 +184,12 @@ def subtract_sky_woheader(input_file, sky_value, subtract_sky_file):
     Remove_file(subtract_sky_file)
 
     hdul = fits.open(input_file)
+    header = hdul[0].header
     data_list = hdul[0].data
 
     data_list -= sky_value
 
-    easy_saveData_Tofits(data_list, savefile=subtract_sky_file)
+    easy_saveData_Tofits(data_list, header, savefile=subtract_sky_file)
 
 def removeellipseIndef(arr):
 
@@ -897,9 +898,8 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
     ax.imshow(np.clip(dat, a_min=noise, a_max=None),
               origin='lower',
               cmap=my_cmap,
-              norm=ImageNormalize(stretch=LogStretch(), clip=False),
-              clim=[3 * noise, None],
-              vmin=3 * noise)
+              norm=colors.LogNorm(vmin=3*noise, clip=False),
+              clim=[3 * noise, None])
     scalebar = ScaleBar(pixel_size,
                         "''",
                         dimension=ANGLE,
@@ -1231,8 +1231,8 @@ def display_isophote_LSB(ax,
             ax.add_artist(e)
 
 
-def easy_saveData_Tofits(data, savefile):
-    hdu = fits.PrimaryHDU(data)
+def easy_saveData_Tofits(data, header, savefile):
+    hdu = fits.PrimaryHDU(data, header=header)
 
     hdul = fits.HDUList(hdu)
     hdul.writeto(savefile, overwrite=True)
