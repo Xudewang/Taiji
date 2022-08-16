@@ -7,6 +7,8 @@ from astropy.table import Table, Column
 from Taiji.imtools import removeellipseIndef
 from Taiji.imtools import bright_to_mag
 from Taiji.imtools import symmetry_propagate_err_mu
+from Taiji.imtools import normalize_angle
+from Taiji.imtools import correct_pa_profile
 
 iraf.stsdas()
 iraf.analysis()
@@ -142,12 +144,12 @@ def PyrafEllipse(input_img,
     ellipse_data.rename_column('col40', 'sarea')
 
     # Normalize the PA
-    # dPA = 75
-    # ellipse_data = fix_pa_profile(ellipse_data, pa_col='pa', delta_pa=dPA)
-    # ellipse_data.add_column(
-    #     Column(name='pa_norm', data=np.array(
-    #         [normalize_angle(pa, lower=-90, upper=90.0, b=True)
-    #          for pa in ellipse_data['pa']])))
+    dPA = 75
+    ellipse_data = correct_pa_profile(ellipse_data, dPA=dPA)
+    ellipse_data.add_column(
+        Column(name='pa_norm', data=np.array(
+            [normalize_angle(pa, lower=0, upper=180.0, b=True) 
+             for pa in ellipse_data['pa']])))
 
     # remove the indef
     intens = ellipse_data['intens']

@@ -273,7 +273,7 @@ def get_Rpercent(sma, cog, maxFlux, percent):
 
     return Rpercent
 
-def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
+def correct_pa_profile(ellipse_output, delta_pa=75.0):
     """
     Correct the position angle for large jump.
     Parameters
@@ -288,7 +288,7 @@ def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
     ------
     ellipse_output with updated position angle column.
     """
-    pa = ellipse_output[pa_col].astype('float')
+    pa = ellipse_output['pa'].astype('float')
 
     for i in range(1, len(pa)):
         if (pa[i] - pa[i - 1]) >= delta_pa:
@@ -296,12 +296,12 @@ def fix_pa_profile(ellipse_output, pa_col='pa', delta_pa=75.0):
         elif pa[i] - pa[i - 1] <= (-1.0 * delta_pa):
             pa[i] += 180.0
 
-    ellipse_output[pa_col] = pa
+    ellipse_output['pa'] = pa
 
     return ellipse_output
 
 
-def fix_pa_profile_single(pa_arr, delta_pa=75.0):
+def correct_pa_single(pa_arr, delta_pa=75.0):
     """
     Correct the position angle for large jump.
     Parameters
@@ -425,12 +425,12 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     ellipse_data.rename_column('col40', 'sarea')
 
     # Normalize the PA
-    # dPA = 75
-    # ellipse_data = fix_pa_profile(ellipse_data, pa_col='pa', delta_pa=dPA)
-    # ellipse_data.add_column(
-    #     Column(name='pa_norm', data=np.array(
-    #         [normalize_angle(pa, lower=-90, upper=90.0, b=True)
-    #          for pa in ellipse_data['pa']])))
+    dPA = 75.0
+    ellipse_data = correct_pa_profile(ellipse_data, dPA=dPA)
+    ellipse_data.add_column(
+        Column(name='pa_norm', data=np.array(
+            [normalize_angle(pa, lower=0, upper=180.0, b=True) 
+             for pa in ellipse_data['pa']])))
 
     # remove the indef
     intens = ellipse_data['intens']
