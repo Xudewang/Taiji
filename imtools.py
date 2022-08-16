@@ -810,7 +810,8 @@ def plot_completeSBP(sma,
     gs = GridSpec(ncols=1, nrows=24, figure=fig)
 
     ax1 = fig.add_subplot(gs[:5, 0])
-    plot_ellip(sma,
+    plot_ellip(ax1,
+               sma,
                ell,
                ell_err,
                pixel_size=pixel_size,
@@ -822,7 +823,8 @@ def plot_completeSBP(sma,
                xlimax=xlimax)
 
     ax2 = fig.add_subplot(gs[5:10, 0])
-    plot_pa(sma,
+    plot_pa(ax2,
+            sma,
             pa,
             pa_err,
             pixel_size=pixel_size,
@@ -834,7 +836,8 @@ def plot_completeSBP(sma,
             xlimax=xlimax)
 
     ax3 = fig.add_subplot(gs[10:, 0])
-    plot_SBP(sma,
+    plot_SBP(ax3,
+             sma,
              mu,
              mu_err,
              pixel_size=pixel_size,
