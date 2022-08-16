@@ -947,6 +947,8 @@ def plot_completeSBP(sma,
                      pa_err,
                      mu,
                      mu_err,
+                     intens_subbkg,
+                     sky_err,
                      pixel_size=0.259,
                      plot_style='fill',
                      color='k',
@@ -965,12 +967,22 @@ def plot_completeSBP(sma,
     fig = plt.figure(figsize=(10, 12))
     fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
     gs = GridSpec(ncols=1, nrows=24, figure=fig)
+    
+    if not xlimin:
+        
+        deltaN = 0.05
+        index_above_sigma = intens_subbkg > sky_err
+        len_xlim = len(sma[index_above_sigma])
+        
+        xlimin = -deltaN*len_xlim
+        
+        xlimax = (sma[index_above_sigma][-1])*pixel_size + deltaN*len_xlim
 
     ax1 = fig.add_subplot(gs[:5, 0])
     plot_ellip(ax1,
-               sma,
-               ell,
-               ell_err,
+               sma[index_above_sigma],
+               ell[index_above_sigma],
+               ell_err[index_above_sigma],
                pixel_size=pixel_size,
                plot_style=plot_style,
                color=color,
@@ -981,9 +993,9 @@ def plot_completeSBP(sma,
 
     ax2 = fig.add_subplot(gs[5:10, 0])
     plot_pa(ax2,
-            sma,
-            pa,
-            pa_err,
+            sma[index_above_sigma],
+            pa[index_above_sigma],
+            pa_err[index_above_sigma],
             pixel_size=pixel_size,
             plot_style=plot_style,
             color=color,
@@ -994,9 +1006,9 @@ def plot_completeSBP(sma,
 
     ax3 = fig.add_subplot(gs[10:, 0])
     plot_SBP(ax3,
-             sma,
-             mu,
-             mu_err,
+             sma[index_above_sigma],
+             mu[index_above_sigma],
+             mu_err[index_above_sigma],
              pixel_size=pixel_size,
              plot_style=plot_style,
              color=color,
