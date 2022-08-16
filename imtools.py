@@ -588,6 +588,53 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
+def plot_x0(ax,
+               sma,
+               x0,
+               x0_err,
+               pixel_size=0.259,
+               plot_style='fill',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label='x0'):
+    '''
+    This function is a templete to plot the center x0 profile.
+    '''
+
+    if plot_style == 'errorbar':
+        ax.errorbar(sma * pixel_size,
+                    x0,
+                    yerr=x0_err,
+                    fmt='o',
+                    markersize=3,
+                    color=color,
+                    capsize=3,
+                    elinewidth=0.7,
+                    label=label)
+
+    elif plot_style == 'fill':
+        ax.plot(sma * pixel_size, x0, color=color, lw=3, label=label)
+        ax.fill_between(sma * pixel_size,
+                        x0 + x0_err,
+                        x0 - x0_err,
+                        color=color,
+                        alpha=0.5)
+
+    if ylimax:
+        ax.set_ylim(ylimin, ylimax)
+    else:
+        ax.set_ylim(np.nanmin(x0) - 5, np.nanmax(x0) + 5)
+
+    if xlimax:
+        ax.set_xlim(xlimin, xlimax)
+
+    ax.set_ylabel(r'$b/a$', fontsize=24)
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.legend()
+
 def plot_ellip(ax,
                sma,
                ellip,
@@ -781,7 +828,105 @@ def plot_SBP(ax,
     ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     plt.gca().invert_yaxis()
+    
+def plot_completeSBP_firststep(sma,
+                               x0,
+                               x0_err,
+                               y0,
+                               y0_err,
+                                ell,
+                                ell_err,
+                                pa,
+                                pa_err,
+                                mu,
+                                mu_err,
+                                pixel_size=0.259,
+                                plot_style='fill',
+                                color='k',
+                                xlimin=None,
+                                xlimax=None,
+                                ylimin_e=None,
+                                ylimax_e=None,
+                                ylimin_pa=None,
+                                ylimax_pa=None,
+                                ylimin_mu=None,
+                                ylimax_mu=None,
+                                save_file=''):
+    '''
+    This function is to plot the standard and basic surface brightness profiles including sbp, ell, and pa panels.
+    '''
+    fig = plt.figure(figsize=(10, 12))
+    fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
+    gs = GridSpec(ncols=1, nrows=29, figure=fig)
+    
+    ax1 = fig.add_subplot(gs[:5, 0])
+    plot_x0(ax1,
+               sma,
+               x0,
+               x0_err,
+               pixel_size=0.259,
+               plot_style='fill',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label='x0')
+    plot_x0(ax1,
+               sma,
+               y0,
+               y0_err,
+               pixel_size=0.259,
+               plot_style='errorbar',
+               color='k',
+               ylimin=None,
+               ylimax=None,
+               xlimin=None,
+               xlimax=None,
+               label='y0')
+    
+    ax2 = fig.add_subplot(gs[5:10, 0])
+    plot_ellip(ax2,
+               sma,
+               ell,
+               ell_err,
+               pixel_size=pixel_size,
+               plot_style=plot_style,
+               color=color,
+               ylimin=ylimin_e,
+               ylimax=ylimax_e,
+               xlimin=xlimin,
+               xlimax=xlimax)
 
+    ax3 = fig.add_subplot(gs[10:15, 0])
+    plot_pa(ax3,
+            sma,
+            pa,
+            pa_err,
+            pixel_size=pixel_size,
+            plot_style=plot_style,
+            color=color,
+            ylimin=ylimin_pa,
+            ylimax=ylimax_pa,
+            xlimin=xlimin,
+            xlimax=xlimax)
+
+    ax4 = fig.add_subplot(gs[15:, 0])
+    plot_SBP(ax4,
+             sma,
+             mu,
+             mu_err,
+             pixel_size=pixel_size,
+             plot_style=plot_style,
+             color=color,
+             ylimin=ylimin_mu,
+             ylimax=ylimax_mu,
+             xlimin=xlimin,
+             xlimax=xlimax)
+
+    if save_file:
+        plt.savefig(save_file, dpi=200, bbox_inches='tight')
+    # plt.show()
 
 def plot_completeSBP(sma,
                      ell,
