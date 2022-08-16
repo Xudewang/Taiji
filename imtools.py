@@ -631,7 +631,7 @@ def plot_x0(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(label, fontsize=24)
+    ax.set_ylabel(r'Center', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
@@ -879,7 +879,7 @@ def plot_completeSBP_firststep(sma,
                ylimax=None,
                xlimin=xlimin,
                xlimax=xlimax,
-               label='Center')
+               label='x0')
     plot_x0(ax1,
                sma[index_above_sigma],
                y0[index_above_sigma],
@@ -891,7 +891,7 @@ def plot_completeSBP_firststep(sma,
                ylimax=None,
                xlimin=xlimin,
                xlimax=xlimax,
-               label='Center')
+               label='y0')
     
     ax2 = fig.add_subplot(gs[5:10, 0])
     plot_ellip(ax2,
