@@ -145,7 +145,7 @@ def PyrafEllipse(input_img,
 
     # Normalize the PA
     dPA = 75
-    ellipse_data = correct_pa_profile(ellipse_data, dPA=dPA)
+    ellipse_data = correct_pa_profile(ellipse_data, delta_pa=dPA)
     ellipse_data.add_column(
         Column(name='pa_norm', data=np.array(
             [normalize_angle(pa, lower=0, upper=180.0, b=True) 
