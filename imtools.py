@@ -841,6 +841,7 @@ def plot_completeSBP_firststep(sma,
                                 mu,
                                 mu_err,
                                 intens_subbkg,
+                                intens_err,
                                 sky_err,
                                 pixel_size=0.259,
                                 plot_style='fill',
@@ -864,7 +865,9 @@ def plot_completeSBP_firststep(sma,
     if not xlimin:
         xlimin = -5
         
-        index_above_sigma = intens_subbkg > sky_err
+        intens_err_sky = np.sqrt(
+        np.array(intens_err)**2 + sky_err**2)
+        index_above_sigma = intens_subbkg > intens_err_sky
         xlimax = (sma[index_above_sigma][-1])*pixel_size + 5
     
     ax1 = fig.add_subplot(gs[:5, 0])
