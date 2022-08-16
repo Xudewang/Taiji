@@ -913,7 +913,7 @@ def plot_completeSBP_firststep(sma,
         
         deltaN = 0.05
         index_above_sigma = intens_subbkg > sky_err
-        len_xlim = len(sma[index_above_sigma])
+        len_xlim = len(sma[index_above_sigma])*pixel_size
         
         xlimin = -deltaN*len_xlim
         
@@ -1020,7 +1020,7 @@ def plot_completeSBP(sma,
         
         deltaN = 0.05
         index_above_sigma = intens_subbkg > sky_err
-        len_xlim = len(sma[index_above_sigma])
+        len_xlim = len(sma[index_above_sigma])*pixel_size
         
         xlimin = -deltaN*len_xlim
         
