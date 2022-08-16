@@ -862,10 +862,14 @@ def plot_completeSBP_firststep(sma,
     gs = GridSpec(ncols=1, nrows=29, figure=fig)
 
     if not xlimin:
-        xlimin = -5
+        
+        deltaN = 0.05
+        len_xlim = len(sma[index_above_sigma])
+        
+        xlimin = -deltaN*len_xlim
         
         index_above_sigma = intens_subbkg > sky_err
-        xlimax = (sma[index_above_sigma][-1])*pixel_size + 5
+        xlimax = (sma[index_above_sigma][-1])*pixel_size + deltaN*len_xlim
     
     ax1 = fig.add_subplot(gs[:5, 0])
     plot_x0(ax1,
