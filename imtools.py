@@ -430,7 +430,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     ellipse_data = correct_pa_profile(ellipse_data, delta_pa=dPA)
     ellipse_data.add_column(
         Column(name='pa_norm', data=np.array(
-            [normalize_angle(pa, lower=0, upper=180.0, b=True) 
+            [normalize_angle(pa, lower=0, upper=180.0, b=False) 
              for pa in ellipse_data['pa']])))
 
     # remove the indef
