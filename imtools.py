@@ -631,7 +631,7 @@ def plot_x0(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'$b/a$', fontsize=24)
+    ax.set_ylabel(label, fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
@@ -855,7 +855,7 @@ def plot_completeSBP_firststep(sma,
     '''
     This function is to plot the standard and basic surface brightness profiles including sbp, ell, and pa panels.
     '''
-    fig = plt.figure(figsize=(10, 12))
+    fig = plt.figure(figsize=(10, 14.5))
     fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
     gs = GridSpec(ncols=1, nrows=29, figure=fig)
     
