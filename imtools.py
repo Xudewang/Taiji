@@ -840,6 +840,8 @@ def plot_completeSBP_firststep(sma,
                                 pa_err,
                                 mu,
                                 mu_err,
+                                intens_subbkg,
+                                sky_err,
                                 pixel_size=0.259,
                                 plot_style='fill',
                                 color='k',
@@ -858,6 +860,12 @@ def plot_completeSBP_firststep(sma,
     fig = plt.figure(figsize=(10, 14.5))
     fig.subplots_adjust(left=1, right=2, top=1, bottom=0, wspace=0, hspace=0)
     gs = GridSpec(ncols=1, nrows=29, figure=fig)
+
+    if not xlimin:
+        xlimin = -5
+        
+        index_above_sigma = intens_subbkg > sky_err
+        xlimax = (sma[index_above_sigma][-1])*pixel_size + 5
     
     ax1 = fig.add_subplot(gs[:5, 0])
     plot_x0(ax1,
@@ -869,9 +877,9 @@ def plot_completeSBP_firststep(sma,
                color='k',
                ylimin=None,
                ylimax=None,
-               xlimin=None,
-               xlimax=None,
-               label='x0')
+               xlimin=xlimin,
+               xlimax=xlimax,
+               label='Center')
     plot_x0(ax1,
                sma,
                y0,
@@ -881,9 +889,9 @@ def plot_completeSBP_firststep(sma,
                color='k',
                ylimin=None,
                ylimax=None,
-               xlimin=None,
-               xlimax=None,
-               label='y0')
+               xlimin=xlimin,
+               xlimax=xlimax,
+               label='Center')
     
     ax2 = fig.add_subplot(gs[5:10, 0])
     plot_ellip(ax2,
@@ -893,8 +901,8 @@ def plot_completeSBP_firststep(sma,
                pixel_size=pixel_size,
                plot_style=plot_style,
                color=color,
-               ylimin=ylimin_e,
-               ylimax=ylimax_e,
+               xlimin=xlimin,
+               xlimax=xlimax,
                xlimin=xlimin,
                xlimax=xlimax)
 
@@ -906,8 +914,8 @@ def plot_completeSBP_firststep(sma,
             pixel_size=pixel_size,
             plot_style=plot_style,
             color=color,
-            ylimin=ylimin_pa,
-            ylimax=ylimax_pa,
+            xlimin=xlimin,
+               xlimax=xlimax,
             xlimin=xlimin,
             xlimax=xlimax)
 
@@ -919,8 +927,8 @@ def plot_completeSBP_firststep(sma,
              pixel_size=pixel_size,
              plot_style=plot_style,
              color=color,
-             ylimin=ylimin_mu,
-             ylimax=ylimax_mu,
+             xlimin=xlimin,
+               xlimax=xlimax,
              xlimin=xlimin,
              xlimax=xlimax)
 
