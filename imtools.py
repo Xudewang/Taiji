@@ -480,61 +480,6 @@ def numpy_weighted_mean(data, weights=None):
 
     return np.dot(np.array(data), weights)
 
-
-def _ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
-    """Get the Average Q and PA."""
-    tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
-    ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
-
-    ellipseOut = fix_pa_profile(ellipseOut, pa_col='pa', delta_pa=dPA)
-    ellipseOut.add_column(
-        Column(name='pa_norm',
-               data=np.array([
-                   normalize_angle(pa, lower=-90, upper=90.0, b=True)
-                   for pa in ellipseOut['pa']
-               ])), overwrite=True)
-
-    ell_err = removeellipseIndef(ellipseOut['ell_err'])
-    pa_err = removeellipseIndef(ellipseOut['pa_err'])
-
-    try:
-        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
-                                 & (ellipseOut['sma'] >= minSma) &
-                                 (np.isfinite(ell_err)) &
-                                 (np.isfinite(pa_err))]
-        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
-                                     & (ellipseOut['sma'] >= minSma) &
-                                     (np.isfinite(ell_err)) &
-                                     (np.isfinite(pa_err))]
-        fUse = ringFlux[(ellipseOut['sma'] <= outRad)
-                        & (ellipseOut['sma'] >= minSma) &
-                        (np.isfinite(ell_err)) & (np.isfinite(pa_err))]
-    except Exception:
-        try:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
-                                     & (ellipseOut['sma'] >= 0.5) &
-                                     (np.isfinite(ell_err)) &
-                                     (np.isfinite(pa_err))]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
-                                         & (ellipseOut['sma'] >= 0.5) &
-                                         (np.isfinite(ell_err)) &
-                                         (np.isfinite(pa_err))]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
-                            & (ellipseOut['sma'] >= 0.5) &
-                            (np.isfinite(ell_err)) & (np.isfinite(pa_err))]
-        except Exception:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
-                                     & (ellipseOut['sma'] >= 0.5)]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
-                                         & (ellipseOut['sma'] >= 0.5)]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
-                            & (ellipseOut['sma'] >= 0.5)]
-
-    avgEll = numpy_weighted_mean(eUse.astype('float'), weights=fUse)
-    avgPA = numpy_weighted_mean(pUse.astype('float'), weights=fUse)
-
-    return avgEll, avgPA
-
 def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
     """Get the Average Q and PA."""
     # tfluxE = ellipseOut['tflux_e']
@@ -542,6 +487,55 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
     
     tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
     ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
+    
+    try:
+        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                 (ellipseOut['sma'] >= minSma) &
+                                 (np.isfinite(ellipseOut['ell_err'])) &
+                                 (np.isfinite(ellipseOut['pa_err']))]
+        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= minSma) &
+                                     (np.isfinite(ellipseOut['ell_err'])) &
+                                     (np.isfinite(ellipseOut['pa_err']))]
+        fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                        (ellipseOut['sma'] >= minSma) &
+                        (np.isfinite(ellipseOut['ell_err'])) &
+                        (np.isfinite(ellipseOut['pa_err']))]
+    except Exception:
+        try:
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= 0.5) &
+                                     (np.isfinite(ellipseOut['ell_err'])) &
+                                     (np.isfinite(ellipseOut['pa_err']))]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                         (ellipseOut['sma'] >= 0.5) &
+                                         (np.isfinite(ellipseOut['ell_err'])) &
+                                         (np.isfinite(ellipseOut['pa_err']))]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                            (ellipseOut['sma'] >= 0.5) &
+                            (np.isfinite(ellipseOut['ell_err'])) &
+                            (np.isfinite(ellipseOut['pa_err']))]
+        except Exception:
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= 0.5)]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                         (ellipseOut['sma'] >= 0.5)]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                            (ellipseOut['sma'] >= 0.5)]
+
+    avgQ = 1.0 - numpy_weighted_mean(eUse, weights=fUse)
+    avgPA = numpy_weighted_mean(pUse, weights=fUse)
+
+    return avgQ, avgPA
+
+def ellipseGetAvgGeometry_CoG(ellipseOut, outRad, minSma=2.0):
+    """Get the Average Q and PA."""
+    # tfluxE = ellipseOut['tflux_e']
+    # ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
+    
+    #tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
+    tflux, maxIsoSma, maxIsoFlux = GrowthCurve(ellipseOut['sma'], ellipseOut['ell'], ellipseOut['intens'])
+    ringFlux = np.append(tflux[0], [tflux[1:] - tflux[:-1]])
     
     try:
         eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
