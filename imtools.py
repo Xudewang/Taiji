@@ -864,11 +864,11 @@ def plot_completeSBP_firststep(sma,
     if not xlimin:
         
         deltaN = 0.05
+        index_above_sigma = intens_subbkg > sky_err
         len_xlim = len(sma[index_above_sigma])
         
         xlimin = -deltaN*len_xlim
         
-        index_above_sigma = intens_subbkg > sky_err
         xlimax = (sma[index_above_sigma][-1])*pixel_size + deltaN*len_xlim
     
     ax1 = fig.add_subplot(gs[:5, 0])
