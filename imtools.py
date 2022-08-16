@@ -426,6 +426,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # Normalize the PA
     dPA = 75.0
+    ellipse_data['pa'] = removeellipseIndef(ellipse_data['pa'])
     ellipse_data = correct_pa_profile(ellipse_data, delta_pa=dPA)
     ellipse_data.add_column(
         Column(name='pa_norm', data=np.array(
