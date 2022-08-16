@@ -538,6 +538,10 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
     """Get the Average Q and PA."""
     tfluxE = ellipseOut['tflux_e']
     ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
+    
+    tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
+    ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
+    
     try:
         eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
                                  (ellipseOut['sma'] >= minSma) &
@@ -573,8 +577,8 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
             fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
                             (ellipseOut['sma'] >= 0.5)]
 
-    avgQ = 1.0 - utils.numpy_weighted_mean(eUse, weights=fUse)
-    avgPA = utils.numpy_weighted_mean(pUse, weights=fUse)
+    avgQ = 1.0 - numpy_weighted_mean(eUse, weights=fUse)
+    avgPA = numpy_weighted_mean(pUse, weights=fUse)
 
     return avgQ, avgPA
 
