@@ -480,7 +480,7 @@ def numpy_weighted_mean(data, weights=None):
     return np.dot(np.array(data), weights)
 
 
-def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
+def _ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
     """Get the Average Q and PA."""
     tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
     ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
@@ -491,7 +491,7 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
                data=np.array([
                    normalize_angle(pa, lower=-90, upper=90.0, b=True)
                    for pa in ellipseOut['pa']
-               ])))
+               ])), overwrite=True)
 
     ell_err = removeellipseIndef(ellipseOut['ell_err'])
     pa_err = removeellipseIndef(ellipseOut['pa_err'])
@@ -533,6 +533,50 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0, dPA=75):
     avgPA = numpy_weighted_mean(pUse.astype('float'), weights=fUse)
 
     return avgEll, avgPA
+
+def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
+    """Get the Average Q and PA."""
+    tfluxE = ellipseOut['tflux_e']
+    ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
+    try:
+        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                 (ellipseOut['sma'] >= minSma) &
+                                 (np.isfinite(ellipseOut['ell_err'])) &
+                                 (np.isfinite(ellipseOut['pa_err']))]
+        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= minSma) &
+                                     (np.isfinite(ellipseOut['ell_err'])) &
+                                     (np.isfinite(ellipseOut['pa_err']))]
+        fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                        (ellipseOut['sma'] >= minSma) &
+                        (np.isfinite(ellipseOut['ell_err'])) &
+                        (np.isfinite(ellipseOut['pa_err']))]
+    except Exception:
+        try:
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= 0.5) &
+                                     (np.isfinite(ellipseOut['ell_err'])) &
+                                     (np.isfinite(ellipseOut['pa_err']))]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                         (ellipseOut['sma'] >= 0.5) &
+                                         (np.isfinite(ellipseOut['ell_err'])) &
+                                         (np.isfinite(ellipseOut['pa_err']))]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                            (ellipseOut['sma'] >= 0.5) &
+                            (np.isfinite(ellipseOut['ell_err'])) &
+                            (np.isfinite(ellipseOut['pa_err']))]
+        except Exception:
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
+                                     (ellipseOut['sma'] >= 0.5)]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
+                                         (ellipseOut['sma'] >= 0.5)]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
+                            (ellipseOut['sma'] >= 0.5)]
+
+    avgQ = 1.0 - utils.numpy_weighted_mean(eUse, weights=fUse)
+    avgPA = utils.numpy_weighted_mean(pUse, weights=fUse)
+
+    return avgQ, avgPA
 
 def Remove_file(file):
     if os.path.exists(file):
