@@ -172,6 +172,7 @@ def PyrafEllipse(input_img,
         np.array(intens_err_removeindef)**2 + sky_err**2)
     
     if sky_value:
+        ellipse_data['intens'] = np.array(intens) - sky_value
         mu = bright_to_mag(intens - sky_value, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
         np.array(intens) - sky_value, intens_err_removeindef_sky)
