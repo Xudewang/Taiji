@@ -901,8 +901,8 @@ def plot_completeSBP_firststep(sma,
                pixel_size=pixel_size,
                plot_style=plot_style,
                color=color,
-               xlimin=xlimin,
-               xlimax=xlimax,
+               ylimin=ylimin_e,
+               ylimax=ylimax_e,
                xlimin=xlimin,
                xlimax=xlimax)
 
@@ -914,10 +914,10 @@ def plot_completeSBP_firststep(sma,
             pixel_size=pixel_size,
             plot_style=plot_style,
             color=color,
+            ylimin=ylimin_pa,
+            ylimax=ylimax_pa,
             xlimin=xlimin,
-               xlimax=xlimax,
-            xlimin=xlimin,
-            xlimax=xlimax)
+               xlimax=xlimax)
 
     ax4 = fig.add_subplot(gs[15:, 0])
     plot_SBP(ax4,
@@ -927,8 +927,8 @@ def plot_completeSBP_firststep(sma,
              pixel_size=pixel_size,
              plot_style=plot_style,
              color=color,
-             xlimin=xlimin,
-               xlimax=xlimax,
+             ylimin=ylimin_mu,
+             ylimax=ylimax_mu,
              xlimin=xlimin,
              xlimax=xlimax)
 
