@@ -599,7 +599,7 @@ def plot_x0(ax,
                ylimax=None,
                xlimin=None,
                xlimax=None,
-               label='x0'):
+               label='Center'):
     '''
     This function is a templete to plot the center x0 profile.
     '''
