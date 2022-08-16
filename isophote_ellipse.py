@@ -158,6 +158,11 @@ def PyrafEllipse(input_img,
     ellipse_data['pa'] = removeellipseIndef(ellipse_data['pa'])
     ellipse_data['ell_err'] = removeellipseIndef(ellipse_data['ell_err'])
     ellipse_data['pa_err'] = removeellipseIndef(ellipse_data['pa_err'])
+    
+    ellipse_data['x0'] = removeellipseIndef(ellipse_data['x0'])
+    ellipse_data['x0_err'] = removeellipseIndef(ellipse_data['x0_err'])
+    ellipse_data['y0'] = removeellipseIndef(ellipse_data['y0'])
+    ellipse_data['y0_err'] = removeellipseIndef(ellipse_data['y0_err'])
 
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
