@@ -599,7 +599,7 @@ def plot_ellip(ax,
                ylimax=None,
                xlimin=None,
                xlimax=None,
-               label=''):
+               label='Ellipticity'):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -646,7 +646,7 @@ def plot_axisRatio(ax,
                ylimax=None,
                xlimin=None,
                xlimax=None,
-               label=''):
+               label='Axis ratio'):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -693,7 +693,7 @@ def plot_pa(ax,
             ylimax=None,
             xlimin=None,
             xlimax=None,
-            label=''):
+            label=r'PA'):
     '''
     This function is a templete to plot the PA profile.
     '''
@@ -745,7 +745,7 @@ def plot_SBP(ax,
              ylimax=None,
              xlimin=None,
              xlimax=None,
-             label=''):
+             label='Surface brightness'):
     '''
     This function is a templete to plot the SB profile.
     '''
