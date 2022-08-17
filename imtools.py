@@ -273,6 +273,14 @@ def get_Rpercent(sma, cog, maxFlux, percent):
 
     return Rpercent
 
+def get_Ie(sma, intens, re):
+
+    f = interp1d(sma, intens)
+
+    Ie = f(re)
+
+    return Ie
+
 def correct_pa_profile(ellipse_output, delta_pa=75.0):
     """
     Correct the position angle for large jump.
