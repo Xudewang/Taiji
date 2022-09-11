@@ -17,7 +17,7 @@ from astropy import units as u
 from astropy.units import Quantity
 from astropy.coordinates import SkyCoord
 
-from .display import display_single, SEG_CMAP, ORG
+from .imtools import display_single, SEG_CMAP, ORG
 
 
 @contextmanager
