@@ -12,6 +12,8 @@ from matplotlib.gridspec import GridSpec
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
 from matplotlib import cm
+from palettable.colorbrewer.sequential import (Blues_9, Greys_9, OrRd_9,
+                                               Purples_9, YlGn_9)
 
 from scipy.special import gammaincinv
 from scipy.special import gamma
