@@ -120,7 +120,7 @@ def _get_cutout_size(cutout_size, redshift=None, cosmo=None, verbose=True):
     return ang_size
 
 def hsc_box_search(coord, box_size=10.0 * u.Unit('arcsec'), coord_2=None, redshift=None, archive=None, dr='pdr3', rerun='pdr3_wide', \
-                   data_path=data_path, code_path=code_path, cosmo=None, verbose=True, **kwargs):
+                   data_path='', code_path='', cosmo=None, verbose=True, **kwargs):
     """
     Search for objects within a box area.
     """
@@ -156,7 +156,7 @@ def hsc_box_search(coord, box_size=10.0 * u.Unit('arcsec'), coord_2=None, redshi
     return objects
         
 def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pdr2', rerun='pdr2_wide', cosmo=None,
-                    verbose=True, data_path=data_path, code_path=code_path, **kwargs):
+                    verbose=True, data_path='', code_path='', **kwargs):
     """
     Search for objects within a cone area.
     """
