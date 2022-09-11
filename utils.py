@@ -1,3 +1,8 @@
+import os
+import matplotlib.pyplot as plt
+from matplotlib.colorbar import Colorbar
+from matplotlib import rcParams
+    
 def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=100):
     '''
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
@@ -5,10 +10,6 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
     Parameters:
         style (str): options are "JL", "SM" (supermongo-like).
     '''
-
-    import matplotlib.pyplot as plt
-    from matplotlib.colorbar import Colorbar
-    from matplotlib import rcParams
     # Use JL as a template
     if style == 'default':
         plt.style.use(os.path.join('/home/dewang/Taiji/', 'mplstyle/default.mplstyle'))
