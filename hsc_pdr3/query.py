@@ -1093,15 +1093,3 @@ def cone_search(ra, dec, rad, primary=True, clean=False, dr='pdr2', rerun='pdr2_
 
     return ' '.join([select_str, from_str, where_str])
     
-def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
-    os.chdir(data_path)
-
-    process_sql = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --skip-syntax-check \
-                                    {} --format fits > {}".format(dr_type, sql_file, catalog_file)], shell=True)
-
-    return_code_sql = process_sql.wait()
-    
-    if return_code_sql==0:
-        print('The query is successful!')
-
-    os.chdir(code_path)
