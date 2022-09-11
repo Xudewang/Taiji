@@ -1,6 +1,7 @@
 import subprocess
 import os
 from astropy.table import Table, Column, vstack
+from astropy import units as u
 
 from .utils import r_phy_to_ang
 import query
