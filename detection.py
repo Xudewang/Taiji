@@ -1,7 +1,7 @@
 import sep
 import numpy as np
-import scarlet
-from scarlet.wavelet import Starlet
+# import scarlet
+# from scarlet.wavelet import Starlet
 
 from .utils import extract_obj, image_gaia_stars, _image_gaia_stars_tigress
 from astropy.table import Table, Column
