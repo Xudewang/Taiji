@@ -1,5 +1,12 @@
 import subprocess
 import os
+from astropy.table import Table, Column, vstack
+
+from .utils import r_phy_to_ang
+import query
+
+ANG_UNITS = ['arcsec', 'arcsecond', 'arcmin', 'arcminute', 'deg']
+PHY_UNITS = ['pc', 'kpc', 'Mpc']
 
 def hsc_cutout_tool(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec, data_path, code_path):
     
@@ -87,4 +94,84 @@ def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
         print('The query is successful!')
 
     os.chdir(code_path)
+    
+def _get_cutout_size(cutout_size, redshift=None, cosmo=None, verbose=True):
+    """Parse the input for the size of the cutout."""
+    if not isinstance(cutout_size, u.quantity.Quantity):
+        if verbose:
+            print("# Assume the cutout size is in arcsec unit.")
+        cutout_size = cutout_size * u.Unit('arcsec')
+        ang_size = cutout_size
+    else:
+        cutout_unit = cutout_size.unit
+        if str(cutout_unit) in ANG_UNITS:
+            ang_size = cutout_size.to(u.Unit('arcsec'))
+        elif str(cutout_unit) in PHY_UNITS:
+            if redshift is None:
+                raise ValueError("# Need to provide redshift value to use physical size!")
+            elif (redshift < 0.) or (~np.isfinite(redshift)):
+                raise ValueError("# Redshift value is not valid!")
+            else:
+                ang_size = r_phy_to_ang(cutout_size, redshift, cosmo=cosmo)
+        else:
+            raise ValueError("# Wrong unit for cutout size: {}".format(str(cutout_unit)))
+
+    return ang_size
+
+def hsc_box_search(coord, box_size=10.0 * u.Unit('arcsec'), coord_2=None, redshift=None, archive=None, dr='pdr3', rerun='pdr3_wide', \
+                   data_path=data_path, code_path=code_path, cosmo=None, verbose=True, **kwargs):
+    """
+    Search for objects within a box area.
+    """
+
+    # We use central coordinate and half image size as the default format.
+    if coord_2 is None:
+        if isinstance(box_size, list):
+            if len(box_size) != 2:
+                raise Exception("# Cutout size should be like: [Width, Height]")
+            ang_size_w = _get_cutout_size(
+                box_size[0], redshift=redshift, cosmo=cosmo, verbose=verbose)
+            ang_size_h = _get_cutout_size(
+                box_size[1], redshift=redshift, cosmo=cosmo, verbose=verbose)
+        else:
+            ang_size_w = ang_size_h = _get_cutout_size(
+                box_size, redshift=redshift, cosmo=cosmo, verbose=verbose)
+        ra_size = ang_size_w.to(u.Unit('deg'))
+        dec_size = ang_size_h.to(u.Unit('deg'))
+        ra1, ra2 = coord.ra.value - ra_size.value, coord.ra.value + ra_size.value
+        dec1, dec2 = coord.dec.value - dec_size.value, coord.dec.value + dec_size.value
+    else:
+        ra1, dec1 = coord.ra.value, coord.dec.value
+        ra2, dec2 = coord_2.ra.value, coord_2.dec.value
+    
+    sql_info = query.box_search(ra1, ra2, dec1, dec2, dr=dr, rerun=rerun, **kwargs)
+    with open(os.path.join(data_path, "object.sql"), "w") as sql_file:
+        sql_file.write("%s" % sql_info)
         
+    hsc_query_tool(sql_file='object.sql', catalog_file='catalog.fits', dr_type=dr, data_path=data_path, code_path=code_path)
+    
+    objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
+
+    return objects
+        
+def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pdr2', rerun='pdr2_wide', cosmo=None,
+                    verbose=True, data_path=data_path, code_path=code_path, **kwargs):
+    """
+    Search for objects within a cone area.
+    """
+
+    # We use central coordinate and half image size as the default format.
+    ra, dec = coord.ra.value, coord.dec.value
+    rad_arcsec = _get_cutout_size(
+        radius, redshift=redshift, cosmo=cosmo, verbose=verbose).to(u.Unit('arcsec'))
+    
+    sql_info = query.cone_search(ra, dec, rad=rad_arcsec.value, dr=dr, rerun=rerun, **kwargs)
+
+    with open(os.path.join(data_path, "object.sql"), "w") as sql_file:
+        sql_file.write("%s" % sql_info)
+        
+    hsc_query_tool(sql_file='object.sql', catalog_file='catalog.fits', dr_type=dr, data_path=data_path, code_path=code_path)
+    
+    objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
+
+    return objects

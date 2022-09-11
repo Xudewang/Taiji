@@ -968,8 +968,8 @@ def box_search(ra1, ra2, dec1, dec2, primary=True, clean=False, dr='pdr2', rerun
     # if archive is None:
     #     archive = hsc.Hsc(dr=dr, rerun=rerun)
     # else:
-    #     dr = archive.dr
-    #     rerun = archive.rerun
+    #dr = archive.dr
+    # rerun = archive.rerun
 
     # The "SELECT" part of the SQL search
     column_dict = basic_forced_photometry(
