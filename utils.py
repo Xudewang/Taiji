@@ -1,6 +1,6 @@
+from __future__ import division, print_function
 from matplotlib.colorbar import Colorbar
 from matplotlib import rcParams
-from __future__ import division, print_function
 import os
 import sys
 import sep
