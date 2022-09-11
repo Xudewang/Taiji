@@ -1150,6 +1150,12 @@ SEG_CMAP = random_cmap(ncolors=512, background_color=u'white')
 SEG_CMAP.set_bad(color='white')
 SEG_CMAP.set_under(color='white')
 
+BLK = Greys_9.mpl_colormap
+ORG = OrRd_9.mpl_colormap
+BLU = Blues_9.mpl_colormap
+GRN = YlGn_9.mpl_colormap
+PUR = Purples_9.mpl_colormap
+
 cmaplist = [
     '#000000', '#720026', '#A0213F', '#ce4257', '#E76154', '#ff9b54', '#ffd1b1'
 ]
