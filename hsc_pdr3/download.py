@@ -1,5 +1,6 @@
 import subprocess
 import os
+import numpy as np
 from astropy.table import Table, Column, vstack
 from astropy import units as u
 
