@@ -262,12 +262,7 @@ def makeCatalog(datas, mask=None, lvl=3, method='wavelet', convolve=False, conv_
         detect = datas[0].images[layer_ind]
 
     # we better subtract background first, before convolve
-    if method == 'wavelet':
-        result = wavelet_detection(
-            detect, mask=mask, sigma=lvl, show_fig=show_fig, convolve=convolve, conv_radius=conv_radius, **kwargs)
-    else:
-        result = vanilla_detection(
-            detect, mask=mask, sigma=lvl, show_fig=show_fig, convolve=convolve, conv_radius=conv_radius, **kwargs)
+    result = vanilla_detection(detect, mask=mask, sigma=lvl, show_fig=show_fig, convolve=convolve, conv_radius=conv_radius, **kwargs)
 
     obj_cat = result[0]
     segmap = result[1]
