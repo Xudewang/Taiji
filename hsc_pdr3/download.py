@@ -201,6 +201,7 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
             
             print('The second run is successful!')
         except:
+            objects = []
             print('The second query is also empty, good luck!')
 
     return objects
