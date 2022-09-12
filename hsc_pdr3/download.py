@@ -1,6 +1,7 @@
 import subprocess
 import os
 import numpy as np
+import pandas as pd
 from astropy.table import Table, Column, vstack
 from astropy.io import ascii
 from astropy import units as u
@@ -185,5 +186,7 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
     
     objects = ascii.read(os.path.join(data_path, 'catalog.csv'), header_start=3, data_start=4, format='csv')
     #objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
+    objects_pd = pd.read_csv("../data/catalog.csv", skiprows=3)
+    objects = Table.from_pandas(objects_pd)
 
     return objects
