@@ -173,6 +173,8 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
     
     sql_info = query.cone_search(ra, dec, rad=rad_arcsec.value, dr=dr, rerun=rerun, **kwargs)
     
+    print(sql_info)
+    
     if os.path.exists(os.path.join(data_path, 'object.sql')):
         os.remove(os.path.join(data_path, 'object.sql'))
 
