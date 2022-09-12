@@ -98,7 +98,7 @@ def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
     return_code_sql = process_sql.wait()
     
     if return_code_sql==0:
-        print('The query is successful!')
+        print('The query code finishes!')
 
     os.chdir(code_path)
     
