@@ -2,6 +2,7 @@ import subprocess
 import os
 import numpy as np
 from astropy.table import Table, Column, vstack
+from astropy.io import ascii
 from astropy import units as u
 
 from .utils import r_phy_to_ang
@@ -183,6 +184,7 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
         
     hsc_query_tool(sql_file='object.sql', catalog_file='catalog.csv', dr_type=dr, data_path=data_path, code_path=code_path)
     
-    objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
+    objects = ascii.read(os.path.join(data_path, 'catalog.csv'), header_start=3)
+    #objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
 
     return objects
