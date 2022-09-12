@@ -86,6 +86,10 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec,
         
 def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
     os.chdir(data_path)
+    
+    if os.path.exists(catalog_file):
+        print('The sql exists, we remove it.')
+        os.remove(catalog_file)
 
     process_sql = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --skip-syntax-check \
                                     {} --format fits > {}".format(dr_type, sql_file, catalog_file)], shell=True)
@@ -168,6 +172,9 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
         radius, redshift=redshift, cosmo=cosmo, verbose=verbose).to(u.Unit('arcsec'))
     
     sql_info = query.cone_search(ra, dec, rad=rad_arcsec.value, dr=dr, rerun=rerun, **kwargs)
+    
+    if os.path.exists(os.path.join(data_path, 'object.sql')):
+        os.remove(os.path.join(data_path, 'object.sql'))
 
     with open(os.path.join(data_path, "object.sql"), "w") as sql_file:
         sql_file.write("%s" % sql_info)
