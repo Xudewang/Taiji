@@ -92,7 +92,7 @@ def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
         os.remove(catalog_file)
 
     process_sql = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --skip-syntax-check \
-                                    {} --format fits > {}".format(dr_type, sql_file, catalog_file)], shell=True)
+                                    {} --format csv > {}".format(dr_type, sql_file, catalog_file)], shell=True)
 
     return_code_sql = process_sql.wait()
     
@@ -181,7 +181,7 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
     with open(os.path.join(data_path, "object.sql"), "w") as sql_file:
         sql_file.write("%s" % sql_info)
         
-    hsc_query_tool(sql_file='object.sql', catalog_file='catalog.fits', dr_type=dr, data_path=data_path, code_path=code_path)
+    hsc_query_tool(sql_file='object.sql', catalog_file='catalog.csv', dr_type=dr, data_path=data_path, code_path=code_path)
     
     objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
 
