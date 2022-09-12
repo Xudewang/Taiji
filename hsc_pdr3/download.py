@@ -186,7 +186,16 @@ def hsc_cone_search(coord, radius=10.0 * u.Unit('arcsec'), redshift=None, dr='pd
     
     #objects = ascii.read(os.path.join(data_path, 'catalog.csv'), header_start=3, data_start=4, format='csv')
     #objects = Table.read(os.path.join(data_path, 'catalog.fits'), format='fits')
-    objects_pd = pd.read_csv("../data/catalog.csv", skiprows=3)
-    objects = Table.from_pandas(objects_pd)
+    
+    # check the catalog empty
+    try:
+        objects_pd = pd.read_csv("../data/catalog.csv", skiprows=3)
+        objects = Table.from_pandas(objects_pd)
+    except Exception as e:
+        print("It seems that the catalog is empty, you should query again!")
+        hsc_query_tool(sql_file='object.sql', catalog_file='catalog.csv', dr_type=dr, data_path=data_path, code_path=code_path)
+        
+        objects_pd = pd.read_csv("../data/catalog.csv", skiprows=3)
+        objects = Table.from_pandas(objects_pd)
 
     return objects
