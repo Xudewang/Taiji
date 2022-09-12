@@ -112,10 +112,10 @@ def select_clean_objects(catalog, check_flag='gri', check_psf='i', check_cmodel=
     if check_flag is not None:
         for f in check_flag:
             mask_of_this_band = (
-                np.isfinite(catalog['{}_extendedness'.format(f)]) &
-                ~catalog['{}_flag_edge'.format(f)] &
-                ~catalog['{}_flag_saturated_cen'.format(f)] &
-                ~catalog['{}_flag_interpolated_cen'.format(f)]
+                np.isfinite(catalog['{}_extendedness'.format(f).astype(bool)]) &
+                ~catalog['{}_flag_edge'.format(f).astype(bool)] &
+                ~catalog['{}_flag_saturated_cen'.format(f).astype(bool)] &
+                ~catalog['{}_flag_interpolated_cen'.format(f).astype(bool)]
                 )
             clean_mask = clean_mask & mask_of_this_band
 
