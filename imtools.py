@@ -1118,7 +1118,7 @@ def random_cmap(ncolors=256, background_color='white'):
     return colors.ListedColormap(rgb)
 
 
-def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
+def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwargs):
     ax.imshow(dat,
               origin='lower',
               cmap='Greys',
@@ -1129,7 +1129,7 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1):
               origin='lower',
               cmap=my_cmap,
               norm=colors.LogNorm(vmin=3*noise, clip=False),
-              clim=[3 * noise, None])
+              clim=[3 * noise, None], **kwargs)
     scalebar = ScaleBar(pixel_size,
                         "''",
                         dimension=ANGLE,
