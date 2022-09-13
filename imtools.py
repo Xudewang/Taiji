@@ -1118,7 +1118,7 @@ def random_cmap(ncolors=256, background_color='white'):
     return colors.ListedColormap(rgb)
 
 
-def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwargs):
+def _LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwargs):
     ax.imshow(dat,
               origin='lower',
               cmap='Greys',
@@ -1145,6 +1145,45 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwa
     ax.xaxis.set_major_formatter(plt.NullFormatter())
     ax.yaxis.set_major_formatter(plt.NullFormatter())
     plt.subplots_adjust(left=0.03, right=0.97, top=0.97, bottom=0.05)
+    
+def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwargs):
+    #plt.figure(figsize=(6, 6))
+    ax.imshow(
+        dat,
+        origin="lower",
+        cmap="Greys",
+        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3*noise]), clip = False, vmax = 3*noise, vmin = np.min(dat)), **kwargs
+    )
+    my_cmap = copy(cm.Greys_r)
+    my_cmap.set_under("k", alpha=0)
+    
+    ax.imshow(
+        np.ma.masked_where(dat < 3*noise, dat), 
+        origin="lower",
+        cmap=my_cmap,
+        norm=ImageNormalize(stretch=LogStretch(),clip = False),
+        clim=[3 * noise, None],
+        interpolation = 'none',
+    )
+    
+    scalebar = ScaleBar(pixel_size,
+                        "''",
+                        dimension=ANGLE,
+                        color='black',
+                        box_alpha=box_alpha,
+                        font_properties={'size': 25},
+                        location='lower left',
+                        length_fraction=pixel_size,
+                        fixed_value=bar_length)
+    ax.add_artist(scalebar)
+    
+    # plt.xticks([])
+    # plt.yticks([])
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
+    ax.yaxis.set_major_formatter(plt.NullFormatter())
+    plt.subplots_adjust(left=0.03, right=0.97, top=0.97, bottom=0.05)
+    plt.xlim([0, dat.shape[1]])
+    plt.ylim([0, dat.shape[0]])
 
 
 # About the Colormaps
