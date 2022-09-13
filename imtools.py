@@ -26,6 +26,8 @@ from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentil
 from astropy.io import ascii
 from astropy.table import Table, Column
 
+import copy
+
 def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
     """[summary]
 
@@ -1154,7 +1156,7 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
         cmap="Greys",
         norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3*noise]), clip = False, vmax = 3*noise, vmin = np.min(dat)), **kwargs
     )
-    my_cmap = copy(cm.Greys_r)
+    my_cmap = copy.copy(cm.Greys_r)
     my_cmap.set_under("k", alpha=0)
     
     ax.imshow(
