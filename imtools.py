@@ -1301,8 +1301,7 @@ def display_single(img,
         labelbottom=False,
         labelleft=False,
         axis=u'both',
-        which=u'both',
-        length=0)
+        which=u'both') # length=0
 
     # Put scale bar on the image
     if img.ndim == 3:
