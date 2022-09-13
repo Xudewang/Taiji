@@ -1139,7 +1139,7 @@ def LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwa
                         location='lower left',
                         length_fraction=pixel_size,
                         fixed_value=bar_length)
-    plt.gca().add_artist(scalebar)
+    ax.add_artist(scalebar)
 #     ax.set_xticks([])
 #     ax.set_yticks([])
     ax.xaxis.set_major_formatter(plt.NullFormatter())
