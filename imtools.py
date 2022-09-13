@@ -1278,8 +1278,7 @@ def display_single(img,
     ax1.tick_params(labelbottom=False,
                     labelleft=False,
                     axis=u'both',
-                    which=u'both',
-                    length=0)
+                    which=u'both') # length=0 (if you want hide tick, you can put length=0 to figure.)
 
     # Put scale bar on the image
     (img_size_x, img_size_y) = img.shape
