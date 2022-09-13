@@ -1272,7 +1272,8 @@ def display_single(img,
                       cmap=cmap,
                       interpolation='none',
                       vmin=zmin,
-                      vmax=zmax)
+                      vmax=zmax,
+                      aspect='auto')
 
     # Hide ticks and tick labels
     ax1.tick_params(labelbottom=False,
