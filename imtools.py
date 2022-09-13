@@ -1191,11 +1191,12 @@ def display_single(img,
                    xsize=8,
                    ysize=8,
                    ax=None,
+                   alpha=1.0,
                    stretch='arcsinh',
                    scale='zscale',
-                   contrast=0.25,
                    zmin=None,
                    zmax=None,
+                   contrast=0.25,
                    no_negative=False,
                    lower_percentile=1.0,
                    upper_percentile=99.0,
@@ -1216,75 +1217,102 @@ def display_single(img,
                    text_fontsize=30,
                    text_color='w'):
     """Display single image.
+
     Parameters
     ----------
         img: np 2-D array for image
+
         xsize: int, default = 8
             Width of the image.
+
         ysize: int, default = 8
             Height of the image.
+
     """
     if ax is None:
         fig = plt.figure(figsize=(xsize, ysize))
         ax1 = fig.add_subplot(111)
     else:
         ax1 = ax
+    ax1.grid(False)
 
     # Stretch option
-    if stretch.strip() == 'arcsinh':
-        img_scale = np.arcsinh(img)
-    elif stretch.strip() == 'log':
-        if no_negative:
-            img[img <= 0.0] = 1.0E-10
-        img_scale = np.log(img)
-    elif stretch.strip() == 'log10':
-        if no_negative:
-            img[img <= 0.0] = 1.0E-10
-        img_scale = np.log10(img)
-    elif stretch.strip() == 'linear':
+    if img.ndim == 3:
         img_scale = img
+        vmin, vmax = None, None
     else:
-        raise Exception("# Wrong stretch option.")
+        if stretch.strip() == 'arcsinh':
+            img_scale = np.arcsinh(img)
+            if zmin is not None:
+                zmin = np.arcsinh(zmin)
+            if zmax is not None:
+                zmax = np.arcsinh(zmax)
+        elif stretch.strip() == 'log':
+            if no_negative:
+                img[img <= 0.0] = 1.0E-10
+            img_scale = np.log(img)
+            if zmin is not None:
+                zmin = np.log(zmin)
+            if zmax is not None:
+                zmax = np.log(zmax)
+        elif stretch.strip() == 'log10':
+            if no_negative:
+                img[img <= 0.0] = 1.0E-10
+            img_scale = np.log10(img)
+            if zmin is not None:
+                zmin = np.log10(zmin)
+            if zmax is not None:
+                zmax = np.log10(zmax)
+        elif stretch.strip() == 'linear':
+            img_scale = img
+        else:
+            raise Exception("# Wrong stretch option.")
 
-    # Scale option
-    if zmin is not None and zmax is not None:
-        zmin, zmax = zmin, zmax
-    elif scale.strip() == 'zscale':
-        try:
-            zmin, zmax = ZScaleInterval(
-                contrast=contrast).get_limits(img_scale)
-        except IndexError:
-            # TODO: Deal with problematic image
-            zmin, zmax = -1.0, 1.0
-    elif scale.strip() == 'percentile':
-        try:
-            zmin, zmax = AsymmetricPercentileInterval(
-                lower_percentile=lower_percentile,
-                upper_percentile=upper_percentile).get_limits(img_scale)
-        except IndexError:
-            # TODO: Deal with problematic image
-            zmin, zmax = -1.0, 1.0
-    else:
-        zmin, zmax = np.nanmin(img_scale), np.nanmax(img_scale)
+        # Scale option
+        if scale.strip() == 'zscale':
+            try:
+                vmin, vmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+            except IndexError:
+                # TODO: Deal with problematic image
+                vmin, vmax = -1.0, 1.0
+        elif scale.strip() == 'percentile':
+            try:
+                vmin, vmax = AsymmetricPercentileInterval(
+                    lower_percentile=lower_percentile,
+                    upper_percentile=upper_percentile).get_limits(img_scale)
+            except IndexError:
+                # TODO: Deal with problematic image
+                vmin, vmax = -1.0, 1.0
+        elif scale.strip() == 'minmax':
+            vmin, vmax = np.nanmin(img_scale), np.nanmax(img_scale)
+        else:
+            vmin, vmax = np.nanmin(img_scale), np.nanmax(img_scale)
 
-    show = ax1.imshow(img_scale,
-                      origin='lower',
-                      cmap=cmap,
-                      interpolation='none',
-                      vmin=zmin,
-                      vmax=zmax,
-                      aspect='auto')
+        if zmin is not None:
+            vmin = zmin
+        if zmax is not None:
+            vmax = zmax
+
+    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
+                      vmin=vmin, vmax=vmax, alpha=alpha)
 
     # Hide ticks and tick labels
-    ax1.tick_params(labelbottom=False,
-                    labelleft=False,
-                    axis=u'both',
-                    which=u'both') # length=0 (if you want hide tick, you can put length=0 to figure.)
+    ax1.tick_params(
+        labelbottom=False,
+        labelleft=False,
+        axis=u'both',
+        which=u'both',
+        length=0)
 
     # Put scale bar on the image
-    (img_size_x, img_size_y) = img.shape
+    if img.ndim == 3:
+        img_size_x, img_size_y = img[:, :, 0].shape
+    else:
+        img_size_x, img_size_y = img.shape
+
     if physical_scale is not None:
         pixel_scale *= physical_scale
+
     if scale_bar:
         if scale_bar_loc == 'left':
             scale_bar_x_0 = int(img_size_x * 0.04)
@@ -1294,7 +1322,6 @@ def display_single(img,
             scale_bar_x_0 = int(img_size_x * 0.95 -
                                 (scale_bar_length / pixel_scale))
             scale_bar_x_1 = int(img_size_x * 0.95)
-
         scale_bar_y = int(img_size_y * 0.10)
         scale_bar_text_x = (scale_bar_x_0 + scale_bar_x_1) / 2
         scale_bar_text_y = (scale_bar_y * scale_bar_y_offset)
@@ -1304,24 +1331,24 @@ def display_single(img,
             scale_bar_text = r'$%d^{\prime\prime}$' % int(scale_bar_length)
         scale_bar_text_size = scale_bar_fontsize
 
-        ax1.plot([scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
-                 linewidth=3,
-                 c=scale_bar_color,
-                 alpha=1.0)
-        ax1.text(scale_bar_text_x,
-                 scale_bar_text_y,
-                 scale_bar_text,
-                 fontsize=scale_bar_text_size,
-                 horizontalalignment='center',
-                 color=scale_bar_color)
+        ax1.plot(
+            [scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
+            linewidth=3,
+            c=scale_bar_color,
+            alpha=1.0)
+        ax1.text(
+            scale_bar_text_x,
+            scale_bar_text_y,
+            scale_bar_text,
+            fontsize=scale_bar_text_size,
+            horizontalalignment='center',
+            color=scale_bar_color)
     if add_text is not None:
-        text_x_0 = int(img_size_x * 0.08)
-        text_y_0 = int(img_size_y * 0.80)
-        ax1.text(text_x_0,
-                 text_y_0,
-                 r'$\mathrm{' + add_text + '}$',
-                 fontsize=text_fontsize,
-                 color=text_color)
+        text_x_0 = int(img_size_x*0.08)
+        text_y_0 = int(img_size_y*0.80)
+        ax1.text(
+            text_x_0, text_y_0, r'$\mathrm{'+add_text+'}$',
+            fontsize=text_fontsize, color=text_color)
 
     # Put a color bar on the image
     if color_bar:
@@ -1330,78 +1357,77 @@ def display_single(img,
                              height=color_bar_height,
                              loc=color_bar_loc)
         if ax is None:
-            cbar = plt.colorbar(show,
-                                ax=ax1,
-                                cax=ax_cbar,
+            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
                                 orientation='horizontal')
         else:
-            cbar = plt.colorbar(show,
-                                ax=ax,
-                                cax=ax_cbar,
+            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
                                 orientation='horizontal')
 
         cbar.ax.xaxis.set_tick_params(color=color_bar_color)
         cbar.ax.yaxis.set_tick_params(color=color_bar_color)
         cbar.outline.set_edgecolor(color_bar_color)
         plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
-                 color=color_bar_color,
-                 fontsize=color_bar_fontsize)
+                 color=color_bar_color, fontsize=color_bar_fontsize)
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
-                 color=color_bar_color,
-                 fontsize=color_bar_fontsize)
+                 color=color_bar_color, fontsize=color_bar_fontsize)
 
     if ax is None:
         return fig
     return ax1
 
+def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=None,
+                cmap_list=None, label_x=0.1, label_y=0.9, fontsize=20, fontcolor='k',
+                hdu_list=False, hdu_start=1, **kwargs):
+    """Display a list of images."""
+    if not isinstance(img_list, list):
+        raise TypeError("Provide a list of image to show or use display_single()")
 
-def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
-    """Visualize the isophotes."""
+    # Make a numpy array list if the input is HDUList
+    if hdu_list:
+        img_list = [img_list[ii].data for ii in np.arange(len(img_list))[hdu_start:]]
 
-    display_single(img,
-                   ax=ax,
-                   scale_bar=True,
-                   pixel_scale=pixel_size,
-                   cmap='Greys_r',
-                   scale_bar_length=1)
+    if cmap_list is not None:
+        assert len(cmap_list) == len(img_list), "Wrong number of color maps!"
 
-    for k in range(len(sma)):
-        if k % 2 == 0:
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#878ECD')
-            e.set_alpha(1)
-            e.set_linewidth(1.5)
-            ax.add_artist(e)
+    if label_list is not None:
+        assert len(label_list) == len(img_list), "Wrong number of labels!"
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 5 == 0, k > 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#30E3CA')
-            e.set_alpha(1)
-            e.set_linewidth(2)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    # Number of image to show
+    n_img = len(img_list)
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 15 == 0, k <= 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#30E3CA')
-            e.set_alpha(1)
-            e.set_linewidth(1)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    if n_img <= n_column:
+        n_col = n_img
+        n_row = 1
+    else:
+        n_col = n_column
+        n_row = int(np.ceil(n_img / n_column))
+
+    fig = plt.figure(figsize=(img_size * n_col, img_size * n_row))
+    fig.subplots_adjust(left=0., right=1., bottom=0., top=1., wspace=0., hspace=0.)
+
+    gs = gridspec.GridSpec(n_row, n_col)
+    gs.update(wspace=0.0, hspace=0.00)
+
+    for ii in range(n_img):
+        if hdu_index is None:
+            img_show = img_list[ii]
+        else:
+            img_show = img_list[ii][hdu_index].data
+
+        ax = plt.subplot(gs[ii])
+        if cmap_list is not None:
+            ax = display_single(img_show, cmap=cmap_list[ii], ax=ax, **kwargs)
+        else:
+            ax = display_single(img_show, ax=ax, **kwargs)
+
+        if label_list is not None:
+            if len(label_list) != n_img:
+                print("# Wrong number for labels!")
+            else:
+                ax.text(label_x, label_y, label_list[ii], fontsize=fontsize,
+                        transform=ax.transAxes, color=fontcolor)
+
+    return fig
 
 
 def display_isophote_LSB(ax,
