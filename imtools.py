@@ -1165,7 +1165,7 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
         cmap=my_cmap,
         norm=ImageNormalize(stretch=LogStretch(),clip = False),
         clim=[3 * noise, None],
-        interpolation = 'none',
+        interpolation = 'none', **kwargs
     )
     
     scalebar = ScaleBar(pixel_size,
