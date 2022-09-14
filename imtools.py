@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.patches import Ellipse
 from matplotlib.gridspec import GridSpec
 from matplotlib_scalebar.scalebar import ScaleBar
 from matplotlib_scalebar.scalebar import ANGLE
