@@ -22,7 +22,7 @@ from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval
+from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval, ZScaleInterval
 from astropy.io import ascii
 from astropy.table import Table, Column
 
@@ -1335,7 +1335,7 @@ def display_single(img,
             vmax = zmax
 
     show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
-                      vmin=vmin, vmax=vmax, alpha=alpha)
+                      vmin=vmin, vmax=vmax, alpha=alpha, aspect='auto')
 
     # Hide ticks and tick labels
     ax1.tick_params(
