@@ -1479,8 +1479,7 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
                    pixel_scale=pixel_size,
                    cmap='Greys_r',
                    scale_bar_length=10,
-                   scale='log10',
-                   aspect='auto')
+                   scale='log10')
 
     for k in range(len(sma)):
         if k % 2 == 0:
