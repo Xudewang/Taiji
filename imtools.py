@@ -276,6 +276,13 @@ def get_Rpercent(sma, cog, maxFlux, percent):
 
     return Rpercent
 
+def get_Rmag(sma, mu, mag_use):
+    f = interp1d(mu, sma)
+    
+    Rnum = f(mag_use)
+    
+    return Rnum
+
 def get_Ie(sma, intens, re):
 
     f = interp1d(sma, intens)
