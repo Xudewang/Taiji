@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from astropy.table import Table, Column, vstack
 from astropy.io import ascii
+import sys
 from astropy import units as u
 
 from .utils import r_phy_to_ang
@@ -11,6 +12,8 @@ from . import query
 
 ANG_UNITS = ['arcsec', 'arcsecond', 'arcmin', 'arcminute', 'deg']
 PHY_UNITS = ['pc', 'kpc', 'Mpc']
+
+system_use = sys.platform
 
 def hsc_cutout_tool(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec, data_path, code_path):
     
@@ -39,9 +42,14 @@ def hsc_cutout_tool(rerun_field, data_type_command, coor_ra, coor_dec, size_arcs
         
         os.chdir(data_path)
 
-        process = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} \
-                                    --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'".format(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec, size_arcsec, \
-                                                                                                     cutout_download_name)], shell=True)
+        if system_use == 'linux':
+            process = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} \
+                                        --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'".format(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec, size_arcsec, \
+                                                                                                        cutout_download_name)], shell=True)
+        elif system_use == 'darwin':
+            process = subprocess.Popen(["python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} \
+                                        --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'".format(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec, size_arcsec, \
+                                                                                                        cutout_download_name)], shell=True)
 
         return_code = process.wait()
 
@@ -76,8 +84,13 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec, size_arcsec,
         
         os.chdir(data_path)
 
-        process_psf = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' \
-                                --user='dwxu'".format(rerun_field, coor_ra, coor_dec, psf_download_name)], shell=True)
+        if system_use == 'linux':
+            process_psf = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' \
+                                    --user='dwxu'".format(rerun_field, coor_ra, coor_dec, psf_download_name)], shell=True)
+            
+        elif system_use == 'darwin':
+            process_psf = subprocess.Popen(["python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' \
+                                    --user='dwxu'".format(rerun_field, coor_ra, coor_dec, psf_download_name)], shell=True)
 
         return_code_psf = process_psf.wait()
 
@@ -93,7 +106,10 @@ def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
         print('The sql exists, we remove it.')
         os.remove(catalog_file)
 
-    process_sql = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --delete-job --skip-syntax-check {} --format csv > {}".format(dr_type, sql_file, catalog_file)], shell=True)
+    if system_use == 'linux':
+        process_sql = subprocess.Popen(["python /home/dewang/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --delete-job --skip-syntax-check {} --format csv > {}".format(dr_type, sql_file, catalog_file)], shell=True)
+    elif system_use == 'darwin':
+        process_sql = subprocess.Popen(["python /Users/xu/Astronomy/Taiji/hsc_pdr3/hscReleaseQuery/hscReleaseQuery.py --user='dwxu' --release-version={} --nomail --delete-job --skip-syntax-check {} --format csv > {}".format(dr_type, sql_file, catalog_file)], shell=True)
 
     return_code_sql = process_sql.wait()
     
