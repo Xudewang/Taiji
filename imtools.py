@@ -8,6 +8,7 @@ import sep
 
 from matplotlib.patches import Ellipse, Circle
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from matplotlib import colors
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -36,7 +37,16 @@ from astropy.coordinates import SkyCoord
 from matplotlib.patches import Ellipse as mpl_ellip
 from contextlib import contextmanager
 
-from .imtools import display_single, SEG_CMAP, ORG
+system_use = sys.platform
+from pathlib import Path
+
+if system_use == 'linux':
+    # for server
+    Taiji_path = Path('/home/dewang/Taiji')
+
+elif system_use == 'darwin':
+    # for mac
+    Taiji_path = Path('/Users/xu/Astronomy/Taiji')
 
 
 @contextmanager
@@ -52,6 +62,69 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+            
+def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=100):
+    '''
+    Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
+
+    Parameters:
+        style (str): options are "JL", "SM" (supermongo-like).
+    '''
+    # Use JL as a template
+    if style == 'default':
+        plt.style.use(Taiji_path.joinpath('mplstyle/default.mplstyle'))
+    else:
+        plt.style.use(Taiji_path.joinpath('mplstyle/JL.mplstyle'))
+    rcParams.update({'font.size': fontsize,
+                     'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+                     'text.usetex': usetex,
+                     'figure.dpi': dpi})
+
+    if style == 'DW':
+        plt.style.use(['science', 'seaborn-colorblind'])
+
+        plt.rcParams['figure.figsize'] = (10,7)
+        plt.rcParams['font.size'] = 25
+        plt.rcParams['lines.linewidth'] = 3
+        plt.rcParams['xtick.labelsize'] = 25
+        plt.rcParams['ytick.labelsize'] = 25
+        plt.rcParams['xtick.direction'] = 'in'
+        plt.rcParams['ytick.direction'] = 'in'
+        plt.rcParams['xtick.major.size'] = 8
+        plt.rcParams['ytick.major.size'] = 8
+        plt.rcParams['xtick.minor.size'] = 5
+        plt.rcParams['ytick.minor.size'] = 5
+        plt.rcParams['xtick.major.pad'] = 5
+        plt.rcParams['xtick.minor.pad'] = 4.8
+        plt.rcParams['ytick.major.pad'] = 5
+        plt.rcParams['ytick.minor.pad'] = 4.8
+        plt.rcParams['xtick.top'] = True
+        plt.rcParams['ytick.right'] = True
+        plt.rcParams['legend.frameon'] = True
+        plt.rcParams['axes.labelpad'] = 8.0
+        plt.rcParams['figure.constrained_layout.h_pad'] = 0
+        plt.rcParams['text.usetex'] = True
+        plt.rc('text', usetex=True)
+        plt.rcParams['font.sans-serif'] = ['Times New Roman']
+        plt.tick_params(axis='both', which='minor', labelsize=18)
+        plt.rcParams['legend.edgecolor'] = 'black'
+        # plt.rcParams['xtick.major.width'] = 3.8
+        # plt.rcParams['xtick.minor.width'] = 3.2
+        # plt.rcParams['ytick.major.width'] = 3.8 
+        # plt.rcParams['ytick.minor.width'] = 3.2
+        # plt.rcParams['axes.linewidth'] = 5
+        import matplotlib.ticker
+        from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                                       AutoMinorLocator)
+        plt.close()
+
+    if style == 'nature':
+        rcParams.update({
+            "font.family": "sans-serif",
+            # The default edge colors for scatter plots.
+            "scatter.edgecolors": "black",
+            "mathtext.fontset": "stixsans"
+        })
 
 def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
     """[summary]
@@ -2065,6 +2138,13 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
         # plt.savefig('./extract_obj.png', bbox_inches='tight')
         return objects, segmap, fig
     return objects, segmap
+
+def seg_remove_cen_obj(seg):
+    """Remove the central object from the segmentation."""
+    seg_copy = copy.deepcopy(seg)
+    seg_copy[seg == seg[int(seg.shape[0] / 2.0), int(seg.shape[1] / 2.0)]] = 0
+
+    return seg_copy
 
 
 def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
