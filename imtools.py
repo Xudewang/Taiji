@@ -78,7 +78,9 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
     rcParams.update({'font.size': fontsize,
                      'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
                      'text.usetex': usetex,
-                     'figure.dpi': dpi})
+                     'figure.dpi': dpi,
+                     'legend.frameon':True,
+                     'figure.constrained_layout.h_pad':0})
 
     if style == 'DW':
         plt.style.use(['science', 'seaborn-colorblind'])
@@ -941,7 +943,7 @@ def plot_pa(ax,
 #     else:
 #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
 
-    ax.set_ylabel(r'PA\, (deg)', fontsize=24)
+    ax.set_ylabel(r'PA\,(deg)', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     ax.legend()
 
