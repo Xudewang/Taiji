@@ -50,14 +50,14 @@ def hsc_cutout_tool(rerun_field, data_type_command, coor_ra, coor_dec,
 
         if system_use == 'linux':
             process = subprocess.Popen([
-                "python /home/dewang/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --filter='HSC-I' --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
+                "python /home/dewang/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
                 .format(rerun_field, data_type_command, coor_ra, coor_dec,
                         size_arcsec, size_arcsec, cutout_download_name)
             ],
                                        shell=True)
         elif system_use == 'darwin':
             process = subprocess.Popen([
-                "python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --filter='HSC-I' --user='dwxu'"
+                "python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
                 .format(rerun_field, data_type_command, coor_ra, coor_dec,
                         size_arcsec, size_arcsec, cutout_download_name)
             ],
@@ -104,14 +104,14 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec,
 
         if system_use == 'linux':
             process_psf = subprocess.Popen([
-                "python /home/dewang/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --filter='HSC-I' --user='dwxu'"
+                "python /home/dewang/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
                 .format(rerun_field, coor_ra, coor_dec, psf_download_name)
             ],
                                            shell=True)
 
         elif system_use == 'darwin':
             process_psf = subprocess.Popen([
-                "python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --filter='HSC-I' --user='dwxu'"
+                "python /Users/xu/Astronomy/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
                 .format(rerun_field, coor_ra, coor_dec, psf_download_name)
             ],
                                            shell=True)
