@@ -859,8 +859,7 @@ def plot_axisRatio(ax,
                ylimin=None,
                ylimax=None,
                xlimin=None,
-               xlimax=None,
-               label='Axis ratio'):
+               xlimax=None):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -873,11 +872,10 @@ def plot_axisRatio(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7,
-                    label=label)
+                    elinewidth=0.7)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, axisratio, color=color, lw=3, label=label)
+        ax.plot(sma * pixel_size, axisratio, color=color, lw=3)
         ax.fill_between(sma * pixel_size,
                         axisratio + axisratio_err,
                         axisratio - axisratio_err,
@@ -894,7 +892,7 @@ def plot_axisRatio(ax,
 
     ax.set_ylabel(r'$b/a$', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
-    ax.legend()
+    #ax.legend()
 
 def plot_pa(ax,
             sma,
@@ -920,11 +918,10 @@ def plot_pa(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7,
-                    label=label)
+                    elinewidth=0.7)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, pa, color=color, lw=3, label=label)
+        ax.plot(sma * pixel_size, pa, color=color, lw=3)
         ax.fill_between(sma * pixel_size,
                         pa + pa_err,
                         pa - pa_err,
@@ -945,8 +942,7 @@ def plot_pa(ax,
 
     ax.set_ylabel(r'PA\,(deg)', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
-    ax.legend()
-
+    #ax.legend()
 
 def plot_SBP(ax,
              sma,
@@ -1255,7 +1251,7 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
                         dimension=ANGLE,
                         color='black',
                         box_alpha=box_alpha,
-                        font_properties={'size': 25},
+                        font_properties={'size': 15},
                         location='lower left',
                         length_fraction=pixel_size,
                         fixed_value=bar_length)
