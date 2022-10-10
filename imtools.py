@@ -1575,31 +1575,31 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
             e.set_linewidth(1.5)
             ax.add_artist(e)
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 5 == 0, k > 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#30E3CA')
-            e.set_alpha(1)
-            e.set_linewidth(2)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    # for k in range(len(sma)):
+    #     if np.logical_and(k % 5 == 0, k > 200):
+    #         e = Ellipse(xy=(x0, y0),
+    #                     height=sma[k] * 2.0,
+    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
+    #                     angle=pa[k])
+    #         e.set_facecolor('none')
+    #         e.set_edgecolor('#30E3CA')
+    #         e.set_alpha(1)
+    #         e.set_linewidth(2)
+    #         e.set_linestyle('-')
+    #         ax.add_artist(e)
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 15 == 0, k <= 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#30E3CA')
-            e.set_alpha(1)
-            e.set_linewidth(1)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    # for k in range(len(sma)):
+    #     if np.logical_and(k % 15 == 0, k <= 200):
+    #         e = Ellipse(xy=(x0, y0),
+    #                     height=sma[k] * 2.0,
+    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
+    #                     angle=pa[k])
+    #         e.set_facecolor('none')
+    #         e.set_edgecolor('#30E3CA')
+    #         e.set_alpha(1)
+    #         e.set_linewidth(1)
+    #         e.set_linestyle('-')
+    #         ax.add_artist(e)
 
 
 def display_isophote_LSB(ax,
@@ -1612,14 +1612,7 @@ def display_isophote_LSB(ax,
                          noise,
                          pixel_size=0.259,
                          scale_bar_length=50):
-    """Visualize the isophotes."""
-
-    display_single(img,
-                   ax=ax,
-                   scale_bar=True,
-                   pixel_scale=pixel_size,
-                   cmap='Greys_r',
-                   scale_bar_length=scale_bar_length)
+    """Visualize the isophotes using LSBImage."""
 
     LSBImage(ax=ax,
              dat=img,
@@ -1634,37 +1627,37 @@ def display_isophote_LSB(ax,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
                         angle=pa[k])
             e.set_facecolor('none')
-            e.set_edgecolor('#FF2E63')
+            e.set_edgecolor('#878ECD')
             e.set_alpha(1)
             e.set_linewidth(1.5)
             ax.add_artist(e)
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 5 == 0, k > 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            # e.set_edgecolor('#30E3CA')
-            e.set_edgecolor('magenta')
-            e.set_alpha(1)
-            e.set_linewidth(2)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    # for k in range(len(sma)):
+    #     if np.logical_and(k % 5 == 0, k > 200):
+    #         e = Ellipse(xy=(x0, y0),
+    #                     height=sma[k] * 2.0,
+    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
+    #                     angle=pa[k])
+    #         e.set_facecolor('none')
+    #         # e.set_edgecolor('#30E3CA')
+    #         e.set_edgecolor('magenta')
+    #         e.set_alpha(1)
+    #         e.set_linewidth(2)
+    #         e.set_linestyle('-')
+    #         ax.add_artist(e)
 
-    for k in range(len(sma)):
-        if np.logical_and(k % 15 == 0, k <= 200):
-            e = Ellipse(xy=(x0, y0),
-                        height=sma[k] * 2.0,
-                        width=sma[k] * 2.0 * (1.0 - ell[k]),
-                        angle=pa[k])
-            e.set_facecolor('none')
-            e.set_edgecolor('#08D9D6')
-            e.set_alpha(1)
-            e.set_linewidth(1)
-            e.set_linestyle('-')
-            ax.add_artist(e)
+    # for k in range(len(sma)):
+    #     if np.logical_and(k % 15 == 0, k <= 200):
+    #         e = Ellipse(xy=(x0, y0),
+    #                     height=sma[k] * 2.0,
+    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
+    #                     angle=pa[k])
+    #         e.set_facecolor('none')
+    #         e.set_edgecolor('#08D9D6')
+    #         e.set_alpha(1)
+    #         e.set_linewidth(1)
+    #         e.set_linestyle('-')
+    #         ax.add_artist(e)
 
 
 def easy_saveData_Tofits(data, header, savefile):
