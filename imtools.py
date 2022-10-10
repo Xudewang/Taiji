@@ -1225,35 +1225,6 @@ def random_cmap(ncolors=256, background_color='white'):
         rgb[0] = colors.hex2color(colors.cnames[background_color])
 
     return colors.ListedColormap(rgb)
-
-
-def _LSBImage(ax, dat, noise, pixel_size=0.259, bar_length=50, box_alpha=1, **kwargs):
-    ax.imshow(dat,
-              origin='lower',
-              cmap='Greys',
-              norm=ImageNormalize(stretch=HistEqStretch(dat)))
-    my_cmap = cm.Greys_r
-    my_cmap.set_under('k', alpha=0)
-    ax.imshow(np.clip(dat, a_min=noise, a_max=None),
-              origin='lower',
-              cmap=my_cmap,
-              norm=colors.LogNorm(vmin=3*noise, clip=False),
-              clim=[3 * noise, None], **kwargs)
-    scalebar = ScaleBar(pixel_size,
-                        "''",
-                        dimension=ANGLE,
-                        color='black',
-                        box_alpha=box_alpha,
-                        font_properties={'size': 25},
-                        location='lower left',
-                        length_fraction=pixel_size,
-                        fixed_value=bar_length)
-    ax.add_artist(scalebar)
-#     ax.set_xticks([])
-#     ax.set_yticks([])
-    ax.xaxis.set_major_formatter(plt.NullFormatter())
-    ax.yaxis.set_major_formatter(plt.NullFormatter())
-    plt.subplots_adjust(left=0.03, right=0.97, top=0.97, bottom=0.05)
     
 def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwargs):
     #plt.figure(figsize=(6, 6))
@@ -1261,7 +1232,9 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
         dat,
         origin="lower",
         cmap="Greys",
-        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3*noise]), clip = False, vmax = 3*noise, vmin = np.min(dat)), **kwargs
+        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3*noise]), clip = False, vmax = 3*noise, vmin = np.min(dat)),
+        aspect='auto',
+        **kwargs
     )
     my_cmap = copy.copy(cm.Greys_r)
     my_cmap.set_under("k", alpha=0)
@@ -1272,7 +1245,9 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
         cmap=my_cmap,
         norm=ImageNormalize(stretch=LogStretch(),clip = False),
         clim=[3 * noise, None],
-        interpolation = 'none', **kwargs
+        interpolation = 'none',
+        aspect='auto',
+        **kwargs
     )
     
     scalebar = ScaleBar(pixel_size,
