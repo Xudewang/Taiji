@@ -2422,6 +2422,25 @@ def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, m
     return None, msk_star
 
 
+def create_circular_mask(img, center=None, radius=None):
+    """Create a circular mask to apply to an image.
+    
+    Based on https://stackoverflow.com/questions/44865023/how-can-i-create-a-circular-mask-for-a-numpy-array
+    """
+    h, w = img.shape
+    
+    if center is None: # use the middle of the image
+        center = (int(w/2), int(h/2))
+    if radius is None: # use the smallest distance between the center and image walls
+        radius = min(center[0], center[1], w-center[0], h-center[1])
+
+    Y, X = np.ogrid[:h, :w]
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+
+    mask = dist_from_center <= radius
+    return mask
+
+
 def padding_PSF(psf_list):
     '''
     If the sizes of HSC PSF in all bands are not the same, this function pads the smaller PSFs.
