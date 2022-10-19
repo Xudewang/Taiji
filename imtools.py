@@ -986,7 +986,6 @@ def plot_SBP(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.legend()
     ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=24)
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
     plt.gca().invert_yaxis()
@@ -1616,7 +1615,19 @@ def display_isophote_LSB(ax,
              bar_length=scale_bar_length)
 
     for k in range(len(sma)):
-        if k % 2 == 0:
+        if (k % 2 == 0) & (k<0.7*len(sma)):
+            e = Ellipse(xy=(x0, y0),
+                        height=sma[k] * 2.0,
+                        width=sma[k] * 2.0 * (1.0 - ell[k]),
+                        angle=pa[k])
+            e.set_facecolor('none')
+            e.set_edgecolor('#878ECD')
+            e.set_alpha(1)
+            e.set_linewidth(1.5)
+            ax.add_artist(e)
+            
+    for k in range(len(sma)):
+        if k>=0.7*len(sma):
             e = Ellipse(xy=(x0, y0),
                         height=sma[k] * 2.0,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
@@ -2438,6 +2449,20 @@ def create_circular_mask(img, center=None, radius=None):
 
     mask = dist_from_center <= radius
     return mask
+
+def remove_consecutive(sma_ap, index_original, con_number = 2):
+    index_left = np.argwhere(index_original)
+    index_left_array = np.array([index_left[i][0] for i in range(len(index_left))])
+    diff_index = np.diff(index_left_array)
+
+    if len(sma_ap[np.argwhere(diff_index>(con_number+1))])>0:
+        sma_stop_lowsn = (np.array(sma_ap)[np.argwhere(diff_index>con_number+1)])[0][0]
+        print(sma_stop_lowsn)
+        new_index = np.logical_and(index_original, sma_ap <= sma_stop_lowsn)
+    else:
+        sma_stop_lowsn = 'well'
+        new_index = index_original
+    return (new_index, sma_stop_lowsn)
 
 
 def padding_PSF(psf_list):
