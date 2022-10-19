@@ -955,7 +955,7 @@ def plot_SBP(ax,
              ylimax=None,
              xlimin=None,
              xlimax=None,
-             label='Surface brightness'):
+             label='Surface brightness', **kwargs):
     '''
     This function is a templete to plot the SB profile.
     '''
@@ -969,10 +969,10 @@ def plot_SBP(ax,
                     color=color,
                     capsize=3,
                     elinewidth=0.7,
-                    label=label)
+                    label=label, **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, mu, color=color, lw=3, label=label)
+        ax.plot(sma * pixel_size, mu, color=color, lw=3, label=label, **kwargs)
         ax.fill_between(sma * pixel_size,
                         mu + mu_err,
                         mu - mu_err,
