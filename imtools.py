@@ -813,7 +813,7 @@ def plot_ellip(ax,
                ylimax=None,
                xlimin=None,
                xlimax=None,
-               label='Ellipticity'):
+               **kwargs):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -827,10 +827,10 @@ def plot_ellip(ax,
                     color=color,
                     capsize=3,
                     elinewidth=0.7,
-                    label=label)
+                    **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, ellip, color=color, lw=3, label=label)
+        ax.plot(sma * pixel_size, ellip, color=color, lw=3, **kwargs)
         ax.fill_between(sma * pixel_size,
                         ellip + ellip_err,
                         ellip - ellip_err,
@@ -905,7 +905,7 @@ def plot_pa(ax,
             ylimax=None,
             xlimin=None,
             xlimax=None,
-            label=r'PA'):
+            **kwargs):
     '''
     This function is a templete to plot the PA profile.
     '''
@@ -918,10 +918,11 @@ def plot_pa(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7)
+                    elinewidth=0.7,
+                    **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, pa, color=color, lw=3)
+        ax.plot(sma * pixel_size, pa, color=color, lw=3, **kwargs)
         ax.fill_between(sma * pixel_size,
                         pa + pa_err,
                         pa - pa_err,
@@ -954,8 +955,7 @@ def plot_SBP(ax,
              ylimin=None,
              ylimax=None,
              xlimin=None,
-             xlimax=None,
-             label='Surface brightness', **kwargs):
+             xlimax=None, **kwargs):
     '''
     This function is a templete to plot the SB profile.
     '''
@@ -968,11 +968,10 @@ def plot_SBP(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7,
-                    label=label, **kwargs)
+                    elinewidth=0.7, **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, mu, color=color, lw=3, label=label, **kwargs)
+        ax.plot(sma * pixel_size, mu, color=color, lw=3, **kwargs)
         ax.fill_between(sma * pixel_size,
                         mu + mu_err,
                         mu - mu_err,
