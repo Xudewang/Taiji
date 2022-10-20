@@ -22,6 +22,7 @@ from palettable.colorbrewer.sequential import (Blues_9, Greys_9, OrRd_9,
 from scipy.special import gammaincinv
 from scipy.special import gamma
 from scipy.interpolate import interp1d
+from scipy import ndimage
 
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
@@ -2121,6 +2122,26 @@ def seg_remove_cen_obj(seg):
     seg_copy[seg == seg[int(seg.shape[0] / 2.0), int(seg.shape[1] / 2.0)]] = 0
 
     return seg_copy
+
+def increase_mask_regions(mask,
+                              method='uniform',
+                              size=7,
+                              mask_threshold=0.01):
+        """Increase the size of the mask regions using smoothing algorithm."""
+        mask_arr = mask.astype('int16')
+        mask_arr[mask_arr > 0] = 100
+
+        if method == 'uniform' or method == 'box':
+            mask_new = ndimage.uniform_filter(mask_arr, size=size)
+        elif method == 'gaussian':
+            mask_new = ndimage.gaussian_filter(mask_arr, sigma=size, order=0)
+        else:
+            raise ValueError("Wrong method. Should be uniform or gaussian.")
+
+        mask_new[mask_new < mask_threshold] = 0
+        mask_new[mask_new >= mask_threshold] = 1
+
+        return mask_new.astype('uint8')
 
 
 def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
