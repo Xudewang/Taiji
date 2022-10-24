@@ -64,7 +64,7 @@ def suppress_stdout():
         finally:
             sys.stdout = old_stdout
             
-def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=100):
+def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), dpi=100):
     '''
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
 
@@ -728,8 +728,8 @@ def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
                      alpha=0.2)
     plt.ylim(np.min(mu_sky) - 0.2, np.max(mu_sky) + 0.2)
     plt.gca().invert_yaxis()
-    plt.ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=20)
-    plt.xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=20)
+    plt.ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$')
+    plt.xlabel(r'$r\,(\mathrm{arcsec})$')
 
 
 def getOuterBound(ellipse_data, sky_err, zpt0, alter=0.2):
@@ -799,8 +799,8 @@ def plot_x0(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'Center', fontsize=24)
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.set_ylabel(r'Center')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     ax.legend()
 
 def plot_ellip(ax,
@@ -846,8 +846,8 @@ def plot_ellip(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'Ellipticity', fontsize=24)
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.set_ylabel(r'Ellipticity')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     ax.legend()
 
 def plot_axisRatio(ax,
@@ -891,8 +891,8 @@ def plot_axisRatio(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'$b/a$', fontsize=24)
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.set_ylabel(r'$b/a$')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     #ax.legend()
 
 def plot_pa(ax,
@@ -942,8 +942,8 @@ def plot_pa(ax,
 #     else:
 #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
 
-    ax.set_ylabel(r'PA\,(deg)', fontsize=24)
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.set_ylabel(r'PA\,(deg)')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     #ax.legend()
 
 def plot_SBP(ax,
@@ -987,8 +987,8 @@ def plot_SBP(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$', fontsize=24)
-    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$', fontsize=24)
+    ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$')
+    ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     plt.gca().invert_yaxis()
     
 def plot_completeSBP_firststep(sma,
