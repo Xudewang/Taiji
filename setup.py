@@ -38,6 +38,7 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     keywords='astronomy, photometry',
+    url='https://gitlab.com/dwxu.astro/Taiji.git',
     author='Dewang Xu',
     author_email='dwxu.astro@gmail.com',
     license='MIT',

@@ -72,10 +72,16 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
         style (str): options are "JL", "SM" (supermongo-like).
     '''
     # Use JL as a template
+    # if style == 'default':
+    #     plt.style.use('../mplstyle/default.mplstyle')
+    # else:
+    #     plt.style.use('../mplstyle/JL.mplstyle')
+    import Taiji
+    pkg_path = Taiji.__path__[0]
     if style == 'default':
-        plt.style.use(Taiji_path.joinpath('mplstyle/default.mplstyle'))
+        plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
     else:
-        plt.style.use(Taiji_path.joinpath('mplstyle/JL.mplstyle'))
+        plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
     rcParams.update({'font.size': fontsize,
                      'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
                      'text.usetex': usetex,
@@ -2513,6 +2519,4 @@ def padding_PSF(psf_list):
 if __name__ == '__main__':
     test_pa = -50
 
-    lll = normalize_angle(test_pa, 0, 180)
 
-    print(lll)
