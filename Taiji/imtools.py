@@ -1,42 +1,36 @@
 from __future__ import division, print_function
-import numpy as np
+
+import copy
 import os
 import re
-import copy
 import sys
-import sep
+from contextlib import contextmanager
 
-from matplotlib.patches import Ellipse, Circle
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
-from matplotlib import colors
+import numpy as np
+import sep
+from astropy import units as u
+from astropy import wcs
+from astropy.coordinates import SkyCoord
+from astropy.io import ascii, fits
+from astropy.table import Column, Table, vstack
+from astropy.units import Quantity
+from astropy.visualization import (AsymmetricPercentileInterval, HistEqStretch,
+                                   LogStretch, ZScaleInterval)
+from astropy.visualization.mpl_normalize import ImageNormalize
+from matplotlib import cm, colors, rcParams
 from matplotlib.colors import LinearSegmentedColormap
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.gridspec import GridSpec
-from matplotlib_scalebar.scalebar import ScaleBar
-from matplotlib_scalebar.scalebar import ANGLE
-from matplotlib import cm
+from matplotlib.patches import Circle
+from matplotlib.patches import Ellipse
+from matplotlib.patches import Ellipse as mpl_ellip
+from matplotlib_scalebar.scalebar import ANGLE, ScaleBar
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from palettable.colorbrewer.sequential import (Blues_9, Greys_9, OrRd_9,
                                                Purples_9, YlGn_9)
-
-from scipy.special import gammaincinv
-from scipy.special import gamma
-from scipy.interpolate import interp1d
 from scipy import ndimage
-
-from astropy.io import fits
-from astropy.visualization import ZScaleInterval
-from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.visualization import HistEqStretch, LogStretch, AsymmetricPercentileInterval, ZScaleInterval
-from astropy.io import ascii
-from astropy.table import Table, Column,vstack
-from astropy import wcs
-from astropy import units as u
-from astropy.units import Quantity
-from astropy.coordinates import SkyCoord
-
-from matplotlib.patches import Ellipse as mpl_ellip
-from contextlib import contextmanager
+from scipy.interpolate import interp1d
+from scipy.special import gamma, gammaincinv
 
 system_use = sys.platform
 from pathlib import Path
@@ -123,8 +117,8 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
         # plt.rcParams['ytick.minor.width'] = 3.2
         # plt.rcParams['axes.linewidth'] = 5
         import matplotlib.ticker
-        from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
-                                       AutoMinorLocator)
+        from matplotlib.ticker import (AutoMinorLocator, FormatStrFormatter,
+                                       MultipleLocator)
         plt.close()
 
     if style == 'nature':
@@ -468,7 +462,7 @@ def normalize_angle(num, lower=0, upper=360, b=False):
     n : float
         A number in the range [lower, upper) or [lower, upper].
     """
-    from math import floor, ceil
+    from math import ceil, floor
 
     # abs(num + upper) and abs(num - lower) are needed, instead of
     # abs(num), since the lower and upper limits need not be 0. We need
@@ -1999,6 +1993,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             segmap: 2-D numpy array, segmentation map
     '''
     import sep
+
     # Subtract a mean sky value to achieve better object detection
     b = b  # Box size
     f = f  # Filter width
@@ -2023,7 +2018,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
         input_data = img
 
     if convolve:
-        from astropy.convolution import convolve, Gaussian2DKernel
+        from astropy.convolution import Gaussian2DKernel, convolve
         input_data = convolve(input_data.astype(
             float), Gaussian2DKernel(conv_radius))
         bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
@@ -2107,6 +2102,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             ax[0].imshow(mask.astype(float), origin='lower',
                          alpha=0.1, cmap='Greys_r')
         from matplotlib.patches import Ellipse
+
         # plot an ellipse for each object
         for obj in objects:
             e = Ellipse(xy=(obj['x'], obj['y']),
@@ -2184,8 +2180,8 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
     # Search for stars in Gaia catatlogs, which are stored in
     # `/tigress/HSC/refcats/htm/gaia_dr2_20200414`.
     try:
-        from lsst.meas.algorithms.htmIndexer import HtmIndexer
         import lsst.geom as geom
+        from lsst.meas.algorithms.htmIndexer import HtmIndexer
 
         def getShards(ra, dec, radius):
             htm = HtmIndexer(depth=7)
@@ -2315,7 +2311,7 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
     # Search for stars
     if tap_url is not None:
         with suppress_stdout():
-            from astroquery.gaia import TapPlus, GaiaClass
+            from astroquery.gaia import GaiaClass, TapPlus
             Gaia = GaiaClass(TapPlus(url=tap_url))
 
             gaia_results = Gaia.query_object_async(
@@ -2515,6 +2511,18 @@ def padding_PSF(psf_list):
             psf_pad.append(temp)
         else:
             raise ValueError('Wrong size!')
+        
+def deltaf_binomial(f, N):
+    """The error bar of the fraction of different types.
+
+    Args:
+        f (float or array): the fraction.
+        N (float or array): the number in each bin.
+
+    Returns:
+        error bar: the error bar of the fraction.
+    """
+    return np.sqrt(f*(1-f)/N)
 
 if __name__ == '__main__':
     test_pa = -50
