@@ -2551,7 +2551,7 @@ def deltaf_binomial(f, N):
     """
     return np.sqrt(f*(1-f)/N)
 
-def Running_median(X, Y, total_bins = 10):
+def Running_median(X, Y):
     """To derive the runing median.
 
     Args:
@@ -2559,12 +2559,19 @@ def Running_median(X, Y, total_bins = 10):
         Y (array): _description_
         total_bins (int, optional): _description_. Defaults to 10.
     """
+    from astropy.stats import scott_bin_width
+    from scipy.stats import iqr
+    
+    hist_bins_scott = scott_bin_width(X[~np.isnan(X)], return_bins=True)
+
+    total_bins = len(hist_bins_scott[1]) - 1
+    print(total_bins)
     
     bins = np.linspace(np.nanmin(X), np.nanmax(X), total_bins)
     delta = bins[1]-bins[0]
     idx  = np.digitize(X,bins)
     running_median = [np.nanmedian(Y[idx==k]) for k in range(total_bins)]
-    running_std = [Y[idx==k].std() for k in range(total_bins)]
+    running_std = [np.std(Y[idx==k]) for k in range(total_bins)]
     
     new_x = bins-delta/2
     new_y = running_median
