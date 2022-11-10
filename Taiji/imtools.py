@@ -42,7 +42,18 @@ if system_use == 'linux':
 elif system_use == 'darwin':
     # for mac
     Taiji_path = Path('/Users/xu/Astronomy/Taiji')
+    
+Cmap = 'cividis'
+Cmap_r = 'cividis_r'
+Vmap = 'viridis'
+Vmap_r = 'viridis_r'
 
+red = '#FF4C00'
+green = '#21A675'
+purple = '#8D4BBB'
+blue = '#4B5CC4'
+gold = '#F2BE45'
+jianghuang = '#FFC773'
 
 @contextmanager
 def suppress_stdout():
@@ -2471,6 +2482,24 @@ def create_circular_mask(img, center=None, radius=None):
     mask = dist_from_center <= radius
     return mask
 
+def create_elliptical_mask(img, center=None, radius=None):
+    """Create a circular mask to apply to an image.
+    
+    Based on https://stackoverflow.com/questions/44865023/how-can-i-create-a-circular-mask-for-a-numpy-array
+    """
+    h, w = img.shape
+    
+    if center is None: # use the middle of the image
+        center = (int(w/2), int(h/2))
+    if radius is None: # use the smallest distance between the center and image walls
+        radius = min(center[0], center[1], w-center[0], h-center[1])
+
+    Y, X = np.ogrid[:h, :w]
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+
+    mask = dist_from_center <= radius
+    return mask
+
 def remove_consecutive(sma_ap, index_original, con_number = 2):
     index_left = np.argwhere(index_original)
     index_left_array = np.array([index_left[i][0] for i in range(len(index_left))])
@@ -2521,6 +2550,26 @@ def deltaf_binomial(f, N):
         error bar: the error bar of the fraction.
     """
     return np.sqrt(f*(1-f)/N)
+
+def Running_median(X, Y, total_bins = 10):
+    """To derive the runing median.
+
+    Args:
+        X (array): _description_
+        Y (array): _description_
+        total_bins (int, optional): _description_. Defaults to 10.
+    """
+    
+    bins = np.linspace(np.nanmin(X), np.nanmax(X), total_bins)
+    delta = bins[1]-bins[0]
+    idx  = np.digitize(X,bins)
+    running_median = [np.nanmedian(Y[idx==k]) for k in range(total_bins)]
+    running_std = [Y[idx==k].std() for k in range(total_bins)]
+    
+    new_x = bins-delta/2
+    new_y = running_median
+
+    return np.array(new_x), np.array(new_y), np.array(running_std)
 
 if __name__ == '__main__':
     test_pa = -50
