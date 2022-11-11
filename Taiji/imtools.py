@@ -1974,7 +1974,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
                 convolve=False, conv_radius=None,
                 deblend_nthresh=32, deblend_cont=0.005, clean_param=1.0,
                 sky_subtract=False, flux_auto=True, flux_aper=None, show_fig=False,
-                verbose=True, logger=None):
+                verbose=True, logger=None, **kwargs):
     '''
     Extract objects for a given image using ``sep`` (a Python-wrapped ``SExtractor``). 
     For more details, please check http://sep.readthedocs.io and documentation of SExtractor.
@@ -2043,7 +2043,8 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
                                   deblend_cont=deblend_cont,
                                   clean=True,
                                   clean_param=clean_param,
-                                  minarea=minarea)
+                                  minarea=minarea,
+                                  **kwargs)
 
     if verbose:
         if logger is not None:
