@@ -2482,23 +2482,21 @@ def create_circular_mask(img, center=None, radius=None):
     mask = dist_from_center <= radius
     return mask
 
-def create_elliptical_mask(img, center=None, radius=None):
-    """Create a circular mask to apply to an image.
-    
-    Based on https://stackoverflow.com/questions/44865023/how-can-i-create-a-circular-mask-for-a-numpy-array
-    """
-    h, w = img.shape
-    
-    if center is None: # use the middle of the image
-        center = (int(w/2), int(h/2))
-    if radius is None: # use the smallest distance between the center and image walls
-        radius = min(center[0], center[1], w-center[0], h-center[1])
+def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio = 1, pa = 0):
+    from astropy.coordinates import Angle
+    from regions import EllipsePixelRegion, PixCoord
 
-    Y, X = np.ogrid[:h, :w]
-    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+    img_copy = copy.deepcopy(image_data)
 
-    mask = dist_from_center <= radius
-    return mask
+    # ellipse mask
+    reg = EllipsePixelRegion(PixCoord(img_copy.shape[0]/2, img_copy.shape[1]/2), width=radius*2, height=axis_ratio*radius*2,
+                            angle=Angle(pa, 'deg'))
+
+    ellipseGal_mask_ori = reg.to_mask()
+    ellipseGal_mask_img = ellipseGal_mask_ori.to_image(image_data.shape)
+
+    cen_mask = ellipseGal_mask_img == 1
+    return cen_mask
 
 def remove_consecutive(sma_ap, index_original, con_number = 2):
     index_left = np.argwhere(index_original)
