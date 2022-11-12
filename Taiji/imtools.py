@@ -1607,6 +1607,30 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
     #         e.set_linestyle('-')
     #         ax.add_artist(e)
 
+def display_single_easy(ax, image_data, scale_bar = True, bar_length = 10, box_alpha=1, pixel_size = 0.168):
+    from astropy.visualization import simple_norm
+
+    # Create an ImageNormalize object
+    norm = simple_norm(image_data, 'log')
+
+    # Display the image
+    fig = plt.figure()
+    im = ax.imshow(image_data, origin='lower', norm=norm, cmap='Greys_r')
+    
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
+    ax.yaxis.set_major_formatter(plt.NullFormatter())
+    
+    if scale_bar:
+        scalebar = ScaleBar(pixel_size,
+                            "''",
+                            dimension=ANGLE,
+                            color='black',
+                            box_alpha=box_alpha,
+                            font_properties={'size': 15},
+                            location='lower left',
+                            length_fraction=pixel_size,
+                            fixed_value=bar_length)
+        ax.add_artist(scalebar)
 
 def display_isophote_LSB(ax,
                          img,
