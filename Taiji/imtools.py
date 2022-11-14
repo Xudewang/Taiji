@@ -585,6 +585,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
         mu_err = symmetry_propagate_err_mu(
         intens_removeindef - sky_value, intens_err_removeindef_sky)
     else:
+        ellipse_data['intens'] = intens_removeindef
         mu = bright_to_mag(intens_removeindef, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
         intens_removeindef, intens_err_removeindef_sky)
