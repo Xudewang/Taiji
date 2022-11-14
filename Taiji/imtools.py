@@ -566,8 +566,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # remove the indef
     intens = ellipse_data['intens']
-    intens_modif = np.array(removeellipseIndef(intens)) + sky_value
-    ellipse_data['intens'] = intens_modif
+    intens_removeindef = np.array(removeellipseIndef(intens))
     intens_err = ellipse_data['int_err']
     intens_err_removeindef = removeellipseIndef(intens_err)
 
@@ -581,12 +580,12 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
         np.array(intens_err_removeindef)**2 + sky_err**2)
     
     if sky_value:
-        ellipse_data['intens'] = np.array(intens) - sky_value
-        mu = bright_to_mag(intens - sky_value, zpt0, texp, pixel_size)
+        ellipse_data['intens'] = intens_removeindef - sky_value
+        mu = bright_to_mag(intens_removeindef - sky_value, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
-        np.array(intens) - sky_value, intens_err_removeindef_sky)
+        intens_removeindef - sky_value, intens_err_removeindef_sky)
     else:
-        mu = bright_to_mag(intens, zpt0, texp, pixel_size)
+        mu = bright_to_mag(intens_removeindef, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
         np.array(intens), intens_err_removeindef_sky)
 
