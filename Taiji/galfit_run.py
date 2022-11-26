@@ -179,7 +179,10 @@ def Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
 
     else:
         print('Galfit does not run!')
-
-    Path('galfit.01').unlink()
+        
+    if Path('galfit.01').exists():
+        Path('galfit.01').unlink()
+    else:
+        print('no galfit.01, does not run???')
     os.chdir(code_dir)
     print('code dir is: ', os.getcwd())
