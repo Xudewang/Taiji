@@ -91,6 +91,7 @@ def Make_constrains(component_number, name_arr, constrain_dict,
             constrain += '\n{:2d}        pa        {:8.4f} {} {:8.4f}'.format(
                 i + 1, constrain_dict['pa_exp_low'], constrain_type['pa_exp_cons'],
                 constrain_dict['pa_exp_high'])
+            constrain += '\n2/1         re       0.6  100'
             
         if name_arr[i] == 'sersic2':
             constrain += f'\n#  Component type: {name_arr[i]}; Component number: {i+1}'
