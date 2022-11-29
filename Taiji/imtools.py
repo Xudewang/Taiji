@@ -179,6 +179,34 @@ def sersic_bn(n):
     
     return bn
 
+def Sersic_intens(r, Ie, re, n):
+    """_summary_
+
+    Args:
+        r (_type_): _description_
+        Ie (_type_): _description_
+        re (_type_): _description_
+        n (_type_): _description_
+    """
+    bn = sersic_bn(n)
+    
+    intensity = Ie*np.exp(-bn*((r/re)**(1/n)-1))
+    
+    return intensity
+
+def Exponential_intens(r, I0, rs):
+    """_summary_
+
+    Args:
+        r (_type_): _description_
+        I0 (_type_): _description_
+        rs (_type_): _description_
+    """
+    
+    intensity = I0*np.exp(-r/rs)
+    
+    return
+
 def nantozero(data):
     temp = []
     for i in range(len(data)):
