@@ -28,8 +28,8 @@ def make_head(runoption_num,
               pixel_scale,
               constraints_file=None,
               fitarea=None):
-
-    fitarea = make_galfit_fitarea(image_file, fitarea)
+    if fitarea is None:
+        fitarea = make_galfit_fitarea(image_file, fitarea)
     head = '# IMAGE and GALFIT CONTROL PARAMETERS'
     head += '\nA) {}'.format(image_file)
     head += '\nB) {}'.format(output_file)
