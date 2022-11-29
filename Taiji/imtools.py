@@ -205,7 +205,7 @@ def Exponential_intens(r, I0, rs):
     
     intensity = I0*np.exp(-r/rs)
     
-    return
+    return intensity
 
 def nantozero(data):
     temp = []
