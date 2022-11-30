@@ -45,6 +45,7 @@ blue = '#4B5CC4'
 gold = '#F2BE45'
 jianghuang = '#FFC773'
 
+
 @contextmanager
 def suppress_stdout():
     """Suppress the output.
@@ -58,6 +59,7 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
 
 def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), dpi=100):
     '''
@@ -81,13 +83,13 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
                      'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
                      'text.usetex': usetex,
                      'figure.dpi': dpi,
-                     'legend.frameon':True,
-                     'figure.constrained_layout.h_pad':0})
+                     'legend.frameon': True,
+                     'figure.constrained_layout.h_pad': 0})
 
     if style == 'DW':
         plt.style.use(['science', 'seaborn-colorblind'])
 
-        plt.rcParams['figure.figsize'] = (10,7)
+        plt.rcParams['figure.figsize'] = (10, 7)
         plt.rcParams['font.size'] = 25
         plt.rcParams['lines.linewidth'] = 3
         plt.rcParams['xtick.labelsize'] = 25
@@ -127,7 +129,8 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
             "mathtext.fontset": "stixsans"
         })
 
-def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
+
+def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     """[summary]
 
     Args:
@@ -137,20 +140,22 @@ def muRe_to_intenRe(muRe, zpt, pixel_size = 0.259):
     Returns:
         [type]: [description]
     """
-    intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
+    intenRe = 10 ** ((zpt - muRe) / 2.5) * pixel_size ** 2
     return intenRe
+
 
 def Ser_kappa(n):
     '''
     # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
     '''
     if n > 0.36:
-        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
+        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n ** 2)
 
     elif n < 0.36:
-        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
+        bn = 0.01945 - 0.8902 * n + 10.95 * n ** 2 - 19.67 * n ** 3 + 13.43 * n ** 4
 
     return bn
+
 
 def sersic_bn(n):
     """ Accurate Sersic bn.
@@ -162,9 +167,10 @@ def sersic_bn(n):
         bn: bn in the Sersic function.
     """
 
-    bn = gammaincinv(2.*n, 0.5)
+    bn = gammaincinv(2. * n, 0.5)
 
     return bn
+
 
 def Sersic_intens(r, Ie, re, n):
     """_summary_
@@ -177,9 +183,10 @@ def Sersic_intens(r, Ie, re, n):
     """
     bn = sersic_bn(n)
 
-    intensity = Ie*np.exp(-bn*((r/re)**(1/n)-1))
+    intensity = Ie * np.exp(-bn * ((r / re) ** (1 / n) - 1))
 
     return intensity
+
 
 def Exponential_intens(r, I0, rs):
     """_summary_
@@ -190,9 +197,10 @@ def Exponential_intens(r, I0, rs):
         rs (_type_): _description_
     """
 
-    intensity = I0*np.exp(-r/rs)
+    intensity = I0 * np.exp(-r / rs)
 
     return intensity
+
 
 def nantozero(data):
     temp = []
@@ -223,6 +231,7 @@ def pospa(pa):
 
     return temp
 
+
 def all_ninety_pa(pa):
     temp = 0
     if pa > 90:
@@ -232,19 +241,21 @@ def all_ninety_pa(pa):
 
     return temp
 
+
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = texp
-    A = pixel_size**2
+    A = pixel_size ** 2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
+
 def mag2bright(mag, zpt0, texp, pixel_size):
+    A = pixel_size ** 2
 
-    A = pixel_size**2
-
-    bright = texp*A*10**((mag-zpt0)/(-2.5))
+    bright = texp * A * 10 ** ((mag - zpt0) / (-2.5))
 
     return bright
+
 
 def bright_to_mag_DESI(intens):
     """transform the flux to magnitude. 
@@ -256,9 +267,10 @@ def bright_to_mag_DESI(intens):
     Returns:
         mu: surface brightness profiles.
     """
-    mu = -2.5*np.log10(intens) + 22.5
+    mu = -2.5 * np.log10(intens) + 22.5
 
     return mu
+
 
 def inten_to_mag(intens, zpt0):
     '''
@@ -266,14 +278,15 @@ def inten_to_mag(intens, zpt0):
     '''
     return -2.5 * np.log10(intens) + zpt0
 
+
 def asymmetry_propagate_err_mu(inten, err):
     detup_residual = 2.5 * np.log10((inten + err) / inten)
     detdown_residual = 2.5 * np.log10(inten / (inten - err))
 
     return detup_residual, detdown_residual
 
+
 def symmetry_propagate_err_mu(intens, intens_err):
-    #TODO: here for CGS, for other survey maybe I need add some parameters. #!??? why do you need zpt0.
     """Get the symmetry magnitude error based on the error propagation formula.
 
     Args:
@@ -288,11 +301,12 @@ def symmetry_propagate_err_mu(intens, intens_err):
 
     return mu_err
 
+
 def subtract_sky(input_file, sky_value, subtract_sky_file):
-    '''
+    """
     This function is to subtract the sky value form the original image.
     It is to be modifed, use the easy way to write just the data into the file. Then we do not need consider the header.
-    '''
+    """
 
     Remove_file(subtract_sky_file)
 
@@ -322,8 +336,8 @@ def subtract_sky_woheader(input_file, sky_value, subtract_sky_file):
 
     easy_saveData_Tofits(data_list, header, savefile=subtract_sky_file)
 
-def removeellipseIndef(arr):
 
+def removeellipseIndef(arr):
     # let the indef equals NaN
     arr[arr == 'INDEF'] = np.nan
 
@@ -351,7 +365,7 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     if not useTflux:
         # The area in unit of pixels covered by an elliptical isophote
         ell = removeellipseIndef(ellipOut['ell'])
-        ellArea = np.pi * ((ellipOut['sma']**2.0) * (1.0 - ell))
+        ellArea = np.pi * ((ellipOut['sma'] ** 2.0) * (1.0 - ell))
         # The total flux inside the "ring"
         intensUse = ellipOut['intens']
         isoFlux = np.append(ellArea[0],
@@ -369,6 +383,7 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
 
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
+
 def GrowthCurve(sma, ellip, isoInten):
     """THis function is to derive the curve of growth by integrating the isophotes.
 
@@ -380,7 +395,7 @@ def GrowthCurve(sma, ellip, isoInten):
     Returns:
         [type]: [description]
     """
-    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
+    ellArea = np.pi * ((sma ** 2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
     curveOfGrowth = list(
         map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
@@ -395,14 +410,14 @@ def GrowthCurve(sma, ellip, isoInten):
 # firstly, I should judge the file is fits or fit.
 
 def get_Rpercent(sma, cog, maxFlux, percent):
-
-    cog_percent = maxFlux*percent
+    cog_percent = maxFlux * percent
 
     f = interp1d(cog, sma)
 
     Rpercent = f(cog_percent)
 
     return Rpercent
+
 
 def get_Rmag(sma, mu, mag_use):
     f = interp1d(mu, sma)
@@ -411,13 +426,14 @@ def get_Rmag(sma, mu, mag_use):
 
     return Rnum
 
-def get_Ie(sma, intens, re):
 
+def get_Ie(sma, intens, re):
     f = interp1d(sma, intens)
 
     Ie = f(re)
 
     return Ie
+
 
 def correct_pa_profile(ellipse_output, delta_pa=75.0):
     """
@@ -526,7 +542,6 @@ def normalize_angle(num, lower=0, upper=360, b=False):
 
 
 def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
-
     # read the data
     ellipse_data = Table.read(outDat, format='ascii.no_header')
     ellipse_data.rename_column('col1', 'sma')
@@ -576,11 +591,11 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     pa_correct = correct_pa_single(ellipse_data['pa'], delta_pa=dPA)
 
     column_pa_norm = Column(name='pa_norm', data=np.array(
-            [normalize_angle(pa, lower=0, upper=180, b=False)
-             for pa in pa_correct]))
+        [normalize_angle(pa, lower=0, upper=180, b=False)
+         for pa in pa_correct]))
     ellipse_data.add_column(
         column_pa_norm
-        )
+    )
 
     # remove the indef
     intens = ellipse_data['intens']
@@ -595,18 +610,18 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
-        np.array(intens_err_removeindef)**2 + sky_err**2)
+        np.array(intens_err_removeindef) ** 2 + sky_err ** 2)
 
     if sky_value:
         ellipse_data['intens'] = intens_removeindef - sky_value
         mu = bright_to_mag(intens_removeindef - sky_value, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
-        intens_removeindef - sky_value, intens_err_removeindef_sky)
+            intens_removeindef - sky_value, intens_err_removeindef_sky)
     else:
         ellipse_data['intens'] = intens_removeindef
         mu = bright_to_mag(intens_removeindef, zpt0, texp, pixel_size)
         mu_err = symmetry_propagate_err_mu(
-        intens_removeindef, intens_err_removeindef_sky)
+            intens_removeindef, intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -633,6 +648,7 @@ def numpy_weighted_mean(data, weights=None):
     weights = np.array(weights).flatten() / float(sum(weights))
 
     return np.dot(np.array(data), weights)
+
 
 def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
     """Get the Average Q and PA."""
@@ -682,12 +698,13 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
 
     return avgQ, avgPA
 
+
 def ellipseGetAvgGeometry_CoG(ellipseOut, outRad, minSma=2.0):
     """Get the Average Q and PA."""
     # tfluxE = ellipseOut['tflux_e']
     # ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
 
-    #tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
+    # tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
     tflux, maxIsoSma, maxIsoFlux = GrowthCurve(ellipseOut['sma'], ellipseOut['ell'], ellipseOut['intens'])
     ringFlux = np.append(tflux[0], [tflux[1:] - tflux[:-1]])
 
@@ -730,6 +747,7 @@ def ellipseGetAvgGeometry_CoG(ellipseOut, outRad, minSma=2.0):
     avgPA = numpy_weighted_mean(pUse, weights=fUse)
 
     return avgQ, avgPA
+
 
 def Remove_file(file):
     if os.path.exists(file):
@@ -785,18 +803,19 @@ def getBound(sma, intens, int_err, zpt0, pixel_size=0.259, texp=1, alter=0.2):
 
     return np.array([sma[index][0], sma[index][-1]], dtype=float)
 
+
 def plot_x0(ax,
-               sma,
-               x0,
-               x0_err,
-               pixel_size=0.259,
-               plot_style='fill',
-               color='k',
-               ylimin=None,
-               ylimax=None,
-               xlimin=None,
-               xlimax=None,
-               label='Center'):
+            sma,
+            x0,
+            x0_err,
+            pixel_size=0.259,
+            plot_style='fill',
+            color='k',
+            ylimin=None,
+            ylimax=None,
+            xlimin=None,
+            xlimax=None,
+            label='Center'):
     '''
     This function is a templete to plot the center x0 profile.
     '''
@@ -831,6 +850,7 @@ def plot_x0(ax,
     ax.set_ylabel(r'Center')
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     ax.legend()
+
 
 def plot_ellip(ax,
                sma,
@@ -879,17 +899,18 @@ def plot_ellip(ax,
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     ax.legend()
 
+
 def plot_axisRatio(ax,
-               sma,
-               axisratio,
-               axisratio_err,
-               pixel_size=0.259,
-               plot_style='fill',
-               color='k',
-               ylimin=None,
-               ylimax=None,
-               xlimin=None,
-               xlimax=None):
+                   sma,
+                   axisratio,
+                   axisratio_err,
+                   pixel_size=0.259,
+                   plot_style='fill',
+                   color='k',
+                   ylimin=None,
+                   ylimax=None,
+                   xlimin=None,
+                   xlimax=None):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -922,7 +943,8 @@ def plot_axisRatio(ax,
 
     ax.set_ylabel(r'$b/a$')
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
-    #ax.legend()
+    # ax.legend()
+
 
 def plot_pa(ax,
             sma,
@@ -967,13 +989,13 @@ def plot_pa(ax,
     if xlimax:
         ax.set_xlim(xlimin, xlimax)
 
-
-#     else:
-#         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
+    #     else:
+    #         plt.xlim(sma[-1]*0.02*(-1)*pixel_size, (sma[-1]+sma[-1]*0.02)*pixel_size)
 
     ax.set_ylabel(r'PA\,(deg)')
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
-    #ax.legend()
+    # ax.legend()
+
 
 def plot_SBP(ax,
              sma,
@@ -1020,31 +1042,32 @@ def plot_SBP(ax,
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
     plt.gca().invert_yaxis()
 
+
 def plot_completeSBP_firststep(sma,
                                x0,
                                x0_err,
                                y0,
                                y0_err,
-                                ell,
-                                ell_err,
-                                pa,
-                                pa_err,
-                                mu,
-                                mu_err,
-                                intens_subbkg,
-                                sky_err,
-                                pixel_size=0.259,
-                                plot_style='fill',
-                                color='k',
-                                xlimin=None,
-                                xlimax=None,
-                                ylimin_e=None,
-                                ylimax_e=None,
-                                ylimin_pa=None,
-                                ylimax_pa=None,
-                                ylimin_mu=None,
-                                ylimax_mu=None,
-                                save_file=''):
+                               ell,
+                               ell_err,
+                               pa,
+                               pa_err,
+                               mu,
+                               mu_err,
+                               intens_subbkg,
+                               sky_err,
+                               pixel_size=0.259,
+                               plot_style='fill',
+                               color='k',
+                               xlimin=None,
+                               xlimax=None,
+                               ylimin_e=None,
+                               ylimax_e=None,
+                               ylimin_pa=None,
+                               ylimax_pa=None,
+                               ylimin_mu=None,
+                               ylimax_mu=None,
+                               save_file=''):
     '''
     This function is to plot the standard and basic surface brightness profiles including sbp, ell, and pa panels.
     '''
@@ -1053,40 +1076,39 @@ def plot_completeSBP_firststep(sma,
     gs = GridSpec(ncols=1, nrows=29, figure=fig)
 
     if not xlimin:
-
         deltaN = 0.05
         index_above_sigma = intens_subbkg > sky_err
-        len_xlim = len(sma[index_above_sigma])*pixel_size
+        len_xlim = len(sma[index_above_sigma]) * pixel_size
 
-        xlimin = -deltaN*len_xlim
+        xlimin = -deltaN * len_xlim
 
-        xlimax = (sma[index_above_sigma][-1])*pixel_size + deltaN*len_xlim
+        xlimax = (sma[index_above_sigma][-1]) * pixel_size + deltaN * len_xlim
 
     ax1 = fig.add_subplot(gs[:5, 0])
     plot_x0(ax1,
-               sma[index_above_sigma],
-               x0[index_above_sigma],
-               x0_err[index_above_sigma],
-               pixel_size=0.259,
-               plot_style='fill',
-               color='k',
-               ylimin=None,
-               ylimax=None,
-               xlimin=xlimin,
-               xlimax=xlimax,
-               label='x0')
+            sma[index_above_sigma],
+            x0[index_above_sigma],
+            x0_err[index_above_sigma],
+            pixel_size=0.259,
+            plot_style='fill',
+            color='k',
+            ylimin=None,
+            ylimax=None,
+            xlimin=xlimin,
+            xlimax=xlimax,
+            label='x0')
     plot_x0(ax1,
-               sma[index_above_sigma],
-               y0[index_above_sigma],
-               y0_err[index_above_sigma],
-               pixel_size=0.259,
-               plot_style='errorbar',
-               color='k',
-               ylimin=None,
-               ylimax=None,
-               xlimin=xlimin,
-               xlimax=xlimax,
-               label='y0')
+            sma[index_above_sigma],
+            y0[index_above_sigma],
+            y0_err[index_above_sigma],
+            pixel_size=0.259,
+            plot_style='errorbar',
+            color='k',
+            ylimin=None,
+            ylimax=None,
+            xlimin=xlimin,
+            xlimax=xlimax,
+            label='y0')
 
     ax2 = fig.add_subplot(gs[5:10, 0])
     plot_ellip(ax2,
@@ -1112,7 +1134,7 @@ def plot_completeSBP_firststep(sma,
             ylimin=ylimin_pa,
             ylimax=ylimax_pa,
             xlimin=xlimin,
-               xlimax=xlimax)
+            xlimax=xlimax)
 
     ax4 = fig.add_subplot(gs[15:, 0])
     plot_SBP(ax4,
@@ -1130,6 +1152,7 @@ def plot_completeSBP_firststep(sma,
     if save_file:
         plt.savefig(save_file, dpi=200, bbox_inches='tight')
     # plt.show()
+
 
 def plot_completeSBP(sma,
                      ell,
@@ -1160,14 +1183,13 @@ def plot_completeSBP(sma,
     gs = GridSpec(ncols=1, nrows=24, figure=fig)
 
     if not xlimin:
-
         deltaN = 0.05
         index_above_sigma = intens_subbkg > sky_err
-        len_xlim = len(sma[index_above_sigma])*pixel_size
+        len_xlim = len(sma[index_above_sigma]) * pixel_size
 
-        xlimin = -deltaN*len_xlim
+        xlimin = -deltaN * len_xlim
 
-        xlimax = (sma[index_above_sigma][-1])*pixel_size + deltaN*len_xlim
+        xlimax = (sma[index_above_sigma][-1]) * pixel_size + deltaN * len_xlim
 
     ax1 = fig.add_subplot(gs[:5, 0])
     plot_ellip(ax1,
@@ -1250,13 +1272,14 @@ def random_cmap(ncolors=256, background_color='white'):
 
     return colors.ListedColormap(rgb)
 
+
 def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwargs):
-    #plt.figure(figsize=(6, 6))
+    # plt.figure(figsize=(6, 6))
     ax.imshow(
         dat,
         origin="lower",
         cmap="Greys",
-        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3*noise]), clip = False, vmax = 3*noise, vmin = np.min(dat)),
+        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3 * noise]), clip=False, vmax=3 * noise, vmin=np.min(dat)),
         aspect='auto',
         **kwargs
     )
@@ -1264,12 +1287,12 @@ def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwa
     my_cmap.set_under("k", alpha=0)
 
     ax.imshow(
-        np.ma.masked_where(dat < 3*noise, dat),
+        np.ma.masked_where(dat < 3 * noise, dat),
         origin="lower",
         cmap=my_cmap,
-        norm=ImageNormalize(stretch=LogStretch(),clip = False),
+        norm=ImageNormalize(stretch=LogStretch(), clip=False),
         clim=[3 * noise, None],
-        interpolation = 'none',
+        interpolation='none',
         aspect='auto',
         **kwargs
     )
@@ -1448,7 +1471,7 @@ def display_single(img,
         labelbottom=False,
         labelleft=False,
         axis=u'both',
-        which=u'both') # length=0
+        which=u'both')  # length=0
 
     # Put scale bar on the image
     if img.ndim == 3:
@@ -1490,10 +1513,10 @@ def display_single(img,
             horizontalalignment='center',
             color=scale_bar_color)
     if add_text is not None:
-        text_x_0 = int(img_size_x*0.08)
-        text_y_0 = int(img_size_y*0.80)
+        text_x_0 = int(img_size_x * 0.08)
+        text_y_0 = int(img_size_y * 0.80)
         ax1.text(
-            text_x_0, text_y_0, r'$\mathrm{'+add_text+'}$',
+            text_x_0, text_y_0, r'$\mathrm{' + add_text + '}$',
             fontsize=text_fontsize, color=text_color)
 
     # Put a color bar on the image
@@ -1520,6 +1543,7 @@ def display_single(img,
     if ax is None:
         return fig
     return ax1
+
 
 def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=None,
                 cmap_list=None, label_x=0.1, label_y=0.9, fontsize=20, fontcolor='k',
@@ -1625,7 +1649,8 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
     #         e.set_linestyle('-')
     #         ax.add_artist(e)
 
-def display_single_easy(ax, image_data, scale_bar = True, bar_length = 10, box_alpha=1, pixel_size = 0.168):
+
+def display_single_easy(ax, image_data, scale_bar=True, bar_length=10, box_alpha=1, pixel_size=0.168):
     from astropy.visualization import simple_norm
 
     # Create an ImageNormalize object
@@ -1650,6 +1675,7 @@ def display_single_easy(ax, image_data, scale_bar = True, bar_length = 10, box_a
                             fixed_value=bar_length)
         ax.add_artist(scalebar)
 
+
 def display_isophote_LSB(ax,
                          img,
                          x0,
@@ -1669,7 +1695,7 @@ def display_isophote_LSB(ax,
              bar_length=scale_bar_length)
 
     for k in range(len(sma)):
-        if (k % 2 == 0) & (k<0.7*len(sma)):
+        if (k % 2 == 0) & (k < 0.7 * len(sma)):
             e = Ellipse(xy=(x0, y0),
                         height=sma[k] * 2.0,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
@@ -1681,7 +1707,7 @@ def display_isophote_LSB(ax,
             ax.add_artist(e)
 
     for k in range(len(sma)):
-        if k>=0.7*len(sma):
+        if k >= 0.7 * len(sma):
             e = Ellipse(xy=(x0, y0),
                         height=sma[k] * 2.0,
                         width=sma[k] * 2.0 * (1.0 - ell[k]),
@@ -1726,6 +1752,7 @@ def easy_saveData_Tofits(data, header, savefile):
     hdul = fits.HDUList(hdu)
     hdul.writeto(savefile, overwrite=True)
 
+
 def arcsec2kpc(x, D):
     """This function is for secondary axis to show the physical units, kpc.
        Note: when use this function, we should predefine a D, D is the distance of the objects.
@@ -1736,9 +1763,10 @@ def arcsec2kpc(x, D):
     Returns:
         [type]: [description]
     """
-    Rkpc = (x*np.pi*D)/(18*36)
+    Rkpc = (x * np.pi * D) / (18 * 36)
 
     return Rkpc
+
 
 def kpc2arcsec(x, D):
     """The inverse function of the [arcsec2kpc] for secondary axis.
@@ -1749,35 +1777,38 @@ def kpc2arcsec(x, D):
     Returns:
         [type]: [description]
     """
-    Rsec = (x*18*36)/(np.pi*D)
+    Rsec = (x * 18 * 36) / (np.pi * D)
 
     return Rsec
 
+
 def M2LToMass(BV, Mag_gal, Dist):
     # This function if for K band. the parameter is from KH13.
-    logM2L = 1.055*(BV) - 0.9402
+    logM2L = 1.055 * (BV) - 0.9402
 
     Mag_sun = 3.27
 
-    logL_gal = (Mag_gal - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 # the unit of L_gal is L_sun
+    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # the unit of L_gal is L_sun
 
-    logM_gal = logM2L + logL_gal # M_gal unit is M_sun
+    logM_gal = logM2L + logL_gal  # M_gal unit is M_sun
 
     return logM_gal
 
+
 def M2LToMass_R(BR, Mag_gal, Dist):
     # This function if for K band. the parameter is from KH13.
-    logM2L = 0.683*(BR) - 0.523
+    logM2L = 0.683 * (BR) - 0.523
     print('ML', logM2L)
 
     Mag_sun = 4.6
 
-    logL_gal = (Mag_gal - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 # the unit of L_gal is L_sun
+    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # the unit of L_gal is L_sun
     print('logL', logL_gal)
 
-    logM_gal = logM2L + logL_gal # M_gal unit is M_sun
+    logM_gal = logM2L + logL_gal  # M_gal unit is M_sun
 
     return logM_gal
+
 
 def Ras2Rkpc(D, R_as):
     """ Transforme the arcsecond to kpc.
@@ -1790,11 +1821,12 @@ def Ras2Rkpc(D, R_as):
         R_kpc: the radius in the unit of kpc.
     """
 
-    return D*1000*R_as*np.pi/180/60/60
+    return D * 1000 * R_as * np.pi / 180 / 60 / 60
+
 
 def Rkpc2Ras(D, R_kpc):
+    return R_kpc * 180 * 60 * 60 / np.pi / D / 1000
 
-    return R_kpc*180*60*60/np.pi/D/1000
 
 def KR(logre, a, b):
     """Show the kormendy relation. It is a linear function.
@@ -1807,7 +1839,8 @@ def KR(logre, a, b):
     Returns:
         <mue>: the mean effective surface brightness of kormendy relation.
     """
-    return a*logre + b
+    return a * logre + b
+
 
 def fn(n):
     """The transformation factor from mue to mean mue.
@@ -1818,11 +1851,12 @@ def fn(n):
     Returns:
         fn: the transformation factor.
     """
-    b = gammaincinv(2.*n, 0.5)
+    b = gammaincinv(2. * n, 0.5)
 
-    fn = n*np.exp(b)/b**(2*n)*gamma(2*n)
+    fn = n * np.exp(b) / b ** (2 * n) * gamma(2 * n)
 
     return fn
+
 
 def mean_mue(mue, n):
     """ To calculate the mean mue for kormendy relation.
@@ -1833,12 +1867,14 @@ def mean_mue(mue, n):
     Returns:
         mean_mue_: mean effective surface brightness.
     """
-    return mue - 2.5*np.log10(fn(n))
+    return mue - 2.5 * np.log10(fn(n))
+
 
 def color2ML_profile(color, a, b):
-    logM2L = a + b*color
+    logM2L = a + b * color
 
     return logM2L
+
 
 def mass_profile(cog_mag, logM2L, Dist, Mag_sun):
     """ To get the mass profiles based on stellar surface brightness profiles.
@@ -1855,11 +1891,12 @@ def mass_profile(cog_mag, logM2L, Dist, Mag_sun):
         mass: the stellar mass profiles.
     """
 
-    logL_gal = (cog_mag - Mag_sun)/(-2.5) - 2*np.log10(1/Dist) + 10 #* the unit of L_gal is L_sun
+    logL_gal = (cog_mag - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # * the unit of L_gal is L_sun
 
-    logM_gal = logM2L + logL_gal #! M_gal's unit is M_sun
+    logM_gal = logM2L + logL_gal  # ! M_gal's unit is M_sun
 
     return logM_gal
+
 
 def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     """Get the mass surface density profiles.
@@ -1874,9 +1911,10 @@ def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
 
-    mass_density_kpc = np.log10(10**logM_gal/(np.pi*sma_kpc**2*(1-ellipticity)))
+    mass_density_kpc = np.log10(10 ** logM_gal / (np.pi * sma_kpc ** 2 * (1 - ellipticity)))
 
     return mass_density_kpc
+
 
 # Save 2-D numpy array to `fits`
 def save_to_fits(img, fits_file, wcs=None, header=None, overwrite=True):
@@ -1923,6 +1961,7 @@ def save_to_fits(img, fits_file, wcs=None, header=None, overwrite=True):
 
     img_hdu.writeto(fits_file, overwrite=overwrite)
     return img_hdu
+
 
 # Cutout image
 
@@ -1986,8 +2025,8 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
 
     if 'PC1_1' in dict(cutout_header).keys():
         cutout_header['CD1_1'] = cutout_header['PC1_1']
-        #cutout_header['CD1_2'] = cutout_header['PC1_2']
-        #cutout_header['CD2_1'] = cutout_header['PC2_1']
+        # cutout_header['CD1_2'] = cutout_header['PC1_2']
+        # cutout_header['CD2_1'] = cutout_header['PC2_1']
         cutout_header['CD2_2'] = cutout_header['PC2_2']
         cutout_header['CDELT1'] = cutout_header['CD1_1']
         cutout_header['CDELT2'] = cutout_header['CD2_2']
@@ -2001,7 +2040,7 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
     # Build a HDU
     hdu = fits.PrimaryHDU(header=cutout_header)
     hdu.data = cutout.data
-    #hdu.data = np.flipud(cutout.data)
+    # hdu.data = np.flipud(cutout.data)
     # Save FITS image
     if save:
         fits_file = prefix + '.fits'
@@ -2011,6 +2050,7 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
         hdu.writeto(fits_file, overwrite=True)
 
     return cutout, [cen_pos, dx, dy], cutout_header
+
 
 def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5,
                 convolve=False, conv_radius=None,
@@ -2099,7 +2139,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
                                                   6. * objects['a'])[0], name='flux_max'))
     # Add FWHM estimated from 'a' and 'b'.
     # This is suggested here: https://github.com/kbarbary/sep/issues/34
-    objects.add_column(Column(data=2 * np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
+    objects.add_column(Column(data=2 * np.sqrt(np.log(2) * (objects['a'] ** 2 + objects['b'] ** 2)),
                               name='fwhm_custom'))
 
     # Measure R30, R50, R80
@@ -2170,6 +2210,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
         return objects, segmap, fig
     return objects, segmap
 
+
 def seg_remove_cen_obj(seg):
     """Remove the central object from the segmentation."""
     seg_copy = copy.deepcopy(seg)
@@ -2177,25 +2218,26 @@ def seg_remove_cen_obj(seg):
 
     return seg_copy
 
+
 def increase_mask_regions(mask,
-                              method='uniform',
-                              size=7,
-                              mask_threshold=0.01):
-        """Increase the size of the mask regions using smoothing algorithm."""
-        mask_arr = mask.astype('int16')
-        mask_arr[mask_arr > 0] = 100
+                          method='uniform',
+                          size=7,
+                          mask_threshold=0.01):
+    """Increase the size of the mask regions using smoothing algorithm."""
+    mask_arr = mask.astype('int16')
+    mask_arr[mask_arr > 0] = 100
 
-        if method == 'uniform' or method == 'box':
-            mask_new = ndimage.uniform_filter(mask_arr, size=size)
-        elif method == 'gaussian':
-            mask_new = ndimage.gaussian_filter(mask_arr, sigma=size, order=0)
-        else:
-            raise ValueError("Wrong method. Should be uniform or gaussian.")
+    if method == 'uniform' or method == 'box':
+        mask_new = ndimage.uniform_filter(mask_arr, size=size)
+    elif method == 'gaussian':
+        mask_new = ndimage.gaussian_filter(mask_arr, sigma=size, order=0)
+    else:
+        raise ValueError("Wrong method. Should be uniform or gaussian.")
 
-        mask_new[mask_new < mask_threshold] = 0
-        mask_new[mask_new >= mask_threshold] = 1
+    mask_new[mask_new < mask_threshold] = 0
+    mask_new[mask_new >= mask_threshold] = 1
 
-        return mask_new.astype('uint8')
+    return mask_new.astype('uint8')
 
 
 def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
@@ -2225,9 +2267,9 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
 
     # Width and height of the search box
     img_ra_size = Quantity(pixel_scale * (image.shape)
-                           [1] * size_buffer, u.arcsec).to(u.degree)
+    [1] * size_buffer, u.arcsec).to(u.degree)
     img_dec_size = Quantity(pixel_scale * (image.shape)
-                            [0] * size_buffer, u.arcsec).to(u.degree)
+    [0] * size_buffer, u.arcsec).to(u.degree)
 
     # Search for stars in Gaia catatlogs, which are stored in
     # `/tigress/HSC/refcats/htm/gaia_dr2_20200414`.
@@ -2276,12 +2318,12 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
             (cat['coord_ra'] < img_cen_ra_dec.ra + img_ra_size / 2) &
             (cat['coord_dec'] > img_cen_ra_dec.dec - img_dec_size / 2) &
             (cat['coord_dec'] < img_cen_ra_dec.dec + img_dec_size / 2)
-        ]
+            ]
         gaia_results.rename_columns(['coord_ra', 'coord_dec'], ['ra', 'dec'])
 
         gaia_results['phot_g_mean_mag'] = -2.5 * \
-            np.log10(
-                (gaia_results['phot_g_mean_flux'] / (3631 * u.Jy)))  # AB magnitude
+                                          np.log10(
+                                              (gaia_results['phot_g_mean_flux'] / (3631 * u.Jy)))  # AB magnitude
 
         # Convert the (RA, Dec) of stars into pixel coordinate using WCS
         x_gaia, y_gaia = wcs.all_world2pix(gaia_results['ra'],
@@ -2356,9 +2398,9 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
 
     # Width and height of the search box
     img_search_x = Quantity(pixel_scale * (image.shape)
-                            [0] * size_buffer, u.arcsec)
+    [0] * size_buffer, u.arcsec)
     img_search_y = Quantity(pixel_scale * (image.shape)
-                            [1] * size_buffer, u.arcsec)
+    [1] * size_buffer, u.arcsec)
 
     # Search for stars
     if tap_url is not None:
@@ -2501,26 +2543,28 @@ def create_circular_mask(img, center=None, radius=None):
     """
     h, w = img.shape
 
-    if center is None: # use the middle of the image
-        center = (int(w/2), int(h/2))
-    if radius is None: # use the smallest distance between the center and image walls
-        radius = min(center[0], center[1], w-center[0], h-center[1])
+    if center is None:  # use the middle of the image
+        center = (int(w / 2), int(h / 2))
+    if radius is None:  # use the smallest distance between the center and image walls
+        radius = min(center[0], center[1], w - center[0], h - center[1])
 
     Y, X = np.ogrid[:h, :w]
-    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
 
     mask = dist_from_center <= radius
     return mask
 
-def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio = 1, pa = 0):
+
+def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio=1, pa=0):
     from astropy.coordinates import Angle
     from regions import EllipsePixelRegion, PixCoord
 
     img_copy = copy.deepcopy(image_data)
 
     # ellipse mask
-    reg = EllipsePixelRegion(PixCoord(img_copy.shape[0]/2, img_copy.shape[1]/2), width=radius*2, height=axis_ratio*radius*2,
-                            angle=Angle(pa, 'deg'))
+    reg = EllipsePixelRegion(PixCoord(img_copy.shape[0] / 2, img_copy.shape[1] / 2), width=radius * 2,
+                             height=axis_ratio * radius * 2,
+                             angle=Angle(pa, 'deg'))
 
     ellipseGal_mask_ori = reg.to_mask()
     ellipseGal_mask_img = ellipseGal_mask_ori.to_image(image_data.shape)
@@ -2528,13 +2572,14 @@ def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio = 1,
     cen_mask = ellipseGal_mask_img == 1
     return cen_mask
 
-def remove_consecutive(sma_ap, index_original, con_number = 2):
+
+def remove_consecutive(sma_ap, index_original, con_number=2):
     index_left = np.argwhere(index_original)
     index_left_array = np.array([index_left[i][0] for i in range(len(index_left))])
     diff_index = np.diff(index_left_array)
 
-    if len(sma_ap[np.argwhere(diff_index>(con_number+1))])>0:
-        sma_stop_lowsn = (np.array(sma_ap)[np.argwhere(diff_index>con_number+1)])[0][0]
+    if len(sma_ap[np.argwhere(diff_index > (con_number + 1))]) > 0:
+        sma_stop_lowsn = (np.array(sma_ap)[np.argwhere(diff_index > con_number + 1)])[0][0]
         print(sma_stop_lowsn)
         new_index = np.logical_and(index_original, sma_ap <= sma_stop_lowsn)
     else:
@@ -2567,6 +2612,7 @@ def padding_PSF(psf_list):
         else:
             raise ValueError('Wrong size!')
 
+
 def deltaf_binomial(f, N):
     """The error bar of the fraction of different types.
 
@@ -2577,7 +2623,8 @@ def deltaf_binomial(f, N):
     Returns:
         error bar: the error bar of the fraction.
     """
-    return np.sqrt(f*(1-f)/N)
+    return np.sqrt(f * (1 - f) / N)
+
 
 def Running_median(X, Y):
     """To derive the runing median.
@@ -2595,17 +2642,16 @@ def Running_median(X, Y):
     print(total_bins)
 
     bins = np.linspace(np.nanmin(X), np.nanmax(X), total_bins)
-    delta = bins[1]-bins[0]
-    idx  = np.digitize(X,bins)
-    running_median = [np.nanmedian(Y[idx==k]) for k in range(total_bins)]
-    running_std = [np.std(Y[idx==k]) for k in range(total_bins)]
+    delta = bins[1] - bins[0]
+    idx = np.digitize(X, bins)
+    running_median = [np.nanmedian(Y[idx == k]) for k in range(total_bins)]
+    running_std = [np.std(Y[idx == k]) for k in range(total_bins)]
 
-    new_x = bins-delta/2
+    new_x = bins - delta / 2
     new_y = running_median
 
     return np.array(new_x), np.array(new_y), np.array(running_std)
 
+
 if __name__ == '__main__':
     test_pa = -50
-
-
