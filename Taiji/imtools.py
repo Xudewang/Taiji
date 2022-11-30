@@ -22,7 +22,7 @@ from matplotlib import cm, colors, rcParams
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Ellipse
-from matplotlib.patches import Ellipse as mpl_ellip
+from matplotlib.patches import Ellipse as mplEllip
 from matplotlib_scalebar.scalebar import ANGLE, ScaleBar
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from palettable.colorbrewer.sequential import (Blues_9, Greys_9, OrRd_9,
@@ -2346,7 +2346,7 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
             ax1 = display_single(image, ax=ax1)
             # Plot an ellipse for each object
             for star in gaia_results:
-                smask = mpl_ellip(
+                smask = mplEllip(
                     xy=(star['x_pix'], star['y_pix']),
                     width=(2.0 * star['rmask_arcsec'] / pixel_scale),
                     height=(2.0 * star['rmask_arcsec'] / pixel_scale),
@@ -2446,7 +2446,7 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
             ax1 = display_single(image, ax=ax1)
             # Plot an ellipse for each object
             for star in gaia_results:
-                smask = mpl_ellip(
+                smask = mplEllip(
                     xy=(star['x_pix'], star['y_pix']),
                     width=(2.0 * star['rmask_arcsec'] / pixel_scale),
                     height=(2.0 * star['rmask_arcsec'] / pixel_scale),
