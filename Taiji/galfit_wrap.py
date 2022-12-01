@@ -49,7 +49,8 @@ def make_head(runoption_num,
 
 
 def Make_constrains(component_number, name_arr, constrain_dict,
-                    constrain_type):
+                    constrain_type,
+                    same_center=False):
     """ To make the constrain file for Galfit. As the Galfit constrain file described, the parameters include x, y, mag, re, rs, n, alpha, beta, gamma, pa, q. Basically, two formats are useful.
     
     # The first type is:
@@ -71,8 +72,8 @@ def Make_constrains(component_number, name_arr, constrain_dict,
     for i in range(component_number):
 
         if name_arr[i] == "expdisk1":
-            constrain  += '\n\n'
-            constrain += f'\n#  Component type: {name_arr[i]}; Component number: {i+1}'
+            constrain += '\n\n'
+            constrain += f'\n#  Component type: {name_arr[i]}; Component number: {i + 1}'
             constrain += '\n{:2d}        x        {:8.4f} {} {:8.4f}'.format(
                 i + 1, constrain_dict['x_low'], constrain_type['x_cons'],
                 constrain_dict['x_high'])
@@ -92,11 +93,13 @@ def Make_constrains(component_number, name_arr, constrain_dict,
                 i + 1, constrain_dict['pa_exp_low'], constrain_type['pa_exp_cons'],
                 constrain_dict['pa_exp_high'])
             constrain += '\n2/1         re       0.6  100'
-            constrain += '\n2/1         x        1  1'
-            constrain += '\n2/1         y        1  1'
-            
+
+            if same_center:
+                constrain += '\n2/1         x        1  1'
+                constrain += '\n2/1         y        1  1'
+
         if name_arr[i] == 'sersic2':
-            constrain += f'\n#  Component type: {name_arr[i]}; Component number: {i+1}'
+            constrain += f'\n#  Component type: {name_arr[i]}; Component number: {i + 1}'
             constrain += '\n{:2d}        x        {:8.4f} {} {:8.4f}'.format(
                 i + 1, constrain_dict['x_low'], constrain_type['x_cons'],
                 constrain_dict['x_high'])
@@ -123,7 +126,6 @@ def Make_constrains(component_number, name_arr, constrain_dict,
 
 
 def Make_Sersic_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1, 1, 1])):
-
     parameternumber_arr = [3, 4, 5, 9, 10]
 
     description_arr = [
@@ -143,7 +145,6 @@ def Make_Sersic_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1, 1, 1])):
 
 
 def Make_Expdisk_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1, 1])):
-
     parameternumber_arr = [3, 4, 9, 10]
 
     description_arr = [
@@ -162,7 +163,6 @@ def Make_Expdisk_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1, 1])):
 
 
 def Make_Sky_parameters(value_arr, fixed_num_arr=np.array([1, 0, 0])):
-
     parameternumber_arr = [1, 2, 3]
 
     description_arr = ('bkg value at center of fitting region [ADUs]',
@@ -236,7 +236,6 @@ def Component_to_galfit(componentnumber,
 
 
 def Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
-
     os.chdir(feedme_dir)
     print('feedme dir is: ', os.getcwd())
 
