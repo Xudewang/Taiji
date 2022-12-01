@@ -172,18 +172,18 @@ def sersic_bn(n):
     return bn
 
 
-def Sersic_intens(r, Ie, re, n):
+def Sersic_intens(r, Ie, r_eff, n):
     """_summary_
 
     Args:
         r (_type_): _description_
         Ie (_type_): _description_
-        re (_type_): _description_
+        r_eff (_type_): _description_
         n (_type_): _description_
     """
     bn = sersic_bn(n)
 
-    intensity = Ie * np.exp(-bn * ((r / re) ** (1 / n) - 1))
+    intensity = Ie * np.exp(-bn * ((r / r_eff) ** (1 / n) - 1))
 
     return intensity
 
