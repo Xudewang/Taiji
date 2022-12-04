@@ -162,7 +162,7 @@ def Make_Expdisk_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1, 1])):
     return ''.join(entry_arr)
 
 
-def Make_Sky_parameters(value_arr, fixed_num_arr=np.array([1, 0, 0])):
+def Make_Sky_parameters(value_arr, fixed_num_arr=np.array([1, 1, 1])):
     parameternumber_arr = [1, 2, 3]
 
     description_arr = ('bkg value at center of fitting region [ADUs]',
