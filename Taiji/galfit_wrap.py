@@ -259,7 +259,7 @@ def _Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
 
     print('code dir is: ', os.getcwd())
     
-def Galfit_fit(feedme_data, galfit_NN_rename, run_type = '-o0', result_path = '/home/dewang/work/thickness/', temp_home_dir = '/home/dewang/work/thickness/', code_dir = '/home/dewang/work/thickness/code/'):
+def Galfit_fit(feedme_data, galfit_NN_rename, run_type = '-o0', result_path = '/home/dewang/work/thickness/galfit_op/', temp_home_dir = '/home/dewang/work/thickness/', code_dir = '/home/dewang/work/thickness/code/'):
 
     with TemporaryDirectory(dir=temp_home_dir) as tmpdir:
         os.chdir(tmpdir)
