@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 from astropy.io import fits
@@ -235,28 +236,74 @@ def Component_to_galfit(componentnumber,
     return body_arr
 
 
-def Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
-    os.chdir(feedme_dir)
-    print('feedme dir is: ', os.getcwd())
+def _Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
 
-    galfitcmd = 'galfit'
+    with os.chdir(feedme_dir):
+        print('feedme dir is: ', os.getcwd())
 
-    cmd = [galfitcmd, run_type, feedme_file]
+        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'], shell=True)
 
-    popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'], shell=True)
+        return_code = popen.wait()
 
-    return_code = popen.wait()
+        if return_code == 0:
+            print('Galfit ran!')
 
-    if return_code == 0:
-        print('Galfit ran!')
+        else:
+            print('Galfit does not run!')
 
-    else:
-        print('Galfit does not run!')
+        if Path('galfit.01').exists():
+            #Path('galfit.01').unlink()
+            print('galfit.01 exsits')
+        else:
+            print('no galfit.01, does not run???')
 
-    # if Path('galfit.01').exists():
-    #     #Path('galfit.01').unlink()
-    #     print('galfit.01 exsits')
-    # else:
-    #     print('no galfit.01, does not run???')
-    os.chdir(code_dir)
+    print('code dir is: ', os.getcwd())
+    
+def Galfit_fit(feedme_data, galfit_NN_rename, result_path = '/home/dewang/work/thickness/', run_type = '-o0', temp_home_dir = '/home/dewang/work/thickness/'):
+
+    with TemporaryDirectory(dir=temp_home_dir) as tmpdir:
+        os.chdir(tmpdir)
+        
+        print('Temp dir is: ', os.getcwd())
+        
+        feedme_file = 'galfit.feedme'
+        
+        with open(feedme_file, "w") as f:
+            f.write(feedme_data)
+
+        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'], shell=True)
+
+        return_code = popen.wait()
+
+        if return_code == 0:
+            print('Galfit ran!')
+
+        else:
+            print('Galfit does not run!')
+
+        if Path('galfit.01').exists():
+            #Path('galfit.01').unlink()
+            print('galfit.01 exsits')
+            
+            os.rename('galfit.01', os.path_join(result_path, galfit_NN_rename))
+            
+        else:
+            print('no galfit.01, does not run???')
+
+    print('code dir is: ', os.getcwd())
+    
+def Galfit_subcomponent(galfit_result_file, feedme_dir, code_dir=None):
+    
+    with os.chdir(feedme_dir):
+        print('feedme dir is: ', os.getcwd())
+        popen = subprocess.Popen([f'galfit -o3 {galfit_result_file}'], shell=True)
+
+        return_code = popen.wait()
+
+        if return_code == 0:
+            print('Galfit ran!')
+
+        else:
+            print('Galfit does not run!')
+            
     print('code dir is: ', os.getcwd())
