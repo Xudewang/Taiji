@@ -317,7 +317,7 @@ def Galfit_subcomponent(galfit_result_file,
 
         print('Temp dir is: ', os.getcwd())
 
-        popen = subprocess.Popen([f'galfit -o3 {galfit_result_file}'],
+        popen = subprocess.Popen([f'galfit -o3 {os.path.join(result_path, galfit_result_file)}'],
                                  shell=True)
 
         return_code = popen.wait()
