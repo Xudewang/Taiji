@@ -285,7 +285,7 @@ def Galfit_fit(feedme_data, galfit_NN_rename, result_path = '/home/dewang/work/t
             #Path('galfit.01').unlink()
             print('galfit.01 exsits')
             
-            os.rename('galfit.01', os.path_join(result_path, galfit_NN_rename))
+            os.rename('galfit.01', os.path.join(result_path, galfit_NN_rename))
             
         else:
             print('no galfit.01, does not run???')
