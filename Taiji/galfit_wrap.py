@@ -49,7 +49,9 @@ def make_head(runoption_num,
     return head
 
 
-def Make_constrains(component_number, name_arr, constrain_dict,
+def Make_constrains(component_number,
+                    name_arr,
+                    constrain_dict,
                     constrain_type,
                     same_center=False):
     """ To make the constrain file for Galfit. As the Galfit constrain file described, the parameters include x, y, mag, re, rs, n, alpha, beta, gamma, pa, q. Basically, two formats are useful.
@@ -88,11 +90,11 @@ def Make_constrains(component_number, name_arr, constrain_dict,
                 i + 1, constrain_dict['rs_low'], constrain_type['rs_cons'],
                 constrain_dict['rs_high'])
             constrain += '\n{:2d}        q        {:8.4f} {} {:8.4f}'.format(
-                i + 1, constrain_dict['q_exp_low'], constrain_type['q_exp_cons'],
-                constrain_dict['q_exp_high'])
+                i + 1, constrain_dict['q_exp_low'],
+                constrain_type['q_exp_cons'], constrain_dict['q_exp_high'])
             constrain += '\n{:2d}        pa        {:8.4f} {} {:8.4f}'.format(
-                i + 1, constrain_dict['pa_exp_low'], constrain_type['pa_exp_cons'],
-                constrain_dict['pa_exp_high'])
+                i + 1, constrain_dict['pa_exp_low'],
+                constrain_type['pa_exp_cons'], constrain_dict['pa_exp_high'])
             constrain += '\n2/1         re       0.6  100'
 
             if same_center:
@@ -117,10 +119,12 @@ def Make_constrains(component_number, name_arr, constrain_dict,
                 i + 1, constrain_dict['n_low'], constrain_type['n_cons'],
                 constrain_dict['n_high'])
             constrain += '\n{:2d}        q        {:8.4f} {} {:8.4f}'.format(
-                i + 1, constrain_dict['q_sersic_low'], constrain_type['q_sersic_cons'],
+                i + 1, constrain_dict['q_sersic_low'],
+                constrain_type['q_sersic_cons'],
                 constrain_dict['q_sersic_high'])
             constrain += '\n{:2d}        pa        {:8.4f} {} {:8.4f}'.format(
-                i + 1, constrain_dict['pa_sersic_low'], constrain_type['pa_sersic_cons'],
+                i + 1, constrain_dict['pa_sersic_low'],
+                constrain_type['pa_sersic_cons'],
                 constrain_dict['pa_sersic_high'])
 
     return constrain
@@ -241,7 +245,8 @@ def _Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
     with os.chdir(feedme_dir):
         print('feedme dir is: ', os.getcwd())
 
-        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'], shell=True)
+        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'],
+                                 shell=True)
 
         return_code = popen.wait()
 
@@ -258,20 +263,27 @@ def _Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
             print('no galfit.01, does not run???')
 
     print('code dir is: ', os.getcwd())
-    
-def Galfit_fit(feedme_data, galfit_NN_rename, run_type = '-o0', result_path = '/home/dewang/work/thickness/galfit_op/', temp_home_dir = '/home/dewang/work/thickness/', code_dir = '/home/dewang/work/thickness/code/'):
+
+
+def Galfit_fit(feedme_data,
+               galfit_NN_rename,
+               run_type='-o0',
+               result_path='/home/dewang/work/thickness/galfit_op/',
+               temp_home_dir='/home/dewang/work/thickness/',
+               code_dir='/home/dewang/work/thickness/code/'):
 
     with TemporaryDirectory(dir=temp_home_dir) as tmpdir:
         os.chdir(tmpdir)
-        
+
         print('Temp dir is: ', os.getcwd())
-        
+
         feedme_file = 'galfit.feedme'
-        
+
         with open(feedme_file, "w") as f:
             f.write(feedme_data)
 
-        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'], shell=True)
+        popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'],
+                                 shell=True)
 
         return_code = popen.wait()
 
@@ -284,27 +296,46 @@ def Galfit_fit(feedme_data, galfit_NN_rename, run_type = '-o0', result_path = '/
         if Path('galfit.01').exists():
             #Path('galfit.01').unlink()
             print('galfit.01 exsits')
-            
+
             os.rename('galfit.01', os.path.join(result_path, galfit_NN_rename))
-            
+
         else:
             print('no galfit.01, does not run???')
-            
+
     os.chdir(code_dir)
     print('code dir is: ', os.getcwd())
-    
-def Galfit_subcomponent(galfit_result_file, feedme_dir, code_dir=None):
-    
-    with os.chdir(feedme_dir):
-        print('feedme dir is: ', os.getcwd())
-        popen = subprocess.Popen([f'galfit -o3 {galfit_result_file}'], shell=True)
+
+
+def Galfit_subcomponent(galfit_result_file,
+                        galfit_subcomp_rename,
+                        result_path='/home/dewang/work/thickness/galfit_op/',
+                        temp_home_dir='/home/dewang/work/thickness/',
+                        code_dir='/home/dewang/work/thickness/code/'):
+
+    with TemporaryDirectory(dir=temp_home_dir) as tmpdir:
+        os.chdir(tmpdir)
+
+        print('Temp dir is: ', os.getcwd())
+
+        popen = subprocess.Popen([f'galfit -o3 {galfit_result_file}'],
+                                 shell=True)
 
         return_code = popen.wait()
 
         if return_code == 0:
-            print('Galfit ran!')
+            print('Galfit -o3 ran!')
 
         else:
-            print('Galfit does not run!')
-            
+            print('Galfit -o3 does not run!')
+
+        if Path('subcomps.fits').exists():
+            #Path('galfit.01').unlink()
+            print('subcomps.fits exsits')
+
+            os.rename('subcomps.fits', os.path.join(result_path, galfit_subcomp_rename))
+
+        else:
+            print('no subcomps.fits, does not run???')
+
+    os.chdir(code_dir)
     print('code dir is: ', os.getcwd())
