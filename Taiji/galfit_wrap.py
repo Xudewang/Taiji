@@ -289,6 +289,7 @@ def Galfit_fit(feedme_data, galfit_NN_rename, run_type = '-o0', result_path = '/
             
         else:
             print('no galfit.01, does not run???')
+            
     os.chdir(code_dir)
     print('code dir is: ', os.getcwd())
     
