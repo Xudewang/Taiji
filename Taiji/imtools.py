@@ -6,6 +6,7 @@ import re
 import sys
 from contextlib import contextmanager
 
+import matplotlib.pyplot as plt
 import numpy as np
 import sep
 from astropy import units as u
@@ -16,8 +17,6 @@ from astropy.units import Quantity
 from astropy.visualization import (AsymmetricPercentileInterval, HistEqStretch,
                                    LogStretch, ZScaleInterval)
 from astropy.visualization.mpl_normalize import ImageNormalize
-
-import matplotlib.pyplot as plt
 from matplotlib import cm, colors, rcParams
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.gridspec import GridSpec
@@ -1544,6 +1543,166 @@ def display_single(img,
         return fig
     return ax1
 
+def display_single2(img,
+                   pixel_scale=0.168,
+                   physical_scale=None,
+                   xsize=8,
+                   ysize=8,
+                   ax=None,
+                   alpha=1.0,
+                   stretch='arcsinh',
+                   scale='zscale',
+                   zmin=None,
+                   zmax=None,
+                   contrast=0.25,
+                   no_negative=False,
+                   lower_percentile=1.0,
+                   upper_percentile=99.0,
+                   cmap=IMG_CMAP,
+                   scale_bar=10,
+                   add_text=None,
+                   text_fontsize=30,
+                   text_color='w'):
+    """Display single image.
+
+    Parameters
+    ----------
+        img: np 2-D array for image
+
+        xsize: int, default = 8
+            Width of the image.
+
+        ysize: int, default = 8
+            Height of the image.
+
+    """
+    if ax is None:
+        fig = plt.figure(figsize=(xsize, ysize))
+        ax1 = fig.add_subplot(111)
+    else:
+        ax1 = ax
+    ax1.grid(False)
+
+    # Stretch option
+    if img.ndim == 3:
+        img_scale = img
+        vmin, vmax = None, None
+    else:
+        if stretch.strip() == 'arcsinh':
+            img_scale = np.arcsinh(img)
+            if zmin is not None:
+                zmin = np.arcsinh(zmin)
+            if zmax is not None:
+                zmax = np.arcsinh(zmax)
+        elif stretch.strip() == 'log':
+            if no_negative:
+                img[img <= 0.0] = 1.0E-10
+            img_scale = np.log(img)
+            if zmin is not None:
+                zmin = np.log(zmin)
+            if zmax is not None:
+                zmax = np.log(zmax)
+        elif stretch.strip() == 'log10':
+            if no_negative:
+                img[img <= 0.0] = 1.0E-10
+            img_scale = np.log10(img)
+            if zmin is not None:
+                zmin = np.log10(zmin)
+            if zmax is not None:
+                zmax = np.log10(zmax)
+        elif stretch.strip() == 'linear':
+            img_scale = img
+        else:
+            raise Exception("# Wrong stretch option.")
+
+        # Scale option
+        if scale.strip() == 'zscale':
+            try:
+                vmin, vmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+            except IndexError:
+                # TODO: Deal with problematic image
+                vmin, vmax = -1.0, 1.0
+        elif scale.strip() == 'percentile':
+            try:
+                vmin, vmax = AsymmetricPercentileInterval(
+                    lower_percentile=lower_percentile,
+                    upper_percentile=upper_percentile).get_limits(img_scale)
+            except IndexError:
+                # TODO: Deal with problematic image
+                vmin, vmax = -1.0, 1.0
+        elif scale.strip() == 'minmax':
+            vmin, vmax = np.nanmin(img_scale), np.nanmax(img_scale)
+        else:
+            vmin, vmax = np.nanmin(img_scale), np.nanmax(img_scale)
+
+        if zmin is not None:
+            vmin = zmin
+        if zmax is not None:
+            vmax = zmax
+
+    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
+                      vmin=vmin, vmax=vmax, alpha=alpha, aspect='auto')
+
+    # Hide ticks and tick labels
+    ax1.tick_params(
+        labelbottom=False,
+        labelleft=False,
+        axis=u'both',
+        which=u'both')  # length=0
+
+    # Put scale bar on the image
+    if img.ndim == 3:
+        img_size_x, img_size_y = img[:, :, 0].shape
+    else:
+        img_size_x, img_size_y = img.shape
+
+    if physical_scale is not None:
+        pixel_scale *= physical_scale
+
+    if scale_bar:
+        scalebar = ScaleBar(pixel_scale,
+                            "''",
+                            dimension=ANGLE,
+                            color='black',
+                            box_alpha=box_alpha,
+                            font_properties={'size': 15},
+                            location='lower left',
+                            length_fraction=pixel_size,
+                            fixed_value=bar_length)
+        ax1.add_artist(scalebar)
+        
+    if add_text is not None:
+        text_x_0 = int(img_size_x * 0.08)
+        text_y_0 = int(img_size_y * 0.80)
+        ax1.text(
+            text_x_0, text_y_0, r'$\mathrm{' + add_text + '}$',
+            fontsize=text_fontsize, color=text_color)
+
+    # Put a color bar on the image
+    if color_bar:
+        ax_cbar = inset_axes(ax1,
+                             width=color_bar_width,
+                             height=color_bar_height,
+                             loc=color_bar_loc)
+        if ax is None:
+            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
+                                orientation='horizontal')
+        else:
+            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
+                                orientation='horizontal')
+
+        cbar.ax.xaxis.set_tick_params(color=color_bar_color)
+        cbar.ax.yaxis.set_tick_params(color=color_bar_color)
+        cbar.outline.set_edgecolor(color_bar_color)
+        plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
+                 color=color_bar_color, fontsize=color_bar_fontsize)
+        plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
+                 color=color_bar_color, fontsize=color_bar_fontsize)
+
+    if ax is None:
+        return fig
+    return ax1
+
 
 def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=None,
                 cmap_list=None, label_x=0.1, label_y=0.9, fontsize=20, fontcolor='k',
@@ -1623,32 +1782,6 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
             e.set_linewidth(1.5)
             ax.add_artist(e)
 
-    # for k in range(len(sma)):
-    #     if np.logical_and(k % 5 == 0, k > 200):
-    #         e = Ellipse(xy=(x0, y0),
-    #                     height=sma[k] * 2.0,
-    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
-    #                     angle=pa[k])
-    #         e.set_facecolor('none')
-    #         e.set_edgecolor('#30E3CA')
-    #         e.set_alpha(1)
-    #         e.set_linewidth(2)
-    #         e.set_linestyle('-')
-    #         ax.add_artist(e)
-
-    # for k in range(len(sma)):
-    #     if np.logical_and(k % 15 == 0, k <= 200):
-    #         e = Ellipse(xy=(x0, y0),
-    #                     height=sma[k] * 2.0,
-    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
-    #                     angle=pa[k])
-    #         e.set_facecolor('none')
-    #         e.set_edgecolor('#30E3CA')
-    #         e.set_alpha(1)
-    #         e.set_linewidth(1)
-    #         e.set_linestyle('-')
-    #         ax.add_artist(e)
-
 
 def display_single_easy(ax, image_data, scale_bar=True, bar_length=10, box_alpha=1, pixel_size=0.168):
     from astropy.visualization import simple_norm
@@ -1717,33 +1850,6 @@ def display_isophote_LSB(ax,
             e.set_alpha(1)
             e.set_linewidth(1.5)
             ax.add_artist(e)
-
-    # for k in range(len(sma)):
-    #     if np.logical_and(k % 5 == 0, k > 200):
-    #         e = Ellipse(xy=(x0, y0),
-    #                     height=sma[k] * 2.0,
-    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
-    #                     angle=pa[k])
-    #         e.set_facecolor('none')
-    #         # e.set_edgecolor('#30E3CA')
-    #         e.set_edgecolor('magenta')
-    #         e.set_alpha(1)
-    #         e.set_linewidth(2)
-    #         e.set_linestyle('-')
-    #         ax.add_artist(e)
-
-    # for k in range(len(sma)):
-    #     if np.logical_and(k % 15 == 0, k <= 200):
-    #         e = Ellipse(xy=(x0, y0),
-    #                     height=sma[k] * 2.0,
-    #                     width=sma[k] * 2.0 * (1.0 - ell[k]),
-    #                     angle=pa[k])
-    #         e.set_facecolor('none')
-    #         e.set_edgecolor('#08D9D6')
-    #         e.set_alpha(1)
-    #         e.set_linewidth(1)
-    #         e.set_linestyle('-')
-    #         ax.add_artist(e)
 
 
 def easy_saveData_Tofits(data, header, savefile):
