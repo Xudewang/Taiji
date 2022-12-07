@@ -60,7 +60,11 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
-def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), dpi=100):
+def set_matplotlib(style='default',
+                   usetex=False,
+                   fontsize=15,
+                   figsize=(6, 5),
+                   dpi=100):
     '''
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
 
@@ -78,12 +82,14 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
         plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
     else:
         plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
-    rcParams.update({'font.size': fontsize,
-                     'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
-                     'text.usetex': usetex,
-                     'figure.dpi': dpi,
-                     'legend.frameon': True,
-                     'figure.constrained_layout.h_pad': 0})
+    rcParams.update({
+        'font.size': fontsize,
+        'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+        'text.usetex': usetex,
+        'figure.dpi': dpi,
+        'legend.frameon': True,
+        'figure.constrained_layout.h_pad': 0
+    })
 
     if style == 'DW':
         plt.style.use(['science', 'seaborn-colorblind'])
@@ -115,7 +121,7 @@ def set_matplotlib(style='default', usetex=False, fontsize=15, figsize=(6, 5), d
         plt.rcParams['legend.edgecolor'] = 'black'
         # plt.rcParams['xtick.major.width'] = 3.8
         # plt.rcParams['xtick.minor.width'] = 3.2
-        # plt.rcParams['ytick.major.width'] = 3.8 
+        # plt.rcParams['ytick.major.width'] = 3.8
         # plt.rcParams['ytick.minor.width'] = 3.2
         # plt.rcParams['axes.linewidth'] = 5
         plt.close()
@@ -139,7 +145,7 @@ def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     Returns:
         [type]: [description]
     """
-    intenRe = 10 ** ((zpt - muRe) / 2.5) * pixel_size ** 2
+    intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
     return intenRe
 
 
@@ -148,10 +154,10 @@ def Ser_kappa(n):
     # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
     '''
     if n > 0.36:
-        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n ** 2)
+        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
 
     elif n < 0.36:
-        bn = 0.01945 - 0.8902 * n + 10.95 * n ** 2 - 19.67 * n ** 3 + 13.43 * n ** 4
+        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
 
     return bn
 
@@ -182,7 +188,7 @@ def Sersic_intens(r, Ie, r_eff, n):
     """
     bn = sersic_bn(n)
 
-    intensity = Ie * np.exp(-bn * ((r / r_eff) ** (1 / n) - 1))
+    intensity = Ie * np.exp(-bn * ((r / r_eff)**(1 / n) - 1))
 
     return intensity
 
@@ -244,14 +250,14 @@ def all_ninety_pa(pa):
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = texp
-    A = pixel_size ** 2
+    A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
 
 def mag2bright(mag, zpt0, texp, pixel_size):
-    A = pixel_size ** 2
+    A = pixel_size**2
 
-    bright = texp * A * 10 ** ((mag - zpt0) / (-2.5))
+    bright = texp * A * 10**((mag - zpt0) / (-2.5))
 
     return bright
 
@@ -364,7 +370,7 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     if not useTflux:
         # The area in unit of pixels covered by an elliptical isophote
         ell = removeellipseIndef(ellipOut['ell'])
-        ellArea = np.pi * ((ellipOut['sma'] ** 2.0) * (1.0 - ell))
+        ellArea = np.pi * ((ellipOut['sma']**2.0) * (1.0 - ell))
         # The total flux inside the "ring"
         intensUse = ellipOut['intens']
         isoFlux = np.append(ellArea[0],
@@ -394,7 +400,7 @@ def GrowthCurve(sma, ellip, isoInten):
     Returns:
         [type]: [description]
     """
-    ellArea = np.pi * ((sma ** 2.0) * (1.0 - ellip))
+    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
     curveOfGrowth = list(
         map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
@@ -407,6 +413,7 @@ def GrowthCurve(sma, ellip, isoInten):
 
 
 # firstly, I should judge the file is fits or fit.
+
 
 def get_Rpercent(sma, cog, maxFlux, percent):
     cog_percent = maxFlux * percent
@@ -589,12 +596,14 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
     ellipse_data['pa'] = removeellipseIndef(ellipse_data['pa'])
     pa_correct = correct_pa_single(ellipse_data['pa'], delta_pa=dPA)
 
-    column_pa_norm = Column(name='pa_norm', data=np.array(
-        [normalize_angle(pa, lower=0, upper=180, b=False)
-         for pa in pa_correct]))
-    ellipse_data.add_column(
-        column_pa_norm
-    )
+    column_pa_norm = Column(name='pa_norm',
+                            data=np.array([
+                                normalize_angle(pa,
+                                                lower=0,
+                                                upper=180,
+                                                b=False) for pa in pa_correct
+                            ]))
+    ellipse_data.add_column(column_pa_norm)
 
     # remove the indef
     intens = ellipse_data['intens']
@@ -609,18 +618,19 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
-        np.array(intens_err_removeindef) ** 2 + sky_err ** 2)
+        np.array(intens_err_removeindef)**2 + sky_err**2)
 
     if sky_value:
         ellipse_data['intens'] = intens_removeindef - sky_value
-        mu = bright_to_mag(intens_removeindef - sky_value, zpt0, texp, pixel_size)
-        mu_err = symmetry_propagate_err_mu(
-            intens_removeindef - sky_value, intens_err_removeindef_sky)
+        mu = bright_to_mag(intens_removeindef - sky_value, zpt0, texp,
+                           pixel_size)
+        mu_err = symmetry_propagate_err_mu(intens_removeindef - sky_value,
+                                           intens_err_removeindef_sky)
     else:
         ellipse_data['intens'] = intens_removeindef
         mu = bright_to_mag(intens_removeindef, zpt0, texp, pixel_size)
-        mu_err = symmetry_propagate_err_mu(
-            intens_removeindef, intens_err_removeindef_sky)
+        mu_err = symmetry_propagate_err_mu(intens_removeindef,
+                                           intens_err_removeindef_sky)
 
     ellipse_data.add_column(Column(name='mu', data=mu))
     ellipse_data.add_column(Column(name='mu_err', data=mu_err))
@@ -658,39 +668,39 @@ def ellipseGetAvgGeometry(ellipseOut, outRad, minSma=2.0):
     ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
 
     try:
-        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                 (ellipseOut['sma'] >= minSma) &
+        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                 & (ellipseOut['sma'] >= minSma) &
                                  (np.isfinite(ellipseOut['ell_err'])) &
                                  (np.isfinite(ellipseOut['pa_err']))]
-        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= minSma) &
+        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= minSma) &
                                      (np.isfinite(ellipseOut['ell_err'])) &
                                      (np.isfinite(ellipseOut['pa_err']))]
-        fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                        (ellipseOut['sma'] >= minSma) &
+        fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                        & (ellipseOut['sma'] >= minSma) &
                         (np.isfinite(ellipseOut['ell_err'])) &
                         (np.isfinite(ellipseOut['pa_err']))]
     except Exception:
         try:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5) &
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5) &
                                      (np.isfinite(ellipseOut['ell_err'])) &
                                      (np.isfinite(ellipseOut['pa_err']))]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5) &
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5) &
                                          (np.isfinite(ellipseOut['ell_err'])) &
                                          (np.isfinite(ellipseOut['pa_err']))]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5) &
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5) &
                             (np.isfinite(ellipseOut['ell_err'])) &
                             (np.isfinite(ellipseOut['pa_err']))]
         except Exception:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5)]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5)]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5)]
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5)]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5)]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5)]
 
     avgQ = 1.0 - numpy_weighted_mean(eUse, weights=fUse)
     avgPA = numpy_weighted_mean(pUse, weights=fUse)
@@ -704,43 +714,45 @@ def ellipseGetAvgGeometry_CoG(ellipseOut, outRad, minSma=2.0):
     # ringFlux = np.append(tfluxE[0], [tfluxE[1:] - tfluxE[:-1]])
 
     # tfluxE = removeellipseIndef(ellipseOut['tflux_e'])
-    tflux, maxIsoSma, maxIsoFlux = GrowthCurve(ellipseOut['sma'], ellipseOut['ell'], ellipseOut['intens'])
+    tflux, maxIsoSma, maxIsoFlux = GrowthCurve(ellipseOut['sma'],
+                                               ellipseOut['ell'],
+                                               ellipseOut['intens'])
     ringFlux = np.append(tflux[0], [tflux[1:] - tflux[:-1]])
 
     try:
-        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                 (ellipseOut['sma'] >= minSma) &
+        eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                 & (ellipseOut['sma'] >= minSma) &
                                  (np.isfinite(ellipseOut['ell_err'])) &
                                  (np.isfinite(ellipseOut['pa_err']))]
-        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= minSma) &
+        pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= minSma) &
                                      (np.isfinite(ellipseOut['ell_err'])) &
                                      (np.isfinite(ellipseOut['pa_err']))]
-        fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                        (ellipseOut['sma'] >= minSma) &
+        fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                        & (ellipseOut['sma'] >= minSma) &
                         (np.isfinite(ellipseOut['ell_err'])) &
                         (np.isfinite(ellipseOut['pa_err']))]
     except Exception:
         try:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5) &
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5) &
                                      (np.isfinite(ellipseOut['ell_err'])) &
                                      (np.isfinite(ellipseOut['pa_err']))]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5) &
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5) &
                                          (np.isfinite(ellipseOut['ell_err'])) &
                                          (np.isfinite(ellipseOut['pa_err']))]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5) &
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5) &
                             (np.isfinite(ellipseOut['ell_err'])) &
                             (np.isfinite(ellipseOut['pa_err']))]
         except Exception:
-            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad) &
-                                     (ellipseOut['sma'] >= 0.5)]
-            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad) &
-                                         (ellipseOut['sma'] >= 0.5)]
-            fUse = ringFlux[(ellipseOut['sma'] <= outRad) &
-                            (ellipseOut['sma'] >= 0.5)]
+            eUse = ellipseOut['ell'][(ellipseOut['sma'] <= outRad)
+                                     & (ellipseOut['sma'] >= 0.5)]
+            pUse = ellipseOut['pa_norm'][(ellipseOut['sma'] <= outRad)
+                                         & (ellipseOut['sma'] >= 0.5)]
+            fUse = ringFlux[(ellipseOut['sma'] <= outRad)
+                            & (ellipseOut['sma'] >= 0.5)]
 
     avgQ = 1.0 - numpy_weighted_mean(eUse, weights=fUse)
     avgPA = numpy_weighted_mean(pUse, weights=fUse)
@@ -1006,7 +1018,8 @@ def plot_SBP(ax,
              ylimin=None,
              ylimax=None,
              xlimin=None,
-             xlimax=None, **kwargs):
+             xlimax=None,
+             **kwargs):
     '''
     This function is a templete to plot the SB profile.
     '''
@@ -1019,7 +1032,8 @@ def plot_SBP(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7, **kwargs)
+                    elinewidth=0.7,
+                    **kwargs)
 
     elif plot_style == 'fill':
         ax.plot(sma * pixel_size, mu, color=color, lw=3, **kwargs)
@@ -1272,29 +1286,34 @@ def random_cmap(ncolors=256, background_color='white'):
     return colors.ListedColormap(rgb)
 
 
-def LSBImage(ax, dat, noise, pixel_size=0.168, bar_length=50, box_alpha=1, **kwargs):
+def LSBImage(ax,
+             dat,
+             noise,
+             pixel_size=0.168,
+             bar_length=50,
+             box_alpha=1,
+             **kwargs):
     # plt.figure(figsize=(6, 6))
-    ax.imshow(
-        dat,
-        origin="lower",
-        cmap="Greys",
-        norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3 * noise]), clip=False, vmax=3 * noise, vmin=np.min(dat)),
-        aspect='auto',
-        **kwargs
-    )
+    ax.imshow(dat,
+              origin="lower",
+              cmap="Greys",
+              norm=ImageNormalize(stretch=HistEqStretch(dat[dat <= 3 * noise]),
+                                  clip=False,
+                                  vmax=3 * noise,
+                                  vmin=np.min(dat)),
+              aspect='auto',
+              **kwargs)
     my_cmap = copy.copy(cm.Greys_r)
     my_cmap.set_under("k", alpha=0)
 
-    ax.imshow(
-        np.ma.masked_where(dat < 3 * noise, dat),
-        origin="lower",
-        cmap=my_cmap,
-        norm=ImageNormalize(stretch=LogStretch(), clip=False),
-        clim=[3 * noise, None],
-        interpolation='none',
-        aspect='auto',
-        **kwargs
-    )
+    ax.imshow(np.ma.masked_where(dat < 3 * noise, dat),
+              origin="lower",
+              cmap=my_cmap,
+              norm=ImageNormalize(stretch=LogStretch(), clip=False),
+              clim=[3 * noise, None],
+              interpolation='none',
+              aspect='auto',
+              **kwargs)
 
     scalebar = ScaleBar(pixel_size,
                         "''",
@@ -1440,7 +1459,8 @@ def display_single(img,
         # Scale option
         if scale.strip() == 'zscale':
             try:
-                vmin, vmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+                vmin, vmax = ZScaleInterval(
+                    contrast=contrast).get_limits(img_scale)
             except IndexError:
                 # TODO: Deal with problematic image
                 vmin, vmax = -1.0, 1.0
@@ -1462,15 +1482,20 @@ def display_single(img,
         if zmax is not None:
             vmax = zmax
 
-    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
-                      vmin=vmin, vmax=vmax, alpha=alpha, aspect='auto')
+    show = ax1.imshow(img_scale,
+                      origin='lower',
+                      cmap=cmap,
+                      interpolation='none',
+                      vmin=vmin,
+                      vmax=vmax,
+                      alpha=alpha,
+                      aspect='auto')
 
     # Hide ticks and tick labels
-    ax1.tick_params(
-        labelbottom=False,
-        labelleft=False,
-        axis=u'both',
-        which=u'both')  # length=0
+    ax1.tick_params(labelbottom=False,
+                    labelleft=False,
+                    axis=u'both',
+                    which=u'both')  # length=0
 
     # Put scale bar on the image
     if img.ndim == 3:
@@ -1499,24 +1524,24 @@ def display_single(img,
             scale_bar_text = r'$%d^{\prime\prime}$' % int(scale_bar_length)
         scale_bar_text_size = scale_bar_fontsize
 
-        ax1.plot(
-            [scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
-            linewidth=3,
-            c=scale_bar_color,
-            alpha=1.0)
-        ax1.text(
-            scale_bar_text_x,
-            scale_bar_text_y,
-            scale_bar_text,
-            fontsize=scale_bar_text_size,
-            horizontalalignment='center',
-            color=scale_bar_color)
+        ax1.plot([scale_bar_x_0, scale_bar_x_1], [scale_bar_y, scale_bar_y],
+                 linewidth=3,
+                 c=scale_bar_color,
+                 alpha=1.0)
+        ax1.text(scale_bar_text_x,
+                 scale_bar_text_y,
+                 scale_bar_text,
+                 fontsize=scale_bar_text_size,
+                 horizontalalignment='center',
+                 color=scale_bar_color)
     if add_text is not None:
         text_x_0 = int(img_size_x * 0.08)
         text_y_0 = int(img_size_y * 0.80)
-        ax1.text(
-            text_x_0, text_y_0, r'$\mathrm{' + add_text + '}$',
-            fontsize=text_fontsize, color=text_color)
+        ax1.text(text_x_0,
+                 text_y_0,
+                 r'$\mathrm{' + add_text + '}$',
+                 fontsize=text_fontsize,
+                 color=text_color)
 
     # Put a color bar on the image
     if color_bar:
@@ -1525,44 +1550,53 @@ def display_single(img,
                              height=color_bar_height,
                              loc=color_bar_loc)
         if ax is None:
-            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax1,
+                                cax=ax_cbar,
                                 orientation='horizontal')
         else:
-            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax,
+                                cax=ax_cbar,
                                 orientation='horizontal')
 
         cbar.ax.xaxis.set_tick_params(color=color_bar_color)
         cbar.ax.yaxis.set_tick_params(color=color_bar_color)
         cbar.outline.set_edgecolor(color_bar_color)
         plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
 
     if ax is None:
         return fig
     return ax1
 
+
 def display_single2(img,
-                   pixel_scale=0.168,
-                   physical_scale=None,
-                   xsize=8,
-                   ysize=8,
-                   ax=None,
-                   alpha=1.0,
-                   stretch='arcsinh',
-                   scale='zscale',
-                   zmin=None,
-                   zmax=None,
-                   contrast=0.25,
-                   no_negative=False,
-                   lower_percentile=1.0,
-                   upper_percentile=99.0,
-                   cmap=IMG_CMAP,
-                   scale_bar=10,
-                   add_text=None,
-                   text_fontsize=30,
-                   text_color='w'):
+                    pixel_scale=0.168,
+                    physical_scale=None,
+                    xsize=8,
+                    ysize=8,
+                    ax=None,
+                    alpha=1.0,
+                    stretch='arcsinh',
+                    scale='zscale',
+                    zmin=None,
+                    zmax=None,
+                    contrast=0.25,
+                    no_negative=False,
+                    lower_percentile=1.0,
+                    upper_percentile=99.0,
+                    cmap=IMG_CMAP,
+                    scale_bar=True,
+                    bar_length=10,
+                    box_alpha=1,
+                    add_text=None,
+                    text_fontsize=30,
+                    text_color='w'):
     """Display single image.
 
     Parameters
@@ -1618,7 +1652,8 @@ def display_single2(img,
         # Scale option
         if scale.strip() == 'zscale':
             try:
-                vmin, vmax = ZScaleInterval(contrast=contrast).get_limits(img_scale)
+                vmin, vmax = ZScaleInterval(
+                    contrast=contrast).get_limits(img_scale)
             except IndexError:
                 # TODO: Deal with problematic image
                 vmin, vmax = -1.0, 1.0
@@ -1640,15 +1675,20 @@ def display_single2(img,
         if zmax is not None:
             vmax = zmax
 
-    show = ax1.imshow(img_scale, origin='lower', cmap=cmap, interpolation='none',
-                      vmin=vmin, vmax=vmax, alpha=alpha, aspect='auto')
+    show = ax1.imshow(img_scale,
+                      origin='lower',
+                      cmap=cmap,
+                      interpolation='none',
+                      vmin=vmin,
+                      vmax=vmax,
+                      alpha=alpha,
+                      aspect='auto')
 
     # Hide ticks and tick labels
-    ax1.tick_params(
-        labelbottom=False,
-        labelleft=False,
-        axis=u'both',
-        which=u'both')  # length=0
+    ax1.tick_params(labelbottom=False,
+                    labelleft=False,
+                    axis=u'both',
+                    which=u'both')  # length=0
 
     # Put scale bar on the image
     if img.ndim == 3:
@@ -1670,13 +1710,15 @@ def display_single2(img,
                             length_fraction=pixel_size,
                             fixed_value=bar_length)
         ax1.add_artist(scalebar)
-        
+
     if add_text is not None:
         text_x_0 = int(img_size_x * 0.08)
         text_y_0 = int(img_size_y * 0.80)
-        ax1.text(
-            text_x_0, text_y_0, r'$\mathrm{' + add_text + '}$',
-            fontsize=text_fontsize, color=text_color)
+        ax1.text(text_x_0,
+                 text_y_0,
+                 r'$\mathrm{' + add_text + '}$',
+                 fontsize=text_fontsize,
+                 color=text_color)
 
     # Put a color bar on the image
     if color_bar:
@@ -1685,35 +1727,54 @@ def display_single2(img,
                              height=color_bar_height,
                              loc=color_bar_loc)
         if ax is None:
-            cbar = plt.colorbar(show, ax=ax1, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax1,
+                                cax=ax_cbar,
                                 orientation='horizontal')
         else:
-            cbar = plt.colorbar(show, ax=ax, cax=ax_cbar,
+            cbar = plt.colorbar(show,
+                                ax=ax,
+                                cax=ax_cbar,
                                 orientation='horizontal')
 
         cbar.ax.xaxis.set_tick_params(color=color_bar_color)
         cbar.ax.yaxis.set_tick_params(color=color_bar_color)
         cbar.outline.set_edgecolor(color_bar_color)
         plt.setp(plt.getp(cbar.ax.axes, 'xticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'),
-                 color=color_bar_color, fontsize=color_bar_fontsize)
+                 color=color_bar_color,
+                 fontsize=color_bar_fontsize)
 
     if ax is None:
         return fig
     return ax1
 
 
-def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=None,
-                cmap_list=None, label_x=0.1, label_y=0.9, fontsize=20, fontcolor='k',
-                hdu_list=False, hdu_start=1, **kwargs):
+def display_all(img_list,
+                n_column=3,
+                img_size=3.,
+                hdu_index=None,
+                label_list=None,
+                cmap_list=None,
+                label_x=0.1,
+                label_y=0.9,
+                fontsize=20,
+                fontcolor='k',
+                hdu_list=False,
+                hdu_start=1,
+                **kwargs):
     """Display a list of images."""
     if not isinstance(img_list, list):
-        raise TypeError("Provide a list of image to show or use display_single()")
+        raise TypeError(
+            "Provide a list of image to show or use display_single()")
 
     # Make a numpy array list if the input is HDUList
     if hdu_list:
-        img_list = [img_list[ii].data for ii in np.arange(len(img_list))[hdu_start:]]
+        img_list = [
+            img_list[ii].data for ii in np.arange(len(img_list))[hdu_start:]
+        ]
 
     if cmap_list is not None:
         assert len(cmap_list) == len(img_list), "Wrong number of color maps!"
@@ -1732,7 +1793,12 @@ def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=No
         n_row = int(np.ceil(n_img / n_column))
 
     fig = plt.figure(figsize=(img_size * n_col, img_size * n_row))
-    fig.subplots_adjust(left=0., right=1., bottom=0., top=1., wspace=0., hspace=0.)
+    fig.subplots_adjust(left=0.,
+                        right=1.,
+                        bottom=0.,
+                        top=1.,
+                        wspace=0.,
+                        hspace=0.)
 
     gs = gridspec.GridSpec(n_row, n_col)
     gs.update(wspace=0.0, hspace=0.00)
@@ -1753,8 +1819,12 @@ def display_all(img_list, n_column=3, img_size=3., hdu_index=None, label_list=No
             if len(label_list) != n_img:
                 print("# Wrong number for labels!")
             else:
-                ax.text(label_x, label_y, label_list[ii], fontsize=fontsize,
-                        transform=ax.transAxes, color=fontcolor)
+                ax.text(label_x,
+                        label_y,
+                        label_list[ii],
+                        fontsize=fontsize,
+                        transform=ax.transAxes,
+                        color=fontcolor)
 
     return fig
 
@@ -1783,7 +1853,12 @@ def display_isophote(img, x0, y0, sma, ell, pa, ax, pixel_size=0.259):
             ax.add_artist(e)
 
 
-def display_single_easy(ax, image_data, scale_bar=True, bar_length=10, box_alpha=1, pixel_size=0.168):
+def display_single_easy(ax,
+                        image_data,
+                        scale_bar=True,
+                        bar_length=10,
+                        box_alpha=1,
+                        pixel_size=0.168):
     from astropy.visualization import simple_norm
 
     # Create an ImageNormalize object
@@ -1894,7 +1969,8 @@ def M2LToMass(BV, Mag_gal, Dist):
 
     Mag_sun = 3.27
 
-    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # the unit of L_gal is L_sun
+    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(
+        1 / Dist) + 10  # the unit of L_gal is L_sun
 
     logM_gal = logM2L + logL_gal  # M_gal unit is M_sun
 
@@ -1908,7 +1984,8 @@ def M2LToMass_R(BR, Mag_gal, Dist):
 
     Mag_sun = 4.6
 
-    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # the unit of L_gal is L_sun
+    logL_gal = (Mag_gal - Mag_sun) / (-2.5) - 2 * np.log10(
+        1 / Dist) + 10  # the unit of L_gal is L_sun
     print('logL', logL_gal)
 
     logM_gal = logM2L + logL_gal  # M_gal unit is M_sun
@@ -1959,7 +2036,7 @@ def fn(n):
     """
     b = gammaincinv(2. * n, 0.5)
 
-    fn = n * np.exp(b) / b ** (2 * n) * gamma(2 * n)
+    fn = n * np.exp(b) / b**(2 * n) * gamma(2 * n)
 
     return fn
 
@@ -1997,7 +2074,8 @@ def mass_profile(cog_mag, logM2L, Dist, Mag_sun):
         mass: the stellar mass profiles.
     """
 
-    logL_gal = (cog_mag - Mag_sun) / (-2.5) - 2 * np.log10(1 / Dist) + 10  # * the unit of L_gal is L_sun
+    logL_gal = (cog_mag - Mag_sun) / (-2.5) - 2 * np.log10(
+        1 / Dist) + 10  # * the unit of L_gal is L_sun
 
     logM_gal = logM2L + logL_gal  # ! M_gal's unit is M_sun
 
@@ -2017,7 +2095,8 @@ def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
 
-    mass_density_kpc = np.log10(10 ** logM_gal / (np.pi * sma_kpc ** 2 * (1 - ellipticity)))
+    mass_density_kpc = np.log10(10**logM_gal / (np.pi * sma_kpc**2 *
+                                                (1 - ellipticity)))
 
     return mass_density_kpc
 
@@ -2072,9 +2151,17 @@ def save_to_fits(img, fits_file, wcs=None, header=None, overwrite=True):
 # Cutout image
 
 
-def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
-               pixel_unit=False, img_header=None, prefix='img_cutout',
-               out_dir=None, save=True):
+def img_cutout(img,
+               wcs,
+               coord_1,
+               coord_2,
+               size=[60.0, 60.0],
+               pixel_scale=0.168,
+               pixel_unit=False,
+               img_header=None,
+               prefix='img_cutout',
+               out_dir=None,
+               save=True):
     """
     Generate image cutout with updated WCS information. (From ``kungpao`` https://github.com/dr-guangtou/kungpao) 
 
@@ -2116,8 +2203,12 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
     dy = -1.0 * (cen_y - int(cen_y))
 
     # Generate cutout
-    cutout = Cutout2D(img, cen_pos, cutout_size, wcs=wcs,
-                      mode='partial', fill_value=0)
+    cutout = Cutout2D(img,
+                      cen_pos,
+                      cutout_size,
+                      wcs=wcs,
+                      mode='partial',
+                      fill_value=0)
 
     # Update the header
     cutout_header = cutout.wcs.to_header()
@@ -2126,8 +2217,8 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
             del img_header['COMMENT']
         intersect = [k for k in img_header if k not in cutout_header]
         for keyword in intersect:
-            cutout_header.set(
-                keyword, img_header[keyword], img_header.comments[keyword])
+            cutout_header.set(keyword, img_header[keyword],
+                              img_header.comments[keyword])
 
     if 'PC1_1' in dict(cutout_header).keys():
         cutout_header['CD1_1'] = cutout_header['PC1_1']
@@ -2158,11 +2249,25 @@ def img_cutout(img, wcs, coord_1, coord_2, size=[60.0, 60.0], pixel_scale=0.168,
     return cutout, [cen_pos, dx, dy], cutout_header
 
 
-def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5,
-                convolve=False, conv_radius=None,
-                deblend_nthresh=32, deblend_cont=0.005, clean_param=1.0,
-                sky_subtract=False, flux_auto=True, flux_aper=None, show_fig=False,
-                verbose=True, logger=None, **kwargs):
+def extract_obj(img,
+                mask=None,
+                b=64,
+                f=3,
+                sigma=5,
+                pixel_scale=0.168,
+                minarea=5,
+                convolve=False,
+                conv_radius=None,
+                deblend_nthresh=32,
+                deblend_cont=0.005,
+                clean_param=1.0,
+                sky_subtract=False,
+                flux_auto=True,
+                flux_aper=None,
+                show_fig=False,
+                verbose=True,
+                logger=None,
+                **kwargs):
     '''
     Extract objects for a given image using ``sep`` (a Python-wrapped ``SExtractor``). 
     For more details, please check http://sep.readthedocs.io and documentation of SExtractor.
@@ -2216,8 +2321,8 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
 
     if convolve:
         from astropy.convolution import Gaussian2DKernel, convolve
-        input_data = convolve(input_data.astype(
-            float), Gaussian2DKernel(conv_radius))
+        input_data = convolve(input_data.astype(float),
+                              Gaussian2DKernel(conv_radius))
         bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
         input_data -= bkg.globalback
 
@@ -2241,16 +2346,20 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     objects = Table(objects)
     objects.add_column(Column(data=np.arange(len(objects)), name='index'))
     # Maximum flux, defined as flux within 6 * `a` (semi-major axis) in radius.
-    objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
-                                                  6. * objects['a'])[0], name='flux_max'))
+    objects.add_column(
+        Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                   6. * objects['a'])[0],
+               name='flux_max'))
     # Add FWHM estimated from 'a' and 'b'.
     # This is suggested here: https://github.com/kbarbary/sep/issues/34
-    objects.add_column(Column(data=2 * np.sqrt(np.log(2) * (objects['a'] ** 2 + objects['b'] ** 2)),
-                              name='fwhm_custom'))
+    objects.add_column(
+        Column(data=2 *
+               np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
+               name='fwhm_custom'))
 
     # Measure R30, R50, R80
-    temp = sep.flux_radius(
-        input_data, objects['x'], objects['y'], 6. * objects['a'], [0.3, 0.5, 0.8])[0]
+    temp = sep.flux_radius(input_data, objects['x'], objects['y'],
+                           6. * objects['a'], [0.3, 0.5, 0.8])[0]
     objects.add_column(Column(data=temp[:, 0], name='R30'))
     objects.add_column(Column(data=temp[:, 1], name='R50'))
     objects.add_column(Column(data=temp[:, 2], name='R80'))
@@ -2258,17 +2367,23 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     # Use Kron radius to calculate FLUX_AUTO in SourceExtractor.
     # Here PHOT_PARAMETER = 2.5, 3.5
     if flux_auto:
-        kronrad, krflag = sep.kron_radius(input_data, objects['x'], objects['y'],
-                                          objects['a'], objects['b'],
-                                          objects['theta'], 6.0)
-        flux, fluxerr, flag = sep.sum_circle(input_data, objects['x'], objects['y'],
-                                             2.5 * (kronrad), subpix=1)
+        kronrad, krflag = sep.kron_radius(input_data, objects['x'],
+                                          objects['y'], objects['a'],
+                                          objects['b'], objects['theta'], 6.0)
+        flux, fluxerr, flag = sep.sum_circle(input_data,
+                                             objects['x'],
+                                             objects['y'],
+                                             2.5 * (kronrad),
+                                             subpix=1)
         flag |= krflag  # combine flags into 'flag'
 
         r_min = 1.75  # minimum diameter = 3.5
         use_circle = kronrad * np.sqrt(objects['a'] * objects['b']) < r_min
-        cflux, cfluxerr, cflag = sep.sum_circle(input_data, objects['x'][use_circle], objects['y'][use_circle],
-                                                r_min, subpix=1)
+        cflux, cfluxerr, cflag = sep.sum_circle(input_data,
+                                                objects['x'][use_circle],
+                                                objects['y'][use_circle],
+                                                r_min,
+                                                subpix=1)
         flux[use_circle] = cflux
         fluxerr[use_circle] = cfluxerr
         flag[use_circle] = cflag
@@ -2278,12 +2393,18 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     if flux_aper is not None:
         if len(flux_aper) != 2:
             raise ValueError('"flux_aper" must be a list with length = 2.')
-        objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'], flux_aper[0])[0],
-                                  name='flux_aper_1'))
-        objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'], flux_aper[1])[0],
-                                  name='flux_aper_2'))
-        objects.add_column(Column(data=sep.sum_circann(input_data, objects['x'], objects['y'],
-                                                       flux_aper[0], flux_aper[1])[0], name='flux_ann'))
+        objects.add_column(
+            Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                       flux_aper[0])[0],
+                   name='flux_aper_1'))
+        objects.add_column(
+            Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                       flux_aper[1])[0],
+                   name='flux_aper_2'))
+        objects.add_column(
+            Column(data=sep.sum_circann(input_data, objects['x'], objects['y'],
+                                        flux_aper[0], flux_aper[1])[0],
+                   name='flux_ann'))
 
     # plot background-subtracted image
     if show_fig:
@@ -2294,11 +2415,15 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             scale_bar_length = 61
         else:
             scale_bar_length = 10
-        ax[0] = display_single(
-            input_data, ax=ax[0], scale_bar_length=scale_bar_length, pixel_scale=pixel_scale)
+        ax[0] = display_single(input_data,
+                               ax=ax[0],
+                               scale_bar_length=scale_bar_length,
+                               pixel_scale=pixel_scale)
         if mask is not None:
-            ax[0].imshow(mask.astype(float), origin='lower',
-                         alpha=0.1, cmap='Greys_r')
+            ax[0].imshow(mask.astype(float),
+                         origin='lower',
+                         alpha=0.1,
+                         cmap='Greys_r')
         from matplotlib.patches import Ellipse
 
         # plot an ellipse for each object
@@ -2310,8 +2435,11 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             e.set_facecolor('none')
             e.set_edgecolor('red')
             ax[0].add_artist(e)
-        ax[1] = display_single(segmap, scale='linear', cmap=SEG_CMAP,
-                               ax=ax[1], scale_bar_length=scale_bar_length)
+        ax[1] = display_single(segmap,
+                               scale='linear',
+                               cmap=SEG_CMAP,
+                               ax=ax[1],
+                               scale_bar_length=scale_bar_length)
         # plt.savefig('./extract_obj.png', bbox_inches='tight')
         return objects, segmap, fig
     return objects, segmap
@@ -2325,10 +2453,7 @@ def seg_remove_cen_obj(seg):
     return seg_copy
 
 
-def increase_mask_regions(mask,
-                          method='uniform',
-                          size=7,
-                          mask_threshold=0.01):
+def increase_mask_regions(mask, method='uniform', size=7, mask_threshold=0.01):
     """Increase the size of the mask regions using smoothing algorithm."""
     mask_arr = mask.astype('int16')
     mask_arr[mask_arr > 0] = 100
@@ -2346,8 +2471,15 @@ def increase_mask_regions(mask,
     return mask_new.astype('uint8')
 
 
-def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                              verbose=True, visual=False, size_buffer=1.4, logger=None):
+def _image_gaia_stars_tigress(image,
+                              wcs,
+                              pixel_scale=0.168,
+                              mask_a=694.7,
+                              mask_b=3.5,
+                              verbose=True,
+                              visual=False,
+                              size_buffer=1.4,
+                              logger=None):
     """
     Search for bright stars using GAIA catalogs on Tigress (`/tigress/HSC/refcats/htm/gaia_dr2_20200414`).
     For more information, see https://community.lsst.org/t/gaia-dr2-reference-catalog-in-lsst-format/3901.
@@ -2365,17 +2497,18 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
         gaia_results (`astropy.table.Table` object): a catalog of matched stars.
     """
     # Central coordinate
-    ra_cen, dec_cen = wcs.all_pix2world(image.shape[1] / 2,
-                                        image.shape[0] / 2,
+    ra_cen, dec_cen = wcs.all_pix2world(image.shape[1] / 2, image.shape[0] / 2,
                                         0)
-    img_cen_ra_dec = SkyCoord(
-        ra_cen, dec_cen, unit=('deg', 'deg'), frame='icrs')
+    img_cen_ra_dec = SkyCoord(ra_cen,
+                              dec_cen,
+                              unit=('deg', 'deg'),
+                              frame='icrs')
 
     # Width and height of the search box
-    img_ra_size = Quantity(pixel_scale * (image.shape)
-    [1] * size_buffer, u.arcsec).to(u.degree)
-    img_dec_size = Quantity(pixel_scale * (image.shape)
-    [0] * size_buffer, u.arcsec).to(u.degree)
+    img_ra_size = Quantity(pixel_scale * (image.shape)[1] * size_buffer,
+                           u.arcsec).to(u.degree)
+    img_dec_size = Quantity(pixel_scale * (image.shape)[0] * size_buffer,
+                            u.arcsec).to(u.degree)
 
     # Search for stars in Gaia catatlogs, which are stored in
     # `/tigress/HSC/refcats/htm/gaia_dr2_20200414`.
@@ -2386,12 +2519,11 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
         def getShards(ra, dec, radius):
             htm = HtmIndexer(depth=7)
 
-            afw_coords = geom.SpherePoint(
-                geom.Angle(ra, geom.degrees),
-                geom.Angle(dec, geom.degrees))
+            afw_coords = geom.SpherePoint(geom.Angle(ra, geom.degrees),
+                                          geom.Angle(dec, geom.degrees))
 
-            shards, onBoundary = htm.getShardIds(
-                afw_coords, radius * geom.degrees)
+            shards, onBoundary = htm.getShardIds(afw_coords,
+                                                 radius * geom.degrees)
             return shards
 
     except ImportError as e:
@@ -2408,10 +2540,12 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
         logger.info('    Taking Gaia catalogs stored in `Tigress`')
     print('    Taking Gaia catalogs stored in `Tigress`')
 
-    shards = getShards(ra_cen, dec_cen, max(
-        img_ra_size, img_dec_size).to(u.degree).value)
-    cat = vstack([Table.read(
-        f'/tigress/HSC/refcats/htm/gaia_dr2_20200414/{index}.fits') for index in shards])
+    shards = getShards(ra_cen, dec_cen,
+                       max(img_ra_size, img_dec_size).to(u.degree).value)
+    cat = vstack([
+        Table.read(f'/tigress/HSC/refcats/htm/gaia_dr2_20200414/{index}.fits')
+        for index in shards
+    ])
     cat['coord_ra'] = cat['coord_ra'].to(u.degree)
     # why GAIA coordinates are in RADIAN???
     cat['coord_dec'] = cat['coord_dec'].to(u.degree)
@@ -2420,11 +2554,10 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
     # Ref: https://github.com/MerianSurvey/caterpillar/blob/main/caterpillar/catalog.py
     if cat:  # if not empty
         gaia_results = cat[
-            (cat['coord_ra'] > img_cen_ra_dec.ra - img_ra_size / 2) &
-            (cat['coord_ra'] < img_cen_ra_dec.ra + img_ra_size / 2) &
+            (cat['coord_ra'] > img_cen_ra_dec.ra - img_ra_size / 2)
+            & (cat['coord_ra'] < img_cen_ra_dec.ra + img_ra_size / 2) &
             (cat['coord_dec'] > img_cen_ra_dec.dec - img_dec_size / 2) &
-            (cat['coord_dec'] < img_cen_ra_dec.dec + img_dec_size / 2)
-            ]
+            (cat['coord_dec'] < img_cen_ra_dec.dec + img_dec_size / 2)]
         gaia_results.rename_columns(['coord_ra', 'coord_dec'], ['ra', 'dec'])
 
         gaia_results['phot_g_mean_mag'] = -2.5 * \
@@ -2463,13 +2596,12 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
                 ax1.add_artist(smask)
 
             # Show stars
-            ax1.scatter(
-                gaia_results['x_pix'],
-                gaia_results['y_pix'],
-                color=ORG(1.0),
-                s=100,
-                alpha=0.9,
-                marker='+')
+            ax1.scatter(gaia_results['x_pix'],
+                        gaia_results['y_pix'],
+                        color=ORG(1.0),
+                        s=100,
+                        alpha=0.9,
+                        marker='+')
 
             ax1.set_xlim(0, image.shape[1])
             ax1.set_ylim(0, image.shape[0])
@@ -2479,8 +2611,15 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
     return None
 
 
-def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                     verbose=False, visual=False, size_buffer=1.4, tap_url=None):
+def image_gaia_stars(image,
+                     wcs,
+                     pixel_scale=0.168,
+                     mask_a=694.7,
+                     mask_b=3.5,
+                     verbose=False,
+                     visual=False,
+                     size_buffer=1.4,
+                     tap_url=None):
     """
     Search for bright stars using GAIA catalog. From https://github.com/dr-guangtou/kungpao.
 
@@ -2496,17 +2635,18 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
         gaia_results (`astropy.table.Table` object): a catalog of matched stars.
     """
     # Central coordinate
-    ra_cen, dec_cen = wcs.all_pix2world(image.shape[0] / 2,
-                                        image.shape[1] / 2,
+    ra_cen, dec_cen = wcs.all_pix2world(image.shape[0] / 2, image.shape[1] / 2,
                                         0)
-    img_cen_ra_dec = SkyCoord(
-        ra_cen, dec_cen, unit=('deg', 'deg'), frame='icrs')
+    img_cen_ra_dec = SkyCoord(ra_cen,
+                              dec_cen,
+                              unit=('deg', 'deg'),
+                              frame='icrs')
 
     # Width and height of the search box
-    img_search_x = Quantity(pixel_scale * (image.shape)
-    [0] * size_buffer, u.arcsec)
-    img_search_y = Quantity(pixel_scale * (image.shape)
-    [1] * size_buffer, u.arcsec)
+    img_search_x = Quantity(pixel_scale * (image.shape)[0] * size_buffer,
+                            u.arcsec)
+    img_search_y = Quantity(pixel_scale * (image.shape)[1] * size_buffer,
+                            u.arcsec)
 
     # Search for stars
     if tap_url is not None:
@@ -2514,20 +2654,18 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
             from astroquery.gaia import GaiaClass, TapPlus
             Gaia = GaiaClass(TapPlus(url=tap_url))
 
-            gaia_results = Gaia.query_object_async(
-                coordinate=img_cen_ra_dec,
-                width=img_search_x,
-                height=img_search_y,
-                verbose=verbose)
+            gaia_results = Gaia.query_object_async(coordinate=img_cen_ra_dec,
+                                                   width=img_search_x,
+                                                   height=img_search_y,
+                                                   verbose=verbose)
     else:
         with suppress_stdout():
             from astroquery.gaia import Gaia
 
-            gaia_results = Gaia.query_object_async(
-                coordinate=img_cen_ra_dec,
-                width=img_search_x,
-                height=img_search_y,
-                verbose=verbose)
+            gaia_results = Gaia.query_object_async(coordinate=img_cen_ra_dec,
+                                                   width=img_search_x,
+                                                   height=img_search_y,
+                                                   verbose=verbose)
 
     if gaia_results:
         # Convert the (RA, Dec) of stars into pixel coordinate
@@ -2563,13 +2701,12 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
                 ax1.add_artist(smask)
 
             # Show stars
-            ax1.scatter(
-                gaia_results['x_pix'],
-                gaia_results['y_pix'],
-                color=ORG(1.0),
-                s=100,
-                alpha=0.9,
-                marker='+')
+            ax1.scatter(gaia_results['x_pix'],
+                        gaia_results['y_pix'],
+                        color=ORG(1.0),
+                        s=100,
+                        alpha=0.9,
+                        marker='+')
 
             ax1.set_xlim(0, image.shape[0])
             ax1.set_ylim(0, image.shape[1])
@@ -2579,9 +2716,17 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
     return None
 
 
-def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                   size_buffer=1.4, gaia_bright=18.0,
-                   factor_b=1.3, factor_f=1.9, tigress=False):
+def gaia_star_mask(img,
+                   wcs,
+                   gaia_stars=None,
+                   pixel_scale=0.168,
+                   mask_a=694.7,
+                   mask_b=3.5,
+                   size_buffer=1.4,
+                   gaia_bright=18.0,
+                   factor_b=1.3,
+                   factor_f=1.9,
+                   tigress=False):
     """Find stars using Gaia and mask them out if necessary. From https://github.com/dr-guangtou/kungpao.
 
     Using the stars found in the GAIA TAP catalog, we build a bright star mask following
@@ -2607,14 +2752,22 @@ def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, m
     """
     if gaia_stars is None:
         if tigress:
-            gaia_stars = _image_gaia_stars_tigress(img, wcs, pixel_scale=pixel_scale,
-                                                   mask_a=mask_a, mask_b=mask_b,
-                                                   verbose=False, visual=False,
+            gaia_stars = _image_gaia_stars_tigress(img,
+                                                   wcs,
+                                                   pixel_scale=pixel_scale,
+                                                   mask_a=mask_a,
+                                                   mask_b=mask_b,
+                                                   verbose=False,
+                                                   visual=False,
                                                    size_buffer=size_buffer)
         else:
-            gaia_stars = image_gaia_stars(img, wcs, pixel_scale=pixel_scale,
-                                          mask_a=mask_a, mask_b=mask_b,
-                                          verbose=False, visual=False,
+            gaia_stars = image_gaia_stars(img,
+                                          wcs,
+                                          pixel_scale=pixel_scale,
+                                          mask_a=mask_a,
+                                          mask_b=mask_b,
+                                          verbose=False,
+                                          visual=False,
                                           size_buffer=size_buffer)
         if gaia_stars is not None:
             print(f'    {len(gaia_stars)} stars from Gaia are masked!')
@@ -2628,14 +2781,22 @@ def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, m
 
     if gaia_stars is not None:
         gaia_b = gaia_stars[gaia_stars['phot_g_mean_mag'] <= gaia_bright]
-        sep.mask_ellipse(msk_star, gaia_b['x_pix'], gaia_b['y_pix'],
+        sep.mask_ellipse(msk_star,
+                         gaia_b['x_pix'],
+                         gaia_b['y_pix'],
                          gaia_b['rmask_arcsec'] / factor_b / pixel_scale,
-                         gaia_b['rmask_arcsec'] / factor_b / pixel_scale, 0.0, r=1.0)
+                         gaia_b['rmask_arcsec'] / factor_b / pixel_scale,
+                         0.0,
+                         r=1.0)
 
         gaia_f = gaia_stars[gaia_stars['phot_g_mean_mag'] > gaia_bright]
-        sep.mask_ellipse(msk_star, gaia_f['x_pix'], gaia_f['y_pix'],
+        sep.mask_ellipse(msk_star,
+                         gaia_f['x_pix'],
+                         gaia_f['y_pix'],
                          gaia_f['rmask_arcsec'] / factor_f / pixel_scale,
-                         gaia_f['rmask_arcsec'] / factor_f / pixel_scale, 0.0, r=1.0)
+                         gaia_f['rmask_arcsec'] / factor_f / pixel_scale,
+                         0.0,
+                         r=1.0)
 
         return gaia_stars, msk_star
 
@@ -2655,20 +2816,26 @@ def create_circular_mask(img, center=None, radius=None):
         radius = min(center[0], center[1], w - center[0], h - center[1])
 
     Y, X = np.ogrid[:h, :w]
-    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y - center[1])**2)
 
     mask = dist_from_center <= radius
     return mask
 
 
-def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio=1, pa=0):
+def create_elliptical_mask(image_data,
+                           center=None,
+                           radius=None,
+                           axis_ratio=1,
+                           pa=0):
     from astropy.coordinates import Angle
     from regions import EllipsePixelRegion, PixCoord
 
     img_copy = copy.deepcopy(image_data)
 
     # ellipse mask
-    reg = EllipsePixelRegion(PixCoord(img_copy.shape[0] / 2, img_copy.shape[1] / 2), width=radius * 2,
+    reg = EllipsePixelRegion(PixCoord(img_copy.shape[0] / 2,
+                                      img_copy.shape[1] / 2),
+                             width=radius * 2,
                              height=axis_ratio * radius * 2,
                              angle=Angle(pa, 'deg'))
 
@@ -2681,11 +2848,13 @@ def create_elliptical_mask(image_data, center=None, radius=None, axis_ratio=1, p
 
 def remove_consecutive(sma_ap, index_original, con_number=2):
     index_left = np.argwhere(index_original)
-    index_left_array = np.array([index_left[i][0] for i in range(len(index_left))])
+    index_left_array = np.array(
+        [index_left[i][0] for i in range(len(index_left))])
     diff_index = np.diff(index_left_array)
 
     if len(sma_ap[np.argwhere(diff_index > (con_number + 1))]) > 0:
-        sma_stop_lowsn = (np.array(sma_ap)[np.argwhere(diff_index > con_number + 1)])[0][0]
+        sma_stop_lowsn = (np.array(sma_ap)[np.argwhere(
+            diff_index > con_number + 1)])[0][0]
         print(sma_stop_lowsn)
         new_index = np.logical_and(index_original, sma_ap <= sma_stop_lowsn)
     else:
@@ -2711,8 +2880,9 @@ def padding_PSF(psf_list):
         y_len, x_len = psf[0].data.shape
         dy = (max_len - y_len) // 2
         dx = (max_len - x_len) // 2
-        temp = np.pad(psf[0].data.astype('float'), ((dy, dy),
-                                                    (dx, dx)), 'constant', constant_values=0)
+        temp = np.pad(psf[0].data.astype('float'), ((dy, dy), (dx, dx)),
+                      'constant',
+                      constant_values=0)
         if temp.shape == (max_len, max_len):
             psf_pad.append(temp)
         else:
