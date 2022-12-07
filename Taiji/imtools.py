@@ -1574,7 +1574,6 @@ def display_single(img,
         return fig
     return ax1
 
-
 def display_single2(img,
                     pixel_scale=0.168,
                     physical_scale=None,
