@@ -1574,6 +1574,7 @@ def display_single(img,
         return fig
     return ax1
 
+
 def display_single2(img,
                     pixel_scale=0.168,
                     physical_scale=None,
@@ -1593,6 +1594,12 @@ def display_single2(img,
                     scale_bar=True,
                     bar_length=10,
                     box_alpha=1,
+                    color_bar=False,
+                    color_bar_loc=1,
+                    color_bar_width='75%',
+                    color_bar_height='5%',
+                    color_bar_fontsize=18,
+                    color_bar_color='w',
                     add_text=None,
                     text_fontsize=30,
                     text_color='w'):
