@@ -1706,7 +1706,7 @@ def display_single2(img,
                             box_alpha=box_alpha,
                             font_properties={'size': 15},
                             location='lower left',
-                            length_fraction=pixel_size,
+                            length_fraction=pixel_scale,
                             fixed_value=bar_length)
         ax1.add_artist(scalebar)
 
