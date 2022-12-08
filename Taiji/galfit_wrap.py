@@ -266,6 +266,7 @@ def _Galfit_fit(feedme_file, run_type, feedme_dir, code_dir=None):
 
 
 def Galfit_fit(feedme_data,
+               constrain_data,
                galfit_NN_rename,
                run_type='-o0',
                result_path='/home/dewang/work/thickness/galfit_op/',
@@ -278,9 +279,13 @@ def Galfit_fit(feedme_data,
         print('Temp dir is: ', os.getcwd())
 
         feedme_file = 'galfit.feedme'
+        constrain_file = 'galfit.constrain'
 
         with open(feedme_file, "w") as f:
             f.write(feedme_data)
+            
+        with open(constrain_file, 'w') as constrain_file:
+            constrain_file.write(constrain_data)
 
         popen = subprocess.Popen([f'galfit {run_type} {feedme_file}'],
                                  shell=True)
