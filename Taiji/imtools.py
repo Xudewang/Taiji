@@ -1036,7 +1036,7 @@ def plot_SBP(ax,
                     **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, mu, color=color, lw=3, **kwargs)
+        ax.plot(sma * pixel_size, mu, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         mu + mu_err,
                         mu - mu_err,
