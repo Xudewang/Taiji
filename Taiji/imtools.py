@@ -898,6 +898,9 @@ def plot_ellip(ax,
                         color=color,
                         alpha=0.5)
 
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, ellip, color=color, **kwargs)
+
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
     else:
@@ -946,6 +949,9 @@ def plot_axisRatio(ax,
                         color=color,
                         alpha=0.5)
 
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, axisratio, color=color, **kwargs)
+
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
     else:
@@ -993,6 +999,9 @@ def plot_pa(ax,
                         pa - pa_err,
                         color=color,
                         alpha=0.5)
+
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, pa, color=color, **kwargs)
 
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
