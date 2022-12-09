@@ -891,7 +891,7 @@ def plot_ellip(ax,
                     **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, ellip, color=color, lw=3, **kwargs)
+        ax.plot(sma * pixel_size, ellip, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         ellip + ellip_err,
                         ellip - ellip_err,
@@ -921,7 +921,8 @@ def plot_axisRatio(ax,
                    ylimin=None,
                    ylimax=None,
                    xlimin=None,
-                   xlimax=None):
+                   xlimax=None,
+                   **kwargs):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -934,10 +935,11 @@ def plot_axisRatio(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7)
+                    elinewidth=0.7,
+                    **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, axisratio, color=color, lw=3)
+        ax.plot(sma * pixel_size, axisratio, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         axisratio + axisratio_err,
                         axisratio - axisratio_err,
@@ -985,7 +987,7 @@ def plot_pa(ax,
                     **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, pa, color=color, lw=3, **kwargs)
+        ax.plot(sma * pixel_size, pa, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         pa + pa_err,
                         pa - pa_err,
