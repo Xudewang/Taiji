@@ -344,3 +344,23 @@ def Galfit_subcomponent(galfit_result_file,
 
     os.chdir(code_dir)
     print('code dir is: ', os.getcwd())
+
+def get_q_pa(galfit_model_header, AR_charac='2_AR', PA_charac='2_PA'):
+    galfit_q, temp, galfit_q_err = (galfit_model_header[AR_charac]).split()
+    galfit_pa, anything, galfit_pa_err = (galfit_model_header[PA_charac]).split()
+
+    if galfit_q[0] == '*':
+        galfit_ell = 1 - float(galfit_q[1:-1])
+        galfit_ell_err = float(galfit_q_err[1:-1])
+    else:
+        galfit_ell = 1 - float(galfit_q)
+        galfit_ell_err = float(galfit_q_err)
+
+    if galfit_pa[0] == '*':
+        galfit_pa = float(galfit_pa[1:-1])
+        galfit_pa_err = float(galfit_pa_err[1:-1])
+    else:
+        galfit_pa = float(galfit_pa)
+        galfit_pa_err = float(galfit_pa_err)
+
+    return galfit_ell, galfit_ell_err, galfit_pa, galfit_pa_err
