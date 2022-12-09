@@ -1045,6 +1045,9 @@ def plot_SBP(ax,
                         color=color,
                         alpha=0.5)
 
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, mu, color=color, **kwargs)
+
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
     else:
