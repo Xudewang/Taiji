@@ -891,12 +891,15 @@ def plot_ellip(ax,
                     **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, ellip, color=color, lw=3, **kwargs)
+        ax.plot(sma * pixel_size, ellip, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         ellip + ellip_err,
                         ellip - ellip_err,
                         color=color,
                         alpha=0.5)
+
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, ellip, color=color, **kwargs)
 
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
@@ -921,7 +924,8 @@ def plot_axisRatio(ax,
                    ylimin=None,
                    ylimax=None,
                    xlimin=None,
-                   xlimax=None):
+                   xlimax=None,
+                   **kwargs):
     '''
     This function is a templete to plot the ellipticity profile.
     '''
@@ -934,15 +938,19 @@ def plot_axisRatio(ax,
                     markersize=3,
                     color=color,
                     capsize=3,
-                    elinewidth=0.7)
+                    elinewidth=0.7,
+                    **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, axisratio, color=color, lw=3)
+        ax.plot(sma * pixel_size, axisratio, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         axisratio + axisratio_err,
                         axisratio - axisratio_err,
                         color=color,
                         alpha=0.5)
+
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, axisratio, color=color, **kwargs)
 
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
@@ -985,12 +993,15 @@ def plot_pa(ax,
                     **kwargs)
 
     elif plot_style == 'fill':
-        ax.plot(sma * pixel_size, pa, color=color, lw=3, **kwargs)
+        ax.plot(sma * pixel_size, pa, color=color, **kwargs)
         ax.fill_between(sma * pixel_size,
                         pa + pa_err,
                         pa - pa_err,
                         color=color,
                         alpha=0.5)
+
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, pa, color=color, **kwargs)
 
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
@@ -1042,6 +1053,9 @@ def plot_SBP(ax,
                         mu - mu_err,
                         color=color,
                         alpha=0.5)
+
+    elif plot_style == 'line':
+        ax.plot(sma * pixel_size, mu, color=color, **kwargs)
 
     if ylimax:
         ax.set_ylim(ylimin, ylimax)
@@ -1593,6 +1607,7 @@ def display_single2(img,
                     cmap=IMG_CMAP,
                     scale_bar=True,
                     bar_length=10,
+                    bar_fontsize = 12,
                     box_alpha=1,
                     color_bar=False,
                     color_bar_loc=1,
@@ -1601,7 +1616,7 @@ def display_single2(img,
                     color_bar_fontsize=18,
                     color_bar_color='w',
                     add_text=None,
-                    text_fontsize=30,
+                    text_fontsize=15,
                     text_color='w'):
     """Display single image.
 
@@ -1711,7 +1726,7 @@ def display_single2(img,
                             dimension=ANGLE,
                             color='black',
                             box_alpha=box_alpha,
-                            font_properties={'size': 15},
+                            font_properties={'size': bar_fontsize},
                             location='lower left',
                             length_fraction=pixel_scale,
                             fixed_value=bar_length)
