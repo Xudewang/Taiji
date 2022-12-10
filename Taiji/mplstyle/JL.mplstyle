@@ -356,9 +356,9 @@ mathtext.fontset: dejavusans   # Should be 'dejavusans' (default),
 ## default font sizes for tick labels, and so on.  See
 ## https://matplotlib.org/api/axes_api.html#module-matplotlib.axes
 #axes.facecolor:     white   # axes background color
-#axes.edgecolor:     black   # axes edge color
+axes.edgecolor:     black   # axes edge color
 axes.linewidth:     1.3     # edge line width
-#axes.grid:          False   # display grid or not
+axes.grid:          False   # display grid or not
 #axes.grid.axis:     both    # which axis the grid should apply to
 axes.grid.which:    major   # grid lines at {major, minor, both} ticks
 #axes.titlelocation: center  # alignment of the title: {left, right, center}
