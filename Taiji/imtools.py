@@ -145,7 +145,7 @@ def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     Returns:
         [type]: [description]
     """
-    intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
+    intenRe = 10 ** ((zpt - muRe) / 2.5) * pixel_size ** 2
     return intenRe
 
 
@@ -154,10 +154,10 @@ def Ser_kappa(n):
     # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
     '''
     if n > 0.36:
-        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
+        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n ** 2)
 
     elif n < 0.36:
-        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
+        bn = 0.01945 - 0.8902 * n + 10.95 * n ** 2 - 19.67 * n ** 3 + 13.43 * n ** 4
 
     return bn
 
@@ -188,7 +188,7 @@ def Sersic_intens(r, Ie, r_eff, n):
     """
     bn = sersic_bn(n)
 
-    intensity = Ie * np.exp(-bn * ((r / r_eff)**(1 / n) - 1))
+    intensity = Ie * np.exp(-bn * ((r / r_eff) ** (1 / n) - 1))
 
     return intensity
 
@@ -250,14 +250,14 @@ def all_ninety_pa(pa):
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = texp
-    A = pixel_size**2
+    A = pixel_size ** 2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
 
 def mag2bright(mag, zpt0, texp, pixel_size):
-    A = pixel_size**2
+    A = pixel_size ** 2
 
-    bright = texp * A * 10**((mag - zpt0) / (-2.5))
+    bright = texp * A * 10 ** ((mag - zpt0) / (-2.5))
 
     return bright
 
@@ -370,7 +370,7 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     if not useTflux:
         # The area in unit of pixels covered by an elliptical isophote
         ell = removeellipseIndef(ellipOut['ell'])
-        ellArea = np.pi * ((ellipOut['sma']**2.0) * (1.0 - ell))
+        ellArea = np.pi * ((ellipOut['sma'] ** 2.0) * (1.0 - ell))
         # The total flux inside the "ring"
         intensUse = ellipOut['intens']
         isoFlux = np.append(ellArea[0],
@@ -400,7 +400,7 @@ def GrowthCurve(sma, ellip, isoInten):
     Returns:
         [type]: [description]
     """
-    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
+    ellArea = np.pi * ((sma ** 2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
     curveOfGrowth = list(
         map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
@@ -618,7 +618,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
-        np.array(intens_err_removeindef)**2 + sky_err**2)
+        np.array(intens_err_removeindef) ** 2 + sky_err ** 2)
 
     if sky_value:
         ellipse_data['intens'] = intens_removeindef - sky_value
@@ -1387,6 +1387,17 @@ autocmap = LinearSegmentedColormap('autocmap', cdict)
 autocmap.set_under('k', alpha=0)
 
 
+def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=None, vmax=None, **kwargs):
+    from matplotlib.colors import LogNorm, Normalize
+    from astropy.visualization import PercentileInterval
+
+    # Calculate the minimum and maximum values based on the central 99% of the data
+    interval = PercentileInterval(percentile)
+    vmin, vmax = interval.get_limits(image)
+
+    ax.imshow(image, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax))
+
+
 def display_single(img,
                    pixel_scale=0.168,
                    physical_scale=None,
@@ -1607,7 +1618,7 @@ def display_single2(img,
                     cmap=IMG_CMAP,
                     scale_bar=True,
                     bar_length=10,
-                    bar_fontsize = 12,
+                    bar_fontsize=12,
                     box_alpha=1,
                     color_bar=False,
                     color_bar_loc=1,
@@ -2057,7 +2068,7 @@ def fn(n):
     """
     b = gammaincinv(2. * n, 0.5)
 
-    fn = n * np.exp(b) / b**(2 * n) * gamma(2 * n)
+    fn = n * np.exp(b) / b ** (2 * n) * gamma(2 * n)
 
     return fn
 
@@ -2116,8 +2127,8 @@ def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
 
-    mass_density_kpc = np.log10(10**logM_gal / (np.pi * sma_kpc**2 *
-                                                (1 - ellipticity)))
+    mass_density_kpc = np.log10(10 ** logM_gal / (np.pi * sma_kpc ** 2 *
+                                                  (1 - ellipticity)))
 
     return mass_density_kpc
 
@@ -2375,7 +2386,7 @@ def extract_obj(img,
     # This is suggested here: https://github.com/kbarbary/sep/issues/34
     objects.add_column(
         Column(data=2 *
-               np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
+                    np.sqrt(np.log(2) * (objects['a'] ** 2 + objects['b'] ** 2)),
                name='fwhm_custom'))
 
     # Measure R30, R50, R80
@@ -2837,7 +2848,7 @@ def create_circular_mask(img, center=None, radius=None):
         radius = min(center[0], center[1], w - center[0], h - center[1])
 
     Y, X = np.ogrid[:h, :w]
-    dist_from_center = np.sqrt((X - center[0])**2 + (Y - center[1])**2)
+    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
 
     mask = dist_from_center <= radius
     return mask
