@@ -136,6 +136,7 @@ def set_matplotlib(style='default',
         'figure.constrained_layout.h_pad': 0
     })
 
+
 def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     """[summary]
 
@@ -1388,7 +1389,9 @@ autocmap = LinearSegmentedColormap('autocmap', cdict)
 autocmap.set_under('k', alpha=0)
 
 
-def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=None, vmax=None, **kwargs):
+def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=None, vmax=None, scale_bar=True,
+                            bar_length=10, bar_fontsize=15,
+                            pixel_scale=0.259, box_alpha=1, **kwargs):
     from matplotlib.colors import LogNorm, Normalize
     from astropy.visualization import PercentileInterval
 
@@ -1403,9 +1406,22 @@ def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=Non
 
     # Hide ticks and tick labels
     ax.tick_params(labelbottom=False,
-                    labelleft=False,
-                    axis=u'both',
-                    which=u'both')  # length=0
+                   labelleft=False,
+                   axis=u'both',
+                   which=u'both')  # length=0
+
+    if scale_bar:
+        scalebar = ScaleBar(pixel_scale,
+                            "''",
+                            dimension=ANGLE,
+                            color='black',
+                            box_alpha=box_alpha,
+                            font_properties={'size': bar_fontsize},
+                            location='lower left',
+                            length_fraction=pixel_scale,
+                            fixed_value=bar_length)
+        ax.add_artist(scalebar)
+
 
 def display_single(img,
                    pixel_scale=0.168,
