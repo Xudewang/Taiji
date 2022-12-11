@@ -1394,7 +1394,10 @@ def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=Non
 
     # Calculate the minimum and maximum values based on the central 99% of the data
     interval = PercentileInterval(percentile)
-    vmin, vmax = interval.get_limits(image)
+    if vmin is None:
+        vmin = PercentileInterval(percentile).get_limits(image)[0]
+    if vmax is None:
+        vmax = PercentileInterval(percentile).get_limits(image)[1]
 
     ax.imshow(image, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax), aspect='auto', **kwargs)
 
