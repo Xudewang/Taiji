@@ -1396,8 +1396,13 @@ def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=Non
     interval = PercentileInterval(percentile)
     vmin, vmax = interval.get_limits(image)
 
-    ax.imshow(image, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax))
+    ax.imshow(image, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax), aspect='auto', **kwargs)
 
+    # Hide ticks and tick labels
+    ax.tick_params(labelbottom=False,
+                    labelleft=False,
+                    axis=u'both',
+                    which=u'both')  # length=0
 
 def display_single(img,
                    pixel_scale=0.168,
