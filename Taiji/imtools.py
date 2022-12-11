@@ -80,18 +80,11 @@ def set_matplotlib(style='default',
     pkg_path = Taiji.__path__[0]
     if style == 'default':
         plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
-    else:
-        plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
-    rcParams.update({
-        'font.size': fontsize,
-        'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
-        'text.usetex': usetex,
-        'figure.dpi': dpi,
-        'legend.frameon': True,
-        'figure.constrained_layout.h_pad': 0
-    })
 
-    if style == 'DW':
+    elif style == 'JL':
+        plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
+
+    elif style == 'DW':
         plt.style.use(['science', 'seaborn-colorblind'])
 
         plt.rcParams['figure.figsize'] = (10, 7)
@@ -126,7 +119,7 @@ def set_matplotlib(style='default',
         # plt.rcParams['axes.linewidth'] = 5
         plt.close()
 
-    if style == 'nature':
+    elif style == 'nature':
         rcParams.update({
             "font.family": "sans-serif",
             # The default edge colors for scatter plots.
@@ -134,6 +127,14 @@ def set_matplotlib(style='default',
             "mathtext.fontset": "stixsans"
         })
 
+    rcParams.update({
+        'font.size': fontsize,
+        'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+        'text.usetex': usetex,
+        'figure.dpi': dpi,
+        'legend.frameon': True,
+        'figure.constrained_layout.h_pad': 0
+    })
 
 def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     """[summary]
