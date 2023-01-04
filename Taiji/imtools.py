@@ -486,7 +486,7 @@ def correct_pa_single(pa_arr, delta_pa=75.0):
     """
     pa = np.array(pa_arr)
 
-    for i in range(len(pa)):
+    for i in range(1, len(pa)):
         if (pa[i] - pa[i - 1]) >= delta_pa:
             pa[i] -= 180.0
         elif pa[i] - pa[i - 1] <= (-1.0 * delta_pa):
