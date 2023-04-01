@@ -1,23 +1,24 @@
 from __future__ import division, print_function
-from matplotlib.colorbar import Colorbar
-from matplotlib import rcParams
+
+import copy
 import os
 import sys
-import sep
-import copy
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse as mpl_ellip
 from contextlib import contextmanager
 
-from astropy.io import fits
-from astropy import wcs
-from astropy.table import Table, Column, vstack
+import matplotlib.pyplot as plt
+import numpy as np
+import sep
 from astropy import units as u
-from astropy.units import Quantity
+from astropy import wcs
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
+from astropy.table import Column, Table, vstack
+from astropy.units import Quantity
+from matplotlib import rcParams
+from matplotlib.colorbar import Colorbar
+from matplotlib.patches import Ellipse as mpl_ellip
 
-from .imtools import display_single, SEG_CMAP, ORG
+from .imtools import ORG, SEG_CMAP, display_single
 
 
 @contextmanager
@@ -33,8 +34,13 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
-    
-def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=100):
+
+
+def set_matplotlib(style='default',
+                   usetex=False,
+                   fontsize=13,
+                   figsize=(6, 5),
+                   dpi=100):
     '''
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
 
@@ -43,18 +49,22 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
     '''
     # Use JL as a template
     if style == 'default':
-        plt.style.use(os.path.join('/home/dewang/Taiji/', 'mplstyle/default.mplstyle'))
+        plt.style.use(
+            os.path.join('/home/dewang/Taiji/', 'mplstyle/default.mplstyle'))
     else:
-        plt.style.use(os.path.join('/home/dewang/Taiji/', 'mplstyle/JL.mplstyle'))
-    rcParams.update({'font.size': fontsize,
-                     'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
-                     'text.usetex': usetex,
-                     'figure.dpi': dpi})
+        plt.style.use(
+            os.path.join('/home/dewang/Taiji/', 'mplstyle/JL.mplstyle'))
+    rcParams.update({
+        'font.size': fontsize,
+        'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+        'text.usetex': usetex,
+        'figure.dpi': dpi
+    })
 
     if style == 'DW':
         plt.style.use(['science', 'seaborn-colorblind'])
 
-        plt.rcParams['figure.figsize'] = (10,7)
+        plt.rcParams['figure.figsize'] = (10, 7)
         plt.rcParams['font.size'] = 25
         plt.rcParams['lines.linewidth'] = 3
         plt.rcParams['xtick.labelsize'] = 25
@@ -81,12 +91,12 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
         plt.rcParams['legend.edgecolor'] = 'black'
         # plt.rcParams['xtick.major.width'] = 3.8
         # plt.rcParams['xtick.minor.width'] = 3.2
-        # plt.rcParams['ytick.major.width'] = 3.8 
+        # plt.rcParams['ytick.major.width'] = 3.8
         # plt.rcParams['ytick.minor.width'] = 3.2
         # plt.rcParams['axes.linewidth'] = 5
         import matplotlib.ticker
-        from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
-                                       AutoMinorLocator)
+        from matplotlib.ticker import (AutoMinorLocator, FormatStrFormatter,
+                                       MultipleLocator)
         plt.close()
 
     if style == 'nature':
@@ -96,12 +106,26 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
             "scatter.edgecolors": "black",
             "mathtext.fontset": "stixsans"
         })
-       
-def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5,
-                convolve=False, conv_radius=None,
-                deblend_nthresh=32, deblend_cont=0.005, clean_param=1.0,
-                sky_subtract=False, flux_auto=True, flux_aper=None, show_fig=False,
-                verbose=True, logger=None):
+
+
+def extract_obj(img,
+                mask=None,
+                b=64,
+                f=3,
+                sigma=5,
+                pixel_scale=0.168,
+                minarea=5,
+                convolve=False,
+                conv_radius=None,
+                deblend_nthresh=32,
+                deblend_cont=0.005,
+                clean_param=1.0,
+                sky_subtract=False,
+                flux_auto=True,
+                flux_aper=None,
+                show_fig=False,
+                verbose=True,
+                logger=None):
     '''
     Extract objects for a given image using ``sep`` (a Python-wrapped ``SExtractor``). 
     For more details, please check http://sep.readthedocs.io and documentation of SExtractor.
@@ -129,6 +153,7 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             segmap: 2-D numpy array, segmentation map
     '''
     import sep
+
     # Subtract a mean sky value to achieve better object detection
     b = b  # Box size
     f = f  # Filter width
@@ -153,9 +178,9 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
         input_data = img
 
     if convolve:
-        from astropy.convolution import convolve, Gaussian2DKernel
-        input_data = convolve(input_data.astype(
-            float), Gaussian2DKernel(conv_radius))
+        from astropy.convolution import Gaussian2DKernel, convolve
+        input_data = convolve(input_data.astype(float),
+                              Gaussian2DKernel(conv_radius))
         bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
         input_data -= bkg.globalback
 
@@ -178,16 +203,20 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     objects = Table(objects)
     objects.add_column(Column(data=np.arange(len(objects)), name='index'))
     # Maximum flux, defined as flux within 6 * `a` (semi-major axis) in radius.
-    objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
-                                                  6. * objects['a'])[0], name='flux_max'))
+    objects.add_column(
+        Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                   6. * objects['a'])[0],
+               name='flux_max'))
     # Add FWHM estimated from 'a' and 'b'.
     # This is suggested here: https://github.com/kbarbary/sep/issues/34
-    objects.add_column(Column(data=2 * np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
-                              name='fwhm_custom'))
+    objects.add_column(
+        Column(data=2 *
+               np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
+               name='fwhm_custom'))
 
     # Measure R30, R50, R80
-    temp = sep.flux_radius(
-        input_data, objects['x'], objects['y'], 6. * objects['a'], [0.3, 0.5, 0.8])[0]
+    temp = sep.flux_radius(input_data, objects['x'], objects['y'],
+                           6. * objects['a'], [0.3, 0.5, 0.8])[0]
     objects.add_column(Column(data=temp[:, 0], name='R30'))
     objects.add_column(Column(data=temp[:, 1], name='R50'))
     objects.add_column(Column(data=temp[:, 2], name='R80'))
@@ -195,17 +224,23 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     # Use Kron radius to calculate FLUX_AUTO in SourceExtractor.
     # Here PHOT_PARAMETER = 2.5, 3.5
     if flux_auto:
-        kronrad, krflag = sep.kron_radius(input_data, objects['x'], objects['y'],
-                                          objects['a'], objects['b'],
-                                          objects['theta'], 6.0)
-        flux, fluxerr, flag = sep.sum_circle(input_data, objects['x'], objects['y'],
-                                             2.5 * (kronrad), subpix=1)
+        kronrad, krflag = sep.kron_radius(input_data, objects['x'],
+                                          objects['y'], objects['a'],
+                                          objects['b'], objects['theta'], 6.0)
+        flux, fluxerr, flag = sep.sum_circle(input_data,
+                                             objects['x'],
+                                             objects['y'],
+                                             2.5 * (kronrad),
+                                             subpix=1)
         flag |= krflag  # combine flags into 'flag'
 
         r_min = 1.75  # minimum diameter = 3.5
         use_circle = kronrad * np.sqrt(objects['a'] * objects['b']) < r_min
-        cflux, cfluxerr, cflag = sep.sum_circle(input_data, objects['x'][use_circle], objects['y'][use_circle],
-                                                r_min, subpix=1)
+        cflux, cfluxerr, cflag = sep.sum_circle(input_data,
+                                                objects['x'][use_circle],
+                                                objects['y'][use_circle],
+                                                r_min,
+                                                subpix=1)
         flux[use_circle] = cflux
         fluxerr[use_circle] = cfluxerr
         flag[use_circle] = cflag
@@ -215,12 +250,18 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
     if flux_aper is not None:
         if len(flux_aper) != 2:
             raise ValueError('"flux_aper" must be a list with length = 2.')
-        objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'], flux_aper[0])[0],
-                                  name='flux_aper_1'))
-        objects.add_column(Column(data=sep.sum_circle(input_data, objects['x'], objects['y'], flux_aper[1])[0],
-                                  name='flux_aper_2'))
-        objects.add_column(Column(data=sep.sum_circann(input_data, objects['x'], objects['y'],
-                                                       flux_aper[0], flux_aper[1])[0], name='flux_ann'))
+        objects.add_column(
+            Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                       flux_aper[0])[0],
+                   name='flux_aper_1'))
+        objects.add_column(
+            Column(data=sep.sum_circle(input_data, objects['x'], objects['y'],
+                                       flux_aper[1])[0],
+                   name='flux_aper_2'))
+        objects.add_column(
+            Column(data=sep.sum_circann(input_data, objects['x'], objects['y'],
+                                        flux_aper[0], flux_aper[1])[0],
+                   name='flux_ann'))
 
     # plot background-subtracted image
     if show_fig:
@@ -231,12 +272,17 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             scale_bar_length = 61
         else:
             scale_bar_length = 10
-        ax[0] = display_single(
-            input_data, ax=ax[0], scale_bar_length=scale_bar_length, pixel_scale=pixel_scale)
+        ax[0] = display_single(input_data,
+                               ax=ax[0],
+                               scale_bar_length=scale_bar_length,
+                               pixel_scale=pixel_scale)
         if mask is not None:
-            ax[0].imshow(mask.astype(float), origin='lower',
-                         alpha=0.1, cmap='Greys_r')
+            ax[0].imshow(mask.astype(float),
+                         origin='lower',
+                         alpha=0.1,
+                         cmap='Greys_r')
         from matplotlib.patches import Ellipse
+
         # plot an ellipse for each object
         for obj in objects:
             e = Ellipse(xy=(obj['x'], obj['y']),
@@ -246,15 +292,25 @@ def extract_obj(img, mask=None, b=64, f=3, sigma=5, pixel_scale=0.168, minarea=5
             e.set_facecolor('none')
             e.set_edgecolor('red')
             ax[0].add_artist(e)
-        ax[1] = display_single(segmap, scale='linear', cmap=SEG_CMAP,
-                               ax=ax[1], scale_bar_length=scale_bar_length)
+        ax[1] = display_single(segmap,
+                               scale='linear',
+                               cmap=SEG_CMAP,
+                               ax=ax[1],
+                               scale_bar_length=scale_bar_length)
         # plt.savefig('./extract_obj.png', bbox_inches='tight')
         return objects, segmap, fig
     return objects, segmap
 
 
-def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                              verbose=True, visual=False, size_buffer=1.4, logger=None):
+def _image_gaia_stars_tigress(image,
+                              wcs,
+                              pixel_scale=0.168,
+                              mask_a=694.7,
+                              mask_b=3.5,
+                              verbose=True,
+                              visual=False,
+                              size_buffer=1.4,
+                              logger=None):
     """
     Search for bright stars using GAIA catalogs on Tigress (`/tigress/HSC/refcats/htm/gaia_dr2_20200414`).
     For more information, see https://community.lsst.org/t/gaia-dr2-reference-catalog-in-lsst-format/3901.
@@ -272,33 +328,33 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
         gaia_results (`astropy.table.Table` object): a catalog of matched stars.
     """
     # Central coordinate
-    ra_cen, dec_cen = wcs.all_pix2world(image.shape[1] / 2,
-                                        image.shape[0] / 2,
+    ra_cen, dec_cen = wcs.all_pix2world(image.shape[1] / 2, image.shape[0] / 2,
                                         0)
-    img_cen_ra_dec = SkyCoord(
-        ra_cen, dec_cen, unit=('deg', 'deg'), frame='icrs')
+    img_cen_ra_dec = SkyCoord(ra_cen,
+                              dec_cen,
+                              unit=('deg', 'deg'),
+                              frame='icrs')
 
     # Width and height of the search box
-    img_ra_size = Quantity(pixel_scale * (image.shape)
-                           [1] * size_buffer, u.arcsec).to(u.degree)
-    img_dec_size = Quantity(pixel_scale * (image.shape)
-                            [0] * size_buffer, u.arcsec).to(u.degree)
+    img_ra_size = Quantity(pixel_scale * (image.shape)[1] * size_buffer,
+                           u.arcsec).to(u.degree)
+    img_dec_size = Quantity(pixel_scale * (image.shape)[0] * size_buffer,
+                            u.arcsec).to(u.degree)
 
     # Search for stars in Gaia catatlogs, which are stored in
     # `/tigress/HSC/refcats/htm/gaia_dr2_20200414`.
     try:
-        from lsst.meas.algorithms.htmIndexer import HtmIndexer
         import lsst.geom as geom
+        from lsst.meas.algorithms.htmIndexer import HtmIndexer
 
         def getShards(ra, dec, radius):
             htm = HtmIndexer(depth=7)
 
-            afw_coords = geom.SpherePoint(
-                geom.Angle(ra, geom.degrees),
-                geom.Angle(dec, geom.degrees))
+            afw_coords = geom.SpherePoint(geom.Angle(ra, geom.degrees),
+                                          geom.Angle(dec, geom.degrees))
 
-            shards, onBoundary = htm.getShardIds(
-                afw_coords, radius * geom.degrees)
+            shards, onBoundary = htm.getShardIds(afw_coords,
+                                                 radius * geom.degrees)
             return shards
 
     except ImportError as e:
@@ -315,10 +371,12 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
         logger.info('    Taking Gaia catalogs stored in `Tigress`')
     print('    Taking Gaia catalogs stored in `Tigress`')
 
-    shards = getShards(ra_cen, dec_cen, max(
-        img_ra_size, img_dec_size).to(u.degree).value)
-    cat = vstack([Table.read(
-        f'/tigress/HSC/refcats/htm/gaia_dr2_20200414/{index}.fits') for index in shards])
+    shards = getShards(ra_cen, dec_cen,
+                       max(img_ra_size, img_dec_size).to(u.degree).value)
+    cat = vstack([
+        Table.read(f'/tigress/HSC/refcats/htm/gaia_dr2_20200414/{index}.fits')
+        for index in shards
+    ])
     cat['coord_ra'] = cat['coord_ra'].to(u.degree)
     # why GAIA coordinates are in RADIAN???
     cat['coord_dec'] = cat['coord_dec'].to(u.degree)
@@ -327,11 +385,10 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
     # Ref: https://github.com/MerianSurvey/caterpillar/blob/main/caterpillar/catalog.py
     if cat:  # if not empty
         gaia_results = cat[
-            (cat['coord_ra'] > img_cen_ra_dec.ra - img_ra_size / 2) &
-            (cat['coord_ra'] < img_cen_ra_dec.ra + img_ra_size / 2) &
+            (cat['coord_ra'] > img_cen_ra_dec.ra - img_ra_size / 2)
+            & (cat['coord_ra'] < img_cen_ra_dec.ra + img_ra_size / 2) &
             (cat['coord_dec'] > img_cen_ra_dec.dec - img_dec_size / 2) &
-            (cat['coord_dec'] < img_cen_ra_dec.dec + img_dec_size / 2)
-        ]
+            (cat['coord_dec'] < img_cen_ra_dec.dec + img_dec_size / 2)]
         gaia_results.rename_columns(['coord_ra', 'coord_dec'], ['ra', 'dec'])
 
         gaia_results['phot_g_mean_mag'] = -2.5 * \
@@ -370,13 +427,12 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
                 ax1.add_artist(smask)
 
             # Show stars
-            ax1.scatter(
-                gaia_results['x_pix'],
-                gaia_results['y_pix'],
-                color=ORG(1.0),
-                s=100,
-                alpha=0.9,
-                marker='+')
+            ax1.scatter(gaia_results['x_pix'],
+                        gaia_results['y_pix'],
+                        color=ORG(1.0),
+                        s=100,
+                        alpha=0.9,
+                        marker='+')
 
             ax1.set_xlim(0, image.shape[1])
             ax1.set_ylim(0, image.shape[0])
@@ -386,8 +442,15 @@ def _image_gaia_stars_tigress(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_
     return None
 
 
-def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                     verbose=False, visual=False, size_buffer=1.4, tap_url=None):
+def image_gaia_stars(image,
+                     wcs,
+                     pixel_scale=0.168,
+                     mask_a=694.7,
+                     mask_b=3.5,
+                     verbose=False,
+                     visual=False,
+                     size_buffer=1.4,
+                     tap_url=None):
     """
     Search for bright stars using GAIA catalog. From https://github.com/dr-guangtou/kungpao.
 
@@ -403,38 +466,37 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
         gaia_results (`astropy.table.Table` object): a catalog of matched stars.
     """
     # Central coordinate
-    ra_cen, dec_cen = wcs.all_pix2world(image.shape[0] / 2,
-                                        image.shape[1] / 2,
+    ra_cen, dec_cen = wcs.all_pix2world(image.shape[0] / 2, image.shape[1] / 2,
                                         0)
-    img_cen_ra_dec = SkyCoord(
-        ra_cen, dec_cen, unit=('deg', 'deg'), frame='icrs')
+    img_cen_ra_dec = SkyCoord(ra_cen,
+                              dec_cen,
+                              unit=('deg', 'deg'),
+                              frame='icrs')
 
     # Width and height of the search box
-    img_search_x = Quantity(pixel_scale * (image.shape)
-                            [0] * size_buffer, u.arcsec)
-    img_search_y = Quantity(pixel_scale * (image.shape)
-                            [1] * size_buffer, u.arcsec)
+    img_search_x = Quantity(pixel_scale * (image.shape)[0] * size_buffer,
+                            u.arcsec)
+    img_search_y = Quantity(pixel_scale * (image.shape)[1] * size_buffer,
+                            u.arcsec)
 
     # Search for stars
     if tap_url is not None:
         with suppress_stdout():
-            from astroquery.gaia import TapPlus, GaiaClass
+            from astroquery.gaia import GaiaClass, TapPlus
             Gaia = GaiaClass(TapPlus(url=tap_url))
 
-            gaia_results = Gaia.query_object_async(
-                coordinate=img_cen_ra_dec,
-                width=img_search_x,
-                height=img_search_y,
-                verbose=verbose)
+            gaia_results = Gaia.query_object_async(coordinate=img_cen_ra_dec,
+                                                   width=img_search_x,
+                                                   height=img_search_y,
+                                                   verbose=verbose)
     else:
         with suppress_stdout():
             from astroquery.gaia import Gaia
 
-            gaia_results = Gaia.query_object_async(
-                coordinate=img_cen_ra_dec,
-                width=img_search_x,
-                height=img_search_y,
-                verbose=verbose)
+            gaia_results = Gaia.query_object_async(coordinate=img_cen_ra_dec,
+                                                   width=img_search_x,
+                                                   height=img_search_y,
+                                                   verbose=verbose)
 
     if gaia_results:
         # Convert the (RA, Dec) of stars into pixel coordinate
@@ -470,13 +532,12 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
                 ax1.add_artist(smask)
 
             # Show stars
-            ax1.scatter(
-                gaia_results['x_pix'],
-                gaia_results['y_pix'],
-                color=ORG(1.0),
-                s=100,
-                alpha=0.9,
-                marker='+')
+            ax1.scatter(gaia_results['x_pix'],
+                        gaia_results['y_pix'],
+                        color=ORG(1.0),
+                        s=100,
+                        alpha=0.9,
+                        marker='+')
 
             ax1.set_xlim(0, image.shape[0])
             ax1.set_ylim(0, image.shape[1])
@@ -486,9 +547,18 @@ def image_gaia_stars(image, wcs, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
     return None
 
 
-def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, mask_b=3.5,
-                   size_buffer=1.4, gaia_bright=18.0,
-                   factor_b=1.3, factor_f=1.9, tigress=False, logger=None):
+def gaia_star_mask(img,
+                   wcs,
+                   gaia_stars=None,
+                   pixel_scale=0.168,
+                   mask_a=694.7,
+                   mask_b=3.5,
+                   size_buffer=1.4,
+                   gaia_bright=18.0,
+                   factor_b=1.3,
+                   factor_f=1.9,
+                   tigress=False,
+                   logger=None):
     """Find stars using Gaia and mask them out if necessary. From https://github.com/dr-guangtou/kungpao.
 
     Using the stars found in the GAIA TAP catalog, we build a bright star mask following
@@ -514,17 +584,27 @@ def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, m
     """
     if gaia_stars is None:
         if tigress:
-            gaia_stars = _image_gaia_stars_tigress(img, wcs, pixel_scale=pixel_scale,
-                                                   mask_a=mask_a, mask_b=mask_b,
-                                                   verbose=False, visual=False,
-                                                   size_buffer=size_buffer, logger=logger)
+            gaia_stars = _image_gaia_stars_tigress(img,
+                                                   wcs,
+                                                   pixel_scale=pixel_scale,
+                                                   mask_a=mask_a,
+                                                   mask_b=mask_b,
+                                                   verbose=False,
+                                                   visual=False,
+                                                   size_buffer=size_buffer,
+                                                   logger=logger)
         else:
-            gaia_stars = image_gaia_stars(img, wcs, pixel_scale=pixel_scale,
-                                          mask_a=mask_a, mask_b=mask_b,
-                                          verbose=False, visual=False,
+            gaia_stars = image_gaia_stars(img,
+                                          wcs,
+                                          pixel_scale=pixel_scale,
+                                          mask_a=mask_a,
+                                          mask_b=mask_b,
+                                          verbose=False,
+                                          visual=False,
                                           size_buffer=size_buffer)
-        gaia_stars = gaia_stars[(abs(gaia_stars['pm_ra']) +
-                                 abs(gaia_stars['pm_dec']) + gaia_stars['parallax'] != 0)]
+        gaia_stars = gaia_stars[(
+            abs(gaia_stars['pm_ra']) + abs(gaia_stars['pm_dec']) +
+            gaia_stars['parallax'] != 0)]
         if len(gaia_stars) == 0:
             gaia_stars = None
 
@@ -548,14 +628,22 @@ def gaia_star_mask(img, wcs, gaia_stars=None, pixel_scale=0.168, mask_a=694.7, m
     # Remove sources with no parallax and proper motion
     if gaia_stars is not None:
         gaia_b = gaia_stars[gaia_stars['phot_g_mean_mag'] <= gaia_bright]
-        sep.mask_ellipse(msk_star, gaia_b['x_pix'], gaia_b['y_pix'],
+        sep.mask_ellipse(msk_star,
+                         gaia_b['x_pix'],
+                         gaia_b['y_pix'],
                          gaia_b['rmask_arcsec'] / factor_b / pixel_scale,
-                         gaia_b['rmask_arcsec'] / factor_b / pixel_scale, 0.0, r=1.0)
+                         gaia_b['rmask_arcsec'] / factor_b / pixel_scale,
+                         0.0,
+                         r=1.0)
 
         gaia_f = gaia_stars[gaia_stars['phot_g_mean_mag'] > gaia_bright]
-        sep.mask_ellipse(msk_star, gaia_f['x_pix'], gaia_f['y_pix'],
+        sep.mask_ellipse(msk_star,
+                         gaia_f['x_pix'],
+                         gaia_f['y_pix'],
                          gaia_f['rmask_arcsec'] / factor_f / pixel_scale,
-                         gaia_f['rmask_arcsec'] / factor_f / pixel_scale, 0.0, r=1.0)
+                         gaia_f['rmask_arcsec'] / factor_f / pixel_scale,
+                         0.0,
+                         r=1.0)
 
         return gaia_stars, msk_star
 
@@ -579,11 +667,122 @@ def padding_PSF(psf_list):
         y_len, x_len = psf[0].data.shape
         dy = (max_len - y_len) // 2
         dx = (max_len - x_len) // 2
-        temp = np.pad(psf[0].data.astype('float'), ((dy, dy),
-                                                    (dx, dx)), 'constant', constant_values=0)
+        temp = np.pad(psf[0].data.astype('float'), ((dy, dy), (dx, dx)),
+                      'constant',
+                      constant_values=0)
         if temp.shape == (max_len, max_len):
             psf_pad.append(temp)
         else:
             raise ValueError('Wrong size!')
 
     return psf_pad
+
+def func_brokenexp(r, I0, gamma, betta, alpha, Rb):
+        S = (1 + np.exp(-alpha * Rb))**(1 / alpha * (1 / gamma - 1 / betta))
+        return (S * I0 * np.exp(-r / gamma) *
+                (1 + np.exp(alpha * (r - Rb)))**(1 / alpha *
+                                                 (1 / gamma - 1 / betta)))
+
+def brokenexpfit_emcee(x,
+                y,
+                yerr,
+                I0_init,
+                I0_low,
+                I0_high,
+                gamma_init,
+                gamma_low,
+                gamma_high,
+                betta_init,
+                betta_low,
+                betta_high,
+                alpha_init,
+                alpha_low,
+                alpha_high,
+                Rb_init,
+                Rb_low,
+                Rb_high,
+                log_f_init=-2,
+                log_f_low=-10,
+                log_f_high=10,
+                nwalkers=100,
+                nsteps = 1000,
+                discard = 100,
+                nthreads=5,
+                plot=False,
+                verbose=False,
+                visual=False,
+                logger=None):
+    """This is to perform exponential fit using EMCEE package.
+    """
+
+    #from multiprocessing import Pool
+    import corner
+    import emcee
+    from pathos.multiprocessing import ProcessingPool as Pool
+
+    def func_brokenexp(r, I0, gamma, betta, alpha, Rb):
+        S = (1 + np.exp(-alpha * Rb))**(1 / alpha * (1 / gamma - 1 / betta))
+        return (S * I0 * np.exp(-r / gamma) *
+                (1 + np.exp(alpha * (r - Rb)))**(1 / alpha *
+                                                 (1 / gamma - 1 / betta)))
+
+    def log_likelihood(theta, x, y, yerr):
+        I0, gamma, betta, alpha, Rb, log_f = theta
+        model = func_brokenexp(x, I0, gamma, betta, alpha, Rb)
+        sigma2 = yerr**2 + model**2 * np.exp(2 * log_f)
+        return -0.5 * np.sum((y - model)**2 / sigma2 + np.log(sigma2))
+
+    def log_prior(theta):
+        I0, gamma, betta, alpha, Rb, log_f = theta
+        if I0_low < I0 < I0_high and gamma_low < gamma < gamma_high and betta_low < betta < betta_high and alpha_low < alpha < alpha_high and Rb_low < Rb < Rb_high and log_f_low < log_f < log_f_high:
+            return 0.0
+        return -np.inf
+
+    def log_probability(theta, x, y, yerr):
+        lp = log_prior(theta)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + log_likelihood(theta, x, y, yerr)
+
+    ndim = 6
+
+    with Pool(nthreads) as pool:
+        ini_geuess = (I0_init, gamma_init, betta_init, alpha_init, Rb_init,
+                      log_f_init) + 1e-4 * np.random.randn(nwalkers, ndim)
+
+        sampler = emcee.EnsembleSampler(nwalkers,
+                                        ndim,
+                                        log_probability,
+                                        args=(x, y, yerr),
+                                        pool=pool)
+        sampler.run_mcmc(ini_geuess, nsteps, progress=True)
+
+    fig, axes = plt.subplots(ndim, figsize=(10, 7), sharex=True)
+    samples = sampler.get_chain()
+    labels = ["I0", "gamma", "betta", "alpha", "Rb", "log_f"]
+    for i in range(ndim):
+        ax = axes[i]
+        ax.plot(samples[:, :, i], "k", alpha=0.3)
+        ax.set_xlim(0, len(samples))
+        ax.set_ylabel(labels[i])
+        ax.yaxis.set_label_coords(-0.1, 0.5)
+
+    axes[-1].set_xlabel("step number")
+
+    flat_samples = sampler.get_chain(discard=discard, thin=15, flat=True)
+
+    fig = corner.corner(flat_samples, labels=labels)
+    
+    from IPython.display import Math, display
+    parameter_arr = []
+    for i in range(ndim):
+        mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+        display(Math(txt))
+        
+        parameter_temp = [mcmc[1], q[0], q[1]]
+        parameter_arr.append(parameter_temp)
+        
+    return parameter_arr
