@@ -4,16 +4,21 @@ import copy
 import os
 import re
 import sys
+import warnings
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
 import numpy as np
+import photutils
 import sep
+import skimage.measure
+import skimage.transform
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.table import Column, Table, vstack
 from astropy.units import Quantity
+from astropy.utils.exceptions import AstropyUserWarning
 from astropy.visualization import (AsymmetricPercentileInterval, HistEqStretch,
                                    LogStretch, ZScaleInterval)
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -29,6 +34,8 @@ from palettable.colorbrewer.sequential import (Blues_9, Greys_9, OrRd_9,
 from scipy import ndimage
 from scipy.interpolate import interp1d
 from scipy.special import gamma, gammaincinv
+
+from autoprof_utils import Background_Mode
 
 system_use = sys.platform
 
@@ -147,7 +154,7 @@ def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     Returns:
         [type]: [description]
     """
-    intenRe = 10 ** ((zpt - muRe) / 2.5) * pixel_size ** 2
+    intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
     return intenRe
 
 
@@ -156,10 +163,10 @@ def Ser_kappa(n):
     # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
     '''
     if n > 0.36:
-        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n ** 2)
+        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
 
     elif n < 0.36:
-        bn = 0.01945 - 0.8902 * n + 10.95 * n ** 2 - 19.67 * n ** 3 + 13.43 * n ** 4
+        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
 
     return bn
 
@@ -190,7 +197,7 @@ def Sersic_intens(r, Ie, r_eff, n):
     """
     bn = sersic_bn(n)
 
-    intensity = Ie * np.exp(-bn * ((r / r_eff) ** (1 / n) - 1))
+    intensity = Ie * np.exp(-bn * ((r / r_eff)**(1 / n) - 1))
 
     return intensity
 
@@ -252,14 +259,14 @@ def all_ninety_pa(pa):
 def bright_to_mag(intens, zpt0, texp, pixel_size):
     # for CGS survey, texp = 1s, A = 0.259*0.259
     texp = texp
-    A = pixel_size ** 2
+    A = pixel_size**2
     return -2.5 * np.log10(intens / (texp * A)) + zpt0
 
 
 def mag2bright(mag, zpt0, texp, pixel_size):
-    A = pixel_size ** 2
+    A = pixel_size**2
 
-    bright = texp * A * 10 ** ((mag - zpt0) / (-2.5))
+    bright = texp * A * 10**((mag - zpt0) / (-2.5))
 
     return bright
 
@@ -372,7 +379,7 @@ def ellipseGetGrowthCurve(ellipOut, useTflux=False):
     if not useTflux:
         # The area in unit of pixels covered by an elliptical isophote
         ell = removeellipseIndef(ellipOut['ell'])
-        ellArea = np.pi * ((ellipOut['sma'] ** 2.0) * (1.0 - ell))
+        ellArea = np.pi * ((ellipOut['sma']**2.0) * (1.0 - ell))
         # The total flux inside the "ring"
         intensUse = ellipOut['intens']
         isoFlux = np.append(ellArea[0],
@@ -402,7 +409,7 @@ def GrowthCurve(sma, ellip, isoInten):
     Returns:
         [type]: [description]
     """
-    ellArea = np.pi * ((sma ** 2.0) * (1.0 - ellip))
+    ellArea = np.pi * ((sma**2.0) * (1.0 - ellip))
     isoFlux = np.append(ellArea[0], [ellArea[1:] - ellArea[:-1]]) * isoInten
     curveOfGrowth = list(
         map(lambda x: np.nansum(isoFlux[0:x + 1]), range(isoFlux.shape[0])))
@@ -620,7 +627,7 @@ def readEllipse(outDat, zpt0, sky_err, pixel_size=0.259, sky_value=0, texp=1):
 
     # calculate the magnitude.
     intens_err_removeindef_sky = np.sqrt(
-        np.array(intens_err_removeindef) ** 2 + sky_err ** 2)
+        np.array(intens_err_removeindef)**2 + sky_err**2)
 
     if sky_value:
         ellipse_data['intens'] = intens_removeindef - sky_value
@@ -1389,9 +1396,18 @@ autocmap = LinearSegmentedColormap('autocmap', cdict)
 autocmap.set_under('k', alpha=0)
 
 
-def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=None, vmax=None, scale_bar=True,
-                            bar_length=10, bar_fontsize=15,
-                            pixel_scale=0.259, box_alpha=1, **kwargs):
+def display_image_colornorm(ax,
+                            image,
+                            cmap='Greys_r',
+                            percentile=99.9,
+                            vmin=None,
+                            vmax=None,
+                            scale_bar=True,
+                            bar_length=10,
+                            bar_fontsize=15,
+                            pixel_scale=0.259,
+                            box_alpha=1,
+                            **kwargs):
     from astropy.visualization import PercentileInterval
     from matplotlib.colors import LogNorm, Normalize
 
@@ -1402,7 +1418,11 @@ def display_image_colornorm(ax, image, cmap='Greys_r', percentile=99.9, vmin=Non
     if vmax is None:
         vmax = PercentileInterval(percentile).get_limits(image)[1]
 
-    ax.imshow(image, cmap=cmap, norm=LogNorm(vmin=vmin, vmax=vmax), aspect='auto', **kwargs)
+    ax.imshow(image,
+              cmap=cmap,
+              norm=LogNorm(vmin=vmin, vmax=vmax),
+              aspect='auto',
+              **kwargs)
 
     # Hide ticks and tick labels
     ax.tick_params(labelbottom=False,
@@ -2093,7 +2113,7 @@ def fn(n):
     """
     b = gammaincinv(2. * n, 0.5)
 
-    fn = n * np.exp(b) / b ** (2 * n) * gamma(2 * n)
+    fn = n * np.exp(b) / b**(2 * n) * gamma(2 * n)
 
     return fn
 
@@ -2152,8 +2172,8 @@ def mass_density_profile(sma, logM_gal, Dist, ellipticity):
     sma_arcsec = sma
     sma_kpc = Ras2Rkpc(Dist, sma_arcsec)
 
-    mass_density_kpc = np.log10(10 ** logM_gal / (np.pi * sma_kpc ** 2 *
-                                                  (1 - ellipticity)))
+    mass_density_kpc = np.log10(10**logM_gal / (np.pi * sma_kpc**2 *
+                                                (1 - ellipticity)))
 
     return mass_density_kpc
 
@@ -2411,7 +2431,7 @@ def extract_obj(img,
     # This is suggested here: https://github.com/kbarbary/sep/issues/34
     objects.add_column(
         Column(data=2 *
-                    np.sqrt(np.log(2) * (objects['a'] ** 2 + objects['b'] ** 2)),
+               np.sqrt(np.log(2) * (objects['a']**2 + objects['b']**2)),
                name='fwhm_custom'))
 
     # Measure R30, R50, R80
@@ -2873,7 +2893,7 @@ def create_circular_mask(img, center=None, radius=None):
         radius = min(center[0], center[1], w - center[0], h - center[1])
 
     Y, X = np.ogrid[:h, :w]
-    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y - center[1])**2)
 
     mask = dist_from_center <= radius
     return mask
@@ -2985,28 +3005,46 @@ def Running_median(X, Y):
 
     return np.array(new_x), np.array(new_y), np.array(running_std)
 
-def extract_fix_isophotes(image=None, xcen=None, ycen=None, initsma=None, eps=None, pa=None, step=None, 
-                          linear_growth=False, minsma=None, maxsma=None, silent=False):
+
+def extract_fix_isophotes(image=None,
+                          xcen=None,
+                          ycen=None,
+                          initsma=None,
+                          eps=None,
+                          pa=None,
+                          step=None,
+                          linear_growth=False,
+                          minsma=None,
+                          maxsma=None,
+                          silent=False):
     """
     Function to extract surface brightness profile with fixed center, ellipticity, and position angle.
     """
     syntax = "syntax: results = extract_fix_isophotes(image=, xcen=, ycen=, initsma=, eps=, pa=, step=, linear_growth=False/True, minsma=None, maxsma=None, silent=False/True; minsma maxsma are optional)"
-    
+
     from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
                                     IsophoteList)
-    
+
     if (None in [xcen, ycen, initsma, eps, pa, step]) or (image is None):
         print(syntax)
         return []
     print(syntax) if silent == False else print("")
-    
+
     minsma = minsma if minsma is not None else 0.5
-    maxsma = maxsma if maxsma is not None else max(np.shape(image))/2*1.3
+    maxsma = maxsma if maxsma is not None else max(np.shape(image)) / 2 * 1.3
     isophote_list = []
 
-    geometry = EllipseGeometry(xcen, ycen, initsma, eps, pa, astep=step, linear_growth=False, 
-                               fix_center=True, fix_pa=True, fix_eps=True)
-    
+    geometry = EllipseGeometry(xcen,
+                               ycen,
+                               initsma,
+                               eps,
+                               pa,
+                               astep=step,
+                               linear_growth=False,
+                               fix_center=True,
+                               fix_pa=True,
+                               fix_eps=True)
+
     sma = initsma
     while True:
         sample = EllipseSample(image, sma, geometry=geometry)
@@ -3033,8 +3071,157 @@ def extract_fix_isophotes(image=None, xcen=None, ycen=None, initsma=None, eps=No
 
     isophote_list.sort()
     iso_fix = IsophoteList(isophote_list)
-    
+
     return iso_fix
+
+
+def align(pa):
+
+    for jc in range(0, len(pa) - 1):
+        test = pa[jc + 1] - pa[jc]
+        if test > 150:
+            pa[jc + 1:] = pa[jc + 1:] - 180
+        if test < -150:
+            pa[jc + 1:] = pa[jc + 1:] + 180
+
+    for jc in range(0, len(pa) - 1):
+        test = pa[jc + 1] - pa[jc]
+        if test > 150:
+            pa[jc + 1:] = pa[jc + 1:] - 180
+        if test < -150:
+            pa[jc + 1:] = pa[jc + 1:] + 180
+
+    for jc in range(0, len(pa) - 1):
+        test = pa[jc + 1] - pa[jc]
+        if test > 150:
+            pa[jc + 1:] = pa[jc + 1:] - 180
+        if test < -150:
+            pa[jc + 1:] = pa[jc + 1:] + 180
+
+    return (pa)
+
+
+def get_initial_geometry(img, Nsigma=2):
+
+    background = Background_Mode(img)
+    bkgsig = background['background noise']
+
+    threshold = np.zeros_like(img)
+
+    threshold[:] = bkgsig * 2
+
+    npixels = 10
+
+    segm = photutils.detect_sources(img, threshold, npixels)
+
+    label = np.argmax(segm.areas) + 1
+
+    segmap = segm.data == label
+
+    raw_segmap = copy.deepcopy(segmap)
+
+    tmp = photutils.SegmentationImage(np.array(segmap, dtype=int))
+    tmp_slice = tmp.slices[0]  # you only have one source
+    dx = tmp_slice[1].stop - tmp_slice[1].start
+    dy = tmp_slice[0].stop - tmp_slice[0].start
+    size = max(dx, dy)
+    sz = int(0.1 * size)
+
+    segmap_float = ndimage.uniform_filter(np.float64(segmap), size=sz)
+
+    segmap = segmap_float > 0.1
+    segmap = np.array(segmap, dtype=int)
+
+    segmap = photutils.SegmentationImage(segmap)
+
+    ##### start to calculate the geometry ##
+    s = segmap.slices[0]  # you only have one source
+    xmin, xmax = s[1].start, s[1].stop - 1
+    ymin, ymax = s[0].start, s[0].stop - 1
+
+    dx = xmax + 1 - xmin
+    dy = ymax + 1 - ymin
+
+    xc, yc = xmin + dx // 2, ymin + dy // 2
+    dist = int(max(dx, dy) * 1.5 / 2.0)
+
+    ny, nx = img.shape
+
+    slice_stamp = (slice(max(0, yc - dist), min(ny, yc + dist)),
+                   slice(max(0, xc - dist), min(nx, xc + dist)))
+
+    xmin_stamp = slice_stamp[1].start
+    ymin_stamp = slice_stamp[0].start
+    img_stamp = img[slice_stamp]
+    segmap_stamp = segmap.data[slice_stamp]
+
+    mask_stamp_bkg = segmap_stamp == 0
+
+    img_stamp_source = np.where(~mask_stamp_bkg, img_stamp,
+                                0.0)  # only consider the galaxy segmentation,
+    # others are set to zero
+
+    image = np.float64(img_stamp_source)
+
+    # Calculate centroid
+    M = skimage.measure.moments(image, order=1)
+    yc_stamp = M[1, 0] / M[0, 0]
+    xc_stamp = M[0, 1] / M[0, 0]
+
+    xc_centroid = xc_stamp + xmin_stamp
+    yc_centroid = yc_stamp + ymin_stamp
+
+    # The covariance matrix of a Gaussian function that has the same second-order moments as the source, with respect to ``(xc, yc)``.
+
+    Mc = skimage.measure.moments_central(image,
+                                         center=(yc_stamp, xc_stamp),
+                                         order=2)
+    assert Mc[0, 0] > 0
+
+    covariance = np.array([[Mc[0, 2], Mc[1, 1]], [Mc[1, 1], Mc[2, 0]]])
+    covariance /= Mc[0, 0]  # normalize
+
+    if (covariance[0, 0] <= 0) or (covariance[1, 1] <= 0):
+        warnings.warn('Nonpositive second moment.', AstropyUserWarning)
+        flag = 1
+
+    rho = 1.0 / 12.0  # variance of 1 pixel-wide top-hat distribution
+    x2, xy, xy, y2 = covariance.flat
+    while np.abs(x2 * y2 - xy**2) < rho**2:
+        x2 += (x2 >= 0) * rho - (x2 < 0) * rho  # np.sign(0) == 0 is no good
+        y2 += (y2 >= 0) * rho - (y2 < 0) * rho
+
+    covariance_centroid = np.array([[x2, xy], [xy, y2]])
+    eigvals = np.linalg.eigvals(covariance_centroid)
+    eigvals_centroid = np.sort(np.abs(eigvals))[::-1]
+
+    a = np.sqrt(np.abs(eigvals_centroid[0]))
+    b = np.sqrt(np.abs(eigvals_centroid[1]))
+
+    eps_centroid = 1.0 - (b / a)
+    ############# The orientation (in radians) of the source
+
+    x2, xy, xy, y2 = covariance_centroid.flat
+
+    orientation_centroid = 0.5 * np.arctan2(2.0 * xy, x2 - y2)
+
+    pa_centroid = -90 + orientation_centroid * 180. / np.pi
+
+    while pa_centroid < 0:
+        pa_centroid += 180
+    while pa_centroid > 180:
+        pa_centroid -= 180
+
+    results = {}
+    results['xc'] = xc_centroid
+    results['yc'] = yc_centroid
+    results['eps'] = eps_centroid
+    results['pa'] = pa_centroid
+    results['size'] = max(dx, dy) / 2
+    results['rmax'] = max(dx, dy)
+    results['segment'] = segmap
+
+    return results
 
 
 if __name__ == '__main__':
