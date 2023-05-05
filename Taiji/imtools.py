@@ -35,7 +35,7 @@ from scipy import ndimage
 from scipy.interpolate import interp1d
 from scipy.special import gamma, gammaincinv
 
-from autoprof_utils import Background_Mode
+from .autoprof_utils import Background_Mode
 
 system_use = sys.platform
 
