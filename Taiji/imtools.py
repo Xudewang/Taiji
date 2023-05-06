@@ -2986,6 +2986,7 @@ def Running_median(X, Y):
         X (array): _description_
         Y (array): _description_
         total_bins (int, optional): _description_. Defaults to 10.
+    TODO: Using astropy.stats.scott_bin_width to determine the number of bins. And use scipy.stats.binned_statistic to calculate the median (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.binned_statistic.html).
     """
     from astropy.stats import scott_bin_width
 
