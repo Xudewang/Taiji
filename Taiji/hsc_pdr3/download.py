@@ -94,8 +94,8 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec,
             print('The {} band PSF exists.'.format(filter_band))
         else:
             print('The {} band PSF dose not exist.'.format(filter_band))
-    print('The end of general check information.')
     print('******************************************')
+    print('The end of general check information.')
 
     check_psf_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_psf.fits'.format(
         rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
@@ -103,7 +103,7 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec,
         print(f'The current {filter_input} band PSF exists, we stop this download.')
 
     else:
-
+        print(f'We should download the {filter_input} band PSF.')
         os.chdir(data_path)
 
         if system_use == 'linux':
@@ -124,6 +124,7 @@ def hsc_psf_tool(rerun_field, data_type_command, coor_ra, coor_dec,
 
         if return_code_psf == 0:
             print('The download PSF process is successful!')
+            print('                                          ')
 
         os.chdir(code_path)
 
