@@ -61,7 +61,7 @@ def hsc_cutout_tool(rerun_field,
 
     if system_use == 'linux':
         process = subprocess.Popen([
-            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
+            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu' --semaphore=/mnt/dewang/data_hsc_obs/semaphore --max-connections=40"
             .format(rerun_field, data_type_command, coor_ra, coor_dec,
                     size_arcsec, size_arcsec, cutout_download_name)
         ],
@@ -126,7 +126,7 @@ def hsc_psf_tool(rerun_field,
 
     if system_use == 'linux':
         process_psf = subprocess.Popen([
-            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
+            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu' --semaphore=/mnt/dewang/data_hsc_obs/semaphore --max-connections=40"
             .format(rerun_field, coor_ra, coor_dec, psf_download_name)
         ],
                                         shell=True)
