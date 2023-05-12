@@ -126,7 +126,7 @@ def hsc_psf_tool(rerun_field,
 
     if system_use == 'linux':
         process_psf = subprocess.Popen([
-            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu' --semaphore=/mnt/dewang/data_hsc_obs/semaphore --max-connections=40"
+            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
             .format(rerun_field, coor_ra, coor_dec, psf_download_name)
         ],
                                         shell=True)
