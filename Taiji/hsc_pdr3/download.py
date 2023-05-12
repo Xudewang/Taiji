@@ -49,37 +49,37 @@ def hsc_cutout_tool(rerun_field,
     print('******************************************')
     print('The end of general check information.')
 
-    check_data_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_cutout.fits'.format(
-        rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
-    if os.path.exists(check_data_file_name_Iband):
-        print(
-            f'The current {filter_input} band cutout exsists, we stop the download code.')
+    # check_data_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_cutout.fits'.format(
+    #     rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
+    # if os.path.exists(check_data_file_name_Iband):
+    #     print(
+    #         f'The current {filter_input} band cutout exsists, we stop the download code.')
 
-    else:
+    # else:
 
-        os.chdir(data_path)
+    os.chdir(data_path)
 
-        if system_use == 'linux':
-            process = subprocess.Popen([
-                "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
-                .format(rerun_field, data_type_command, coor_ra, coor_dec,
-                        size_arcsec, size_arcsec, cutout_download_name)
-            ],
-                                       shell=True)
-        elif system_use == 'darwin':
-            process = subprocess.Popen([
-                "python /Users/xu/Astronomy/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
-                .format(rerun_field, data_type_command, coor_ra, coor_dec,
-                        size_arcsec, size_arcsec, cutout_download_name)
-            ],
-                                       shell=True)
+    if system_use == 'linux':
+        process = subprocess.Popen([
+            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
+            .format(rerun_field, data_type_command, coor_ra, coor_dec,
+                    size_arcsec, size_arcsec, cutout_download_name)
+        ],
+                                    shell=True)
+    elif system_use == 'darwin':
+        process = subprocess.Popen([
+            "python /Users/xu/Astronomy/Taiji/Taiji/hsc_pdr3/downloadCutout/downloadCutout.py --rerun='{0}' --type='{1}' --mask=True --variance=True --ra={2} --dec={3} --sw={4}arcsec --sh={5}arcsec --name='{6}' --user='dwxu'"
+            .format(rerun_field, data_type_command, coor_ra, coor_dec,
+                    size_arcsec, size_arcsec, cutout_download_name)
+        ],
+                                    shell=True)
 
-        return_code = process.wait()
+    return_code = process.wait()
 
-        if return_code == 0:
-            print('The downloading cutout process is successful!')
+    if return_code == 0:
+        print('The downloading cutout process is successful!')
 
-        os.chdir(code_path)
+    os.chdir(code_path)
 
 
 def hsc_psf_tool(rerun_field,
@@ -113,38 +113,38 @@ def hsc_psf_tool(rerun_field,
     print('******************************************')
     print('The end of general check information.')
 
-    check_psf_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_psf.fits'.format(
-        rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
-    if os.path.exists(check_psf_file_name_Iband):
-        print(
-            f'The current {filter_input} band PSF exists, we stop this download.'
-        )
+    # check_psf_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_psf.fits'.format(
+    #     rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
+    # if os.path.exists(check_psf_file_name_Iband):
+    #     print(
+    #         f'The current {filter_input} band PSF exists, we stop this download.'
+    #     )
 
-    else:
-        print(f'We should download the {filter_input} band PSF.')
-        os.chdir(data_path)
+    # else:
+        #print(f'We should download the {filter_input} band PSF.')
+    os.chdir(data_path)
 
-        if system_use == 'linux':
-            process_psf = subprocess.Popen([
-                "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
-                .format(rerun_field, coor_ra, coor_dec, psf_download_name)
-            ],
-                                           shell=True)
+    if system_use == 'linux':
+        process_psf = subprocess.Popen([
+            "python /home/dewang/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
+            .format(rerun_field, coor_ra, coor_dec, psf_download_name)
+        ],
+                                        shell=True)
 
-        elif system_use == 'darwin':
-            process_psf = subprocess.Popen([
-                "python /Users/xu/Astronomy/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
-                .format(rerun_field, coor_ra, coor_dec, psf_download_name)
-            ],
-                                           shell=True)
+    elif system_use == 'darwin':
+        process_psf = subprocess.Popen([
+            "python /Users/xu/Astronomy/Taiji/Taiji/hsc_pdr3/downloadPsf/downloadPsf.py --rerun='{0}' --type='coadd' --ra={1} --dec={2} --name='{3}' --user='dwxu'"
+            .format(rerun_field, coor_ra, coor_dec, psf_download_name)
+        ],
+                                        shell=True)
 
-        return_code_psf = process_psf.wait()
+    return_code_psf = process_psf.wait()
 
-        if return_code_psf == 0:
-            print('The download PSF process is successful!')
-            print('                                          ')
+    if return_code_psf == 0:
+        print('The download PSF process is successful!')
+        print('                                          ')
 
-        os.chdir(code_path)
+    os.chdir(code_path)
 
 
 def hsc_query_tool(sql_file, catalog_file, dr_type, data_path, code_path):
