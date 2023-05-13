@@ -76,6 +76,8 @@ def hsc_cutout_tool(rerun_field,
 
     if return_code == 0:
         print('The downloading cutout process is successful!')
+    else:
+        print('Download Error: the download process returned a non-zero exit code.')
 
     os.chdir(code_path)
 
