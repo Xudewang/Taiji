@@ -343,6 +343,7 @@ def hsc_cone_search(coord,
 def wget_download_urls(coor_ra,
                        coor_dec,
                        size_arcsec,
+                       filter,
                        datatype='coadd/bg',
                        rerun='pdr3_wide'):
     """Use wget to download the hsc datas for PDR3.
@@ -361,6 +362,6 @@ def wget_download_urls(coor_ra,
 
     """
 
-    url = f'https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra={coor_ra}&dec={coor_dec}&sw={size_arcsec}asec&sh={size_arcsec}asec&type={datatype}&image=on&filter=HSC-G&tract=&rerun={rerun}'
+    url = f'https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra={coor_ra}&dec={coor_dec}&sw={size_arcsec}asec&sh={size_arcsec}asec&type={datatype}&image=on&filter={filter}&tract=&rerun={rerun}'
     
     return url
