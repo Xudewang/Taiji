@@ -36,7 +36,6 @@ def hsc_cutout_tool(rerun_field,
 
     filters_hsc = ['HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z', 'HSC-Y']
 
-    print('The general check information is as follows:')
     print('******************************************')
     for filter_band in filters_hsc:
         check_data_file_name = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_cutout.fits'.format(
@@ -48,7 +47,6 @@ def hsc_cutout_tool(rerun_field,
             print('The {} band cutout does not exist.'.format(filter_band))
             print('The filename is {}'.format(check_data_file_name))
     print('******************************************')
-    print('The end of general check information.')
 
     # check_data_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_cutout.fits'.format(
     #     rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
@@ -102,7 +100,6 @@ def hsc_psf_tool(rerun_field,
 
     filters_hsc = ['HSC-G', 'HSC-R', 'HSC-I', 'HSC-Z', 'HSC-Y']
 
-    print('The general check information is as follows:')
     print('******************************************')
     for filter_band in filters_hsc:
         check_psf_file_name = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_psf.fits'.format(
@@ -112,7 +109,6 @@ def hsc_psf_tool(rerun_field,
         else:
             print('The {} band PSF dose not exist.'.format(filter_band))
     print('******************************************')
-    print('The end of general check information.')
 
     # check_psf_file_name_Iband = data_path + '{0}_{1}_{2}_{3}_{4}_{5:.2f}arcsec_psf.fits'.format(
     #     rerun_field, Datatype, coor_ra, coor_dec, filter_input, size_arcsec)
