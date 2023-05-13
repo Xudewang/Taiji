@@ -46,6 +46,7 @@ def hsc_cutout_tool(rerun_field,
 
         else:
             print('The {} band cutout does not exist.'.format(filter_band))
+            print('The filename is {}'.format(check_data_file_name))
     print('******************************************')
     print('The end of general check information.')
 
