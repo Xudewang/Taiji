@@ -77,7 +77,9 @@ def hsc_cutout_tool(rerun_field,
     if return_code == 0:
         print('The downloading cutout process is successful!')
     else:
-        print('Download Error: the download process returned a non-zero exit code.')
+        print(
+            'Download Error: the download process returned a non-zero exit code.'
+        )
 
     os.chdir(code_path)
 
@@ -336,3 +338,29 @@ def hsc_cone_search(coord,
                            code_path=code_path)
 
     return objects
+
+
+def wget_download_urls(coor_ra,
+                       coor_dec,
+                       size_arcsec,
+                       datatype='coadd/bg',
+                       rerun='pdr3_wide'):
+    """Use wget to download the hsc datas for PDR3.
+    A link “(link)” will appear to the right of the “Cutout” button when the button is enabled. You can copy & paste the link if you want to use a command line tool to download it.
+
+    You can successively get other files by changing the suffix of the url. We recommend that you create a url list like:
+
+    https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra=-24&dec=0&sw=2asec&sh=2asec&type=coadd&image=on&filter=HSC-G&tract=&rerun=pdr3_wide
+    https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra=-24&dec=0&sw=2asec&sh=2asec&type=coadd&image=on&filter=HSC-R&tract=&rerun=pdr3_wide
+    https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra=-24&dec=0&sw=2asec&sh=2asec&type=coadd&image=on&filter=HSC-I&tract=&rerun=pdr3_wide
+    https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra=-24&dec=0&sw=2asec&sh=2asec&type=coadd&image=on&filter=HSC-Z&tract=&rerun=pdr3_wide
+    https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra=-24&dec=0&sw=2asec&sh=2asec&type=coadd&image=on&filter=HSC-Y&tract=&rerun=pdr3_wide
+    And feed the list (urllist.txt) to wget:
+
+    wget -i urllist.txt --user=YOURNAME --ask-password
+
+    """
+
+    url = f'https://hsc-release.mtk.nao.ac.jp/das_cutout/pdr3/cgi-bin/cutout?ra={coor_ra}&dec={coor_dec}&sw={size_arcsec}asec&sh={size_arcsec}asec&type={datatype}&image=on&filter=HSC-G&tract=&rerun={rerun}'
+    
+    return url
