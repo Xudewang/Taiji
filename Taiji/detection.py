@@ -1,15 +1,15 @@
 import numpy as np
-#import scarlet
+import scarlet
 import sep
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Column, Table
 from astropy.units import Quantity
 from kuaizi.mock import Data
+from scarlet.wavelet import Starlet
 
 from .utils import _image_gaia_stars_tigress, extract_obj, image_gaia_stars
 
-#from scarlet.wavelet import Starlet
 
 def interpolate(data_lr, data_hr):
     ''' Interpolate low resolution data to high resolution
@@ -97,6 +97,7 @@ def sep_detection(detect_image, mask=None, sigma=3, b=64, f=3, minarea=5,
         **kwargs)
 
     obj_cat = result[0]
+    ra, dec = wcs_img.wcs_pix2world(list(zip(x, y)), 1).T
     arg_ind = obj_cat.argsort('flux', reverse=True)
     obj_cat.sort('flux', reverse=True)
     obj_cat['index'] = np.arange(len(obj_cat))
