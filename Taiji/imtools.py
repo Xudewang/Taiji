@@ -68,10 +68,10 @@ def suppress_stdout():
 
 
 def _set_matplotlib(style='default',
-                   usetex=False,
-                   fontsize=15,
-                   figsize=(6, 5),
-                   dpi=100):
+                    usetex=False,
+                    fontsize=15,
+                    figsize=(6, 5),
+                    dpi=100):
     '''
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
 
@@ -143,8 +143,13 @@ def _set_matplotlib(style='default',
         'legend.frameon': True,
         'figure.constrained_layout.h_pad': 0
     })
-    
-def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=60):
+
+
+def set_matplotlib(style='default',
+                   usetex=False,
+                   fontsize=13,
+                   figsize=(6, 5),
+                   dpi=60):
     '''
     This function is from Kuaizi package developed by Jiaxuan Li.
     Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
@@ -162,13 +167,17 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
     pkg_path = Taiji.__path__[0]
     if style == 'default':
         plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
-    else:
+    elif style == 'JL':
         plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
 
-    rcParams.update({'font.size': fontsize,
-                     'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
-                     'text.usetex': usetex,
-                     'figure.dpi': dpi})
+    rcParams.update({
+        'font.size': fontsize,
+        'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+        'text.usetex': usetex,
+        'figure.dpi': dpi,
+        'legend.frameon': True,
+        'figure.constrained_layout.h_pad': 0
+    })
 
     if style == 'SM':
         rcParams.update({
@@ -194,10 +203,10 @@ def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), d
 
         if usetex is True:
             rcParams.update({
-                "text.latex.preamble": '\n'.join([
+                "text.latex.preamble":
+                '\n'.join([
                     '\\usepackage{amsmath}'
-                    '\\usepackage[T1]{fontenc}',
-                    '\\usepackage{courier}',
+                    '\\usepackage[T1]{fontenc}', '\\usepackage{courier}',
                     '\\usepackage[variablett]{lmodern}',
                     '\\usepackage[LGRgreek]{mathastext}',
                     '\\renewcommand{\\rmdefault}{\\ttdefault}'
@@ -2598,6 +2607,7 @@ def seg_remove_cen_obj(seg):
 
     return seg_copy
 
+
 def seg_remove_obj(seg, x, y):
     """Remove an object from the segmentation given its coordinate.
 
@@ -2613,6 +2623,7 @@ def seg_remove_obj(seg, x, y):
     seg_copy[seg == seg[int(y), int(x)]] = 0
 
     return seg_copy
+
 
 def seg_index_obj(seg, x, y):
     """Remove the index array for an object given its location.
@@ -3177,7 +3188,6 @@ def extract_fix_isophotes(image=None,
 
 
 def align(pa):
-    
     """The function to align the position angle from Si-yue Yu.
 
     Returns:
