@@ -67,7 +67,7 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
-def set_matplotlib(style='default',
+def _set_matplotlib(style='default',
                    usetex=False,
                    fontsize=15,
                    figsize=(6, 5),
@@ -88,6 +88,7 @@ def set_matplotlib(style='default',
     if style == 'default':
         plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
 
+    # Now it should be the _JL.mplstyle.
     elif style == 'JL':
         plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
 
@@ -142,6 +143,74 @@ def set_matplotlib(style='default',
         'legend.frameon': True,
         'figure.constrained_layout.h_pad': 0
     })
+    
+def set_matplotlib(style='default', usetex=False, fontsize=13, figsize=(6, 5), dpi=60):
+    '''
+    This function is from Kuaizi package developed by Jiaxuan Li.
+    Default matplotlib settings, borrowed from Song Huang. I really like his plotting style.
+
+    Parameters:
+        style (str): options are "JL", "SM" (supermongo-like).
+    '''
+
+    import matplotlib.pyplot as plt
+    from matplotlib import rcParams
+
+    import Taiji
+
+    # Use JL as a template
+    pkg_path = Taiji.__path__[0]
+    if style == 'default':
+        plt.style.use(os.path.join(pkg_path, 'mplstyle/default.mplstyle'))
+    else:
+        plt.style.use(os.path.join(pkg_path, 'mplstyle/JL.mplstyle'))
+
+    rcParams.update({'font.size': fontsize,
+                     'figure.figsize': "{0}, {1}".format(figsize[0], figsize[1]),
+                     'text.usetex': usetex,
+                     'figure.dpi': dpi})
+
+    if style == 'SM':
+        rcParams.update({
+            "figure.figsize": "6, 6",
+            "axes.linewidth": 0.6,
+            "xtick.major.width": 0.5,
+            "xtick.minor.width": 0.3,
+            "ytick.major.width": 0.5,
+            "ytick.minor.width": 0.3,
+            "font.family": "monospace",
+            "font.stretch": "semi-expanded",
+            # The default edge colors for scatter plots.
+            "scatter.edgecolors": "black",
+            "mathtext.bf": "monospace:bold",
+            "mathtext.cal": "monospace:bold",
+            "mathtext.it": "monospace:italic",
+            "mathtext.rm": "monospace",
+            "mathtext.sf": "monospace",
+            "mathtext.tt": "monospace",
+            "mathtext.fallback": "cm",
+            "mathtext.default": 'it'
+        })
+
+        if usetex is True:
+            rcParams.update({
+                "text.latex.preamble": '\n'.join([
+                    '\\usepackage{amsmath}'
+                    '\\usepackage[T1]{fontenc}',
+                    '\\usepackage{courier}',
+                    '\\usepackage[variablett]{lmodern}',
+                    '\\usepackage[LGRgreek]{mathastext}',
+                    '\\renewcommand{\\rmdefault}{\\ttdefault}'
+                ])
+            })
+
+    if style == 'nature':
+        rcParams.update({
+            "font.family": "sans-serif",
+            # The default edge colors for scatter plots.
+            "scatter.edgecolors": "black",
+            "mathtext.fontset": "stixsans"
+        })
 
 
 def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
@@ -2529,6 +2598,37 @@ def seg_remove_cen_obj(seg):
 
     return seg_copy
 
+def seg_remove_obj(seg, x, y):
+    """Remove an object from the segmentation given its coordinate.
+
+    Parameters
+    ----------
+    seg     : 2-D data array, segmentation mask
+    x, y    : int, coordinates
+
+    TODO:
+        Should be absorbed by objects for segmentation image
+    """
+    seg_copy = copy.deepcopy(seg)
+    seg_copy[seg == seg[int(y), int(x)]] = 0
+
+    return seg_copy
+
+def seg_index_obj(seg, x, y):
+    """Remove the index array for an object given its location.
+
+    TODO
+    ----
+        Should be absorbed by objects for segmentation image
+
+    """
+    #TODO should check the order of int(x) and int(y).
+    obj = seg[int(x), int(y)]
+    if obj == 0:
+        return None
+
+    return seg == obj
+
 
 def increase_mask_regions(mask, method='uniform', size=7, mask_threshold=0.01):
     """Increase the size of the mask regions using smoothing algorithm."""
@@ -3019,7 +3119,7 @@ def extract_fix_isophotes(image=None,
                           maxsma=None,
                           silent=False):
     """
-    Function to extract surface brightness profile with fixed center, ellipticity, and position angle.
+    Function to extract surface brightness profile with fixed center, ellipticity, and position angle using Photutils from Si-yue Yu.
     """
     syntax = "syntax: results = extract_fix_isophotes(image=, xcen=, ycen=, initsma=, eps=, pa=, step=, linear_growth=False/True, minsma=None, maxsma=None, silent=False/True; minsma maxsma are optional)"
 
@@ -3077,6 +3177,12 @@ def extract_fix_isophotes(image=None,
 
 
 def align(pa):
+    
+    """The function to align the position angle from Si-yue Yu.
+
+    Returns:
+        _type_: _description_
+    """
 
     for jc in range(0, len(pa) - 1):
         test = pa[jc + 1] - pa[jc]
