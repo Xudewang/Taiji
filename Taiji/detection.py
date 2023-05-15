@@ -1,16 +1,15 @@
-import sep
 import numpy as np
-# import scarlet
-# from scarlet.wavelet import Starlet
-
-from .utils import extract_obj, image_gaia_stars, _image_gaia_stars_tigress
-from astropy.table import Table, Column
+#import scarlet
+import sep
 from astropy import units as u
-from astropy.units import Quantity
 from astropy.coordinates import SkyCoord
-
+from astropy.table import Column, Table
+from astropy.units import Quantity
 from kuaizi.mock import Data
 
+from .utils import _image_gaia_stars_tigress, extract_obj, image_gaia_stars
+
+#from scarlet.wavelet import Starlet
 
 def interpolate(data_lr, data_hr):
     ''' Interpolate low resolution data to high resolution
@@ -48,7 +47,7 @@ def interpolate(data_lr, data_hr):
 # Vanilla detection: SEP
 
 
-def vanilla_detection(detect_image, mask=None, sigma=3, b=64, f=3, minarea=5,
+def sep_detection(detect_image, mask=None, sigma=3, b=64, f=3, minarea=5,
                       convolve=False, conv_radius=None, deblend_nthresh=30,
                       deblend_cont=0.001, sky_subtract=True, show_fig=True, **kwargs):
     '''
@@ -167,7 +166,7 @@ def wavelet_detection(detect_image, mask=None, wavelet_lvl=4, low_freq_lvl=0, hi
     # image with high-frequency features highlighted
     high_freq_image = Starlet.from_coefficients(w).image
 
-    result = vanilla_detection(
+    result = sep_detection(
         high_freq_image,
         mask=mask,
         sigma=sigma,
@@ -262,7 +261,7 @@ def makeCatalog(datas, mask=None, lvl=3, method='wavelet', convolve=False, conv_
         detect = datas[0].images[layer_ind]
 
     # we better subtract background first, before convolve
-    result = vanilla_detection(detect, mask=mask, sigma=lvl, show_fig=show_fig, convolve=convolve, conv_radius=conv_radius, **kwargs)
+    result = sep_detection(detect, mask=mask, sigma=lvl, show_fig=show_fig, convolve=convolve, conv_radius=conv_radius, **kwargs)
 
     obj_cat = result[0]
     segmap = result[1]
@@ -356,7 +355,8 @@ def makeCatalog(datas, mask=None, lvl=3, method='wavelet', convolve=False, conv_
     # Visualize the results
     if show_fig and match_gaia:
         from matplotlib.patches import Ellipse as mpl_ellip
-        from .display import ORG, GRN
+
+        from .display import GRN, ORG
 
         fig = result[2]
         ax1 = fig.get_axes()[0]
