@@ -553,8 +553,13 @@ def remove_overlap(obj_cat,
         _type_: _description_
     """
     # Don't mask out objects that fall in the segmap of the central object
-    segmap = segmap.copy()
-    segmap_ori = segmap_ori.copy()
+    import copy
+    segmap = copy.deepcopy(segmap)
+    segmap_ori = copy.deepcopy(segmap_ori)
+
+    obj_cat = copy.deepcopy(obj_cat)
+    obj_cat_ori = copy.deepcopy(obj_cat_ori)
+
     # overlap_flag is for objects which fall in the footprint
     # of central galaxy in the fist SEP detection
     # calculate the cen_indx_ori
@@ -565,6 +570,8 @@ def remove_overlap(obj_cat,
     dist = np.sqrt((obj_cat['x'] - segmap.shape[0] // 2)**2 +
                    (obj_cat['y'] - segmap.shape[1] // 2)**2)
     cen_indx = np.argmin(dist)
+
+    # first we should remove the center object from the latter hot segmap.
 
     overlap_flag = [(segmap_ori == (cen_indx_ori + 1))[item] for item in list(
         zip(obj_cat['y'].astype(int), obj_cat['x'].astype(int)))]
@@ -625,14 +632,10 @@ def divide_dilate_segmap(segmap_ori,
         segmap_inner,
         method='gaussian',
         size=(dilation_inner * seeing_fwhm / pixel_scale))
-    print('check the size of segmap_inner_dilation: ',
-          dilation_inner * seeing_fwhm / pixel_scale)
     segmap_outer_dilation = increase_mask_regions(
         segmap_outer,
         method='gaussian',
         size=(dilation_outer * seeing_fwhm / pixel_scale))
-    print('check the size of segmap_outer_dilation: ',
-          dilation_outer * seeing_fwhm / pixel_scale)
 
     # we can construct the the inner segmap with 3 times of the a and b of the central object using sep make_ellipse function.
     maskEllipse_x_arr = []
@@ -666,14 +669,14 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    seg_hot,
                                    dist_inner_criteria=3,
                                    q_criteria=0.8,
-                                   dilate_radius_criteria=5,
+                                   dilate_radius_criteria=6,
                                    dist_unit_flag='r50',
                                    dilation_inner=1.5,
                                    dilation_outer=3,
                                    seeing_fwhm=0.65,
                                    image_data=None,
                                    inner_mask='segmap',
-                                   inner_ellipse_Na = 3
+                                   inner_ellipse_Na=3,
                                    show_img=False,
                                    show_img_dilated=False,
                                    show_img_parts=False):
@@ -712,8 +715,6 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     x_cen_obj_hot = info_cen_obj_hot['x']
     y_cen_obj_hot = info_cen_obj_hot['y']
 
-    idx_remove_arr = []
-
     if dist_unit_flag == 'a':
         dist_unit = a_cen_cold
     elif dist_unit_flag == 'r50':
@@ -726,51 +727,60 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
     boundary_innermost_criteria = dist_inner_criteria * dist_unit
 
-    for i, obj in enumerate(obj_cat_hot):
+    idx_remove_arr = []
+    seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
+    obj_cat_hot_remove = copy.deepcopy(obj_cat_hot)
+    obj_cat_hot_remove.remove_row(cen_obj_idx_hot)
 
-        dist_cen_hot = np.sqrt(
-            (obj_cat_hot[i]['x'] - seg_hot.shape[0] // 2)**2 +
-            (obj_cat_hot[i]['y'] - seg_hot.shape[1] // 2)**2)
+    for i, obj in enumerate(obj_cat_hot_remove):
+
+        dist_cen_hot = np.sqrt((obj_cat_hot_remove[i]['x'] -
+                                seg_hot_removecenter.shape[0] // 2)**2 +
+                               (obj_cat_hot_remove[i]['y'] -
+                                seg_hot_removecenter.shape[1] // 2)**2)
 
         if np.logical_and(dist_cen_hot < boundary_innermost_criteria,
                           (obj['b'] / obj['a'] <= q_criteria)):
-            if obj['x'] == x_cen_obj_hot and obj['y'] == y_cen_obj_hot:
-                print('should retain as the central object')
-                # we also should remove the center object
-                seg_hot[seg_hot == (cen_obj_idx_hot + 1)] = 0
-                idx_remove_arr.append(i)
-            else:
-                seg_hot[seg_hot == (i + 1)] = 0
-                idx_remove_arr.append(i)
+            seg_hot_removecenter[seg_hot_removecenter == (
+                obj_cat_hot_remove[i]['index'] + 1)] = 0
+            idx_remove_arr.append(i)
 
-    obj_cat_hot_remove = copy.deepcopy(obj_cat_hot)
     obj_cat_hot_remove.remove_rows(idx_remove_arr)
-    print('obj_cat_hot_remove: ', obj_cat_hot_remove)
+    #print('obj_cat_hot_remove: ', obj_cat_hot_remove)
+    # fig, ax = plt.subplots(figsize=(6, 6))
+    # plt.imshow(seg_hot_removecenter, origin='lower')
+    # plt.title('seg_hot_removecenter')
 
     # after removing the center object of the segmap_cold, we should get the segmap_cold_removecenter and obj_cat_cold_removecenter
     seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
 
     obj_cat_cold_removecenter = copy.deepcopy(obj_cat_cold)
     obj_cat_cold_removecenter.remove_row(cen_obj_idx_cold)
-    print('obj_cat_cold_removecenter: ', obj_cat_cold_removecenter)
+    #print('obj_cat_cold_removecenter: ', obj_cat_cold_removecenter)
+    # fig, ax = plt.subplots(figsize=(6, 6))
+    # plt.imshow(seg_cold_removecenter,
+    #            origin='lower',
+    #            label='segmap_cold_removecenter')
+    # plt.title('seg_cold_removecenter')
 
     #add the cold mode segmap to the hot mode segmap
-    seg_combine_direct = np.logical_or(seg_hot, seg_remove_cen_obj(seg_cold))
+    seg_combine_direct = np.logical_or(seg_hot_removecenter,
+                                       seg_remove_cen_obj(seg_cold))
 
     # dilate the segmap_cold_removecenter and segmap_hot_remove with different dilation parameters and then add them together
     seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation, maskEllipse_cold_inner = divide_dilate_segmap(
         seg_cold_removecenter,
         obj_cat_cold_removecenter,
-        divide_radius=dilate_radius_criteria * dist_unit,
+        divide_radius=dilate_radius_criteria * r50_cen_cold,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
         inner_ellipse_Na=inner_ellipse_Na)
 
     seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
-        seg_hot,
+        seg_hot_removecenter,
         obj_cat_hot_remove,
-        divide_radius=dilate_radius_criteria * dist_unit,
+        divide_radius=dilate_radius_criteria * r50_cen_cold,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
@@ -781,14 +791,15 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         seg_cold_removecenter_inner_dilation, seg_hot_remove_inner_dilation)
     seg_combine_outer_dilation = np.logical_or(
         seg_cold_removecenter_outer_dilation, seg_hot_remove_outer_dilation)
-    maskEllipse_combine_inner = np.logical_or(maskEllipse_cold_inner, maskEllipse_hot_inner)
+    maskEllipse_combine_inner = np.logical_or(maskEllipse_cold_inner,
+                                              maskEllipse_hot_inner)
 
     if inner_mask == 'segmap':
         seg_combine_dilation = np.logical_or(seg_combine_inner_dilation,
-                                         seg_combine_outer_dilation)
+                                             seg_combine_outer_dilation)
     elif inner_mask == 'ellipse':
         seg_combine_dilation = np.logical_or(seg_combine_outer_dilation,
-                                         maskEllipse_combine_inner)
+                                             maskEllipse_combine_inner)
 
     # show the image data with segmap. And add the circular mask for the central object.
     if show_img:
@@ -819,30 +830,13 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         ax.set_title('Modified combined Segmap')
 
         # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            dilate_radius_criteria * dist_unit,
-                            color='green',
-                            fill=False,
-                            label='dilation radius',
-                            lw=2)
-        ax.add_artist(circle)
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            6 * r50_cen_cold,
-                            color='blue',
-                            fill=False,
-                            label='6 r50',
-                            lw=2)
-        ax.add_artist(circle)
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            1.25 * r90_cen_cold,
-                            color='blue',
-                            fill=False,
-                            label='1.25 r90',
-                            lw=2)
+        circle = plt.Circle(
+            (seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
+            dilate_radius_criteria * r50_cen_cold,
+            color='green',
+            fill=False,
+            label=f'dilation radius: {dilate_radius_criteria} $Re$',
+            lw=2)
         ax.add_artist(circle)
 
         plt.legend()
@@ -881,4 +875,98 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                             color='green',
                             fill=False)
         ax.add_artist(circle)
+
     return seg_combine_direct, seg_combine_dilation
+
+def coldhot_detection(image_data,
+                      b1=256,
+                      f1=3,
+                      sigma1=3.,
+                      b2=64,
+                      f2=3,
+                      sigma2=1.,
+                      pixel_scale=0.168,
+                      minarea=5,
+                      deblend_nthresh=32,
+                      deblend_cont=0.05,
+                      sky_subtract=True,
+                      show_fig=False,
+                      mask=None,
+                      convolve=False,
+                      conv_radius=3,
+                      dist_inner_criteria=3,
+                      q_criteria=0.8,
+                      dilate_radius_criteria=5,
+                      dist_unit_flag='a',
+                      dilation_inner=1.,
+                      dilation_outer=3,
+                      seeing_fwhm=0.65,
+                      inner_mask='segmap',
+                      inner_ellipse_Na=5,
+                      show_img=False,
+                      show_img_dilated=False,
+                      show_img_parts=False):
+
+    obj_cat_cold, segmap_cold = extract_obj(image_data,
+                                            b=b1,
+                                            f=f1,
+                                            sigma=sigma1,
+                                            pixel_scale=pixel_scale,
+                                            minarea=minarea,
+                                            deblend_nthresh=deblend_nthresh,
+                                            deblend_cont=deblend_cont,
+                                            sky_subtract=sky_subtract,
+                                            show_fig=show_fig,
+                                            mask=mask,
+                                            convolve=convolve,
+                                            conv_radius=conv_radius)
+
+    obj_cat_hot, segmap_hot = extract_obj(image_data,
+                                          b=b2,
+                                          f=f2,
+                                          sigma=sigma2,
+                                          pixel_scale=pixel_scale,
+                                          minarea=minarea,
+                                          deblend_nthresh=deblend_nthresh,
+                                          deblend_cont=0.001,
+                                          sky_subtract=sky_subtract,
+                                          show_fig=show_fig,
+                                          mask=mask,
+                                          convolve=convolve,
+                                          conv_radius=6)
+
+    seg_removecenter_hot = seg_remove_cen_obj(segmap_hot)
+    seg_removecenter_cold = seg_remove_cen_obj(segmap_cold)
+    segmap_combine_direct = np.logical_or(seg_removecenter_cold,
+                                          seg_removecenter_hot)
+
+    segmap_combine_removeoverlap = np.logical_or(
+        seg_remove_cen_obj(
+            remove_overlap(obj_cat_hot,
+                           segmap_hot,
+                           obj_cat_cold,
+                           segmap_cold,
+                           dist_minimum=1,
+                           pixel_scale=pixel_scale)),
+        seg_remove_cen_obj(segmap_cold))
+
+    seg_combine_removeinnermost, seg_combine_removeinnermost_dilation = segmap_coldhot_removeinnermost(
+        obj_cat_cold,
+        segmap_cold,
+        obj_cat_hot,
+        segmap_hot,
+        dist_inner_criteria=dist_inner_criteria,
+        q_criteria=q_criteria,
+        dilate_radius_criteria=dilate_radius_criteria,
+        dist_unit_flag=dist_unit_flag,
+        dilation_inner=dilation_inner,
+        dilation_outer=dilation_outer,
+        seeing_fwhm=seeing_fwhm,
+        image_data=image_data,
+        inner_mask=inner_mask,
+        inner_ellipse_Na=inner_ellipse_Na,
+        show_img=show_img,
+        show_img_dilated=show_img_dilated,
+        show_img_parts=show_img_parts)
+
+    return seg_combine_removeinnermost_dilation, segmap_combine_removeoverlap, segmap_combine_direct
