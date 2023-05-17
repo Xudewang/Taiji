@@ -10,6 +10,7 @@ from scarlet.wavelet import Starlet
 
 from .utils import _image_gaia_stars_tigress, extract_obj, image_gaia_stars
 
+# Some basic functions is from Kuaizi written by Jiaxuan Li.
 
 def interpolate(data_lr, data_hr):
     ''' Interpolate low resolution data to high resolution
@@ -387,3 +388,68 @@ def makeCatalog(datas, mask=None, lvl=3, method='wavelet', convolve=False, conv_
         ax1.set_ylim(ylim)
 
     return obj_cat, segmap, 0  # bg_rms
+
+def extract_centermain_object(obj_cat, segmap, image_data, wcs_img, size_around = 30, pixel_scale = 0.168):
+    """Remove the center object from the segmap and extract the enter information. The basic strategy is to find the brightest object around the center region (within size_around, default is 30 pixels).
+
+    Args:
+        obj_cat (_type_): _description_
+        segmap (_type_): _description_
+        image_data (_type_): _description_
+        wcs_img (_type_): _description_
+        size_around (int, optional): _description_. Defaults to 30.
+        pixel_scale (float, optional): _description_. Defaults to 0.168.
+
+    Returns:
+        _type_: _description_
+    """
+    HSC_pixel_scale = 0.168
+    # Generate manual measurement table
+    obj_table = obj_cat
+    a_arcsec, b_arcsec = (pixel_scale * obj_table['a']), (
+        pixel_scale * obj_table['b'])  # arcsec
+    x = obj_table['x']
+    y = obj_table['y']
+    ra, dec = wcs_img.wcs_pix2world(list(zip(x, y)), 1).T
+    x2 = obj_table['x2']
+    y2 = obj_table['y2']
+    xy = obj_table['xy']
+    a = obj_table['a']  # pixel
+    b = obj_table['b']  # pixel
+    theta = obj_table['theta']
+    flux = obj_table['flux']
+    R50_pixel = obj_table['R50']
+    kron_rad_pixel = obj_table['kron_rad']
+    index = obj_table['index']
+    fwhm = obj_table['fwhm_custom']
+    point_source = [((b_arcsec[i] / a_arcsec[i] > .9) and (a_arcsec[i] < .35))
+                    for i in range(len(obj_table))]
+    detection_cat = Table(
+        [
+            index, ra, dec, x, y, x2, y2, xy, a, b, a_arcsec, b_arcsec, theta,
+            flux, R50_pixel, kron_rad_pixel, fwhm, point_source
+        ],
+        names=('index', 'ra', 'dec', 'x', 'y', 'x2', 'y2', 'xy', 'a', 'b',
+               'a_arcsec', 'b_arcsec', 'theta', 'flux', 'R50_pixel',
+               'kron_rad_pixel', 'fwhm_custom', 'point_source'),
+        meta={'name': 'object table'})
+    
+    center_galaxy_labels = np.where(
+        np.logical_and(
+            np.logical_and(detection_cat['x'] > image_data.shape[0] / 2 - size_around,
+                           detection_cat['x'] < image_data.shape[0] / 2 + size_around),
+            np.logical_and(detection_cat['y'] > image_data.shape[1] / 2 - size_around,
+                           detection_cat['y'] < image_data.shape[1] / 2 + size_around)))[0]
+
+    galaxy_fluxes = np.array([
+        detection_cat[np.where(detection_cat['index'] == label)]['flux'][0]
+        for label in center_galaxy_labels
+    ])
+    main_galaxy_label = center_galaxy_labels[np.argmax(galaxy_fluxes)]
+    info_center = detection_cat[main_galaxy_label]
+    
+    # construct the segmap without center.
+    seg_copy = copy.deepcopy(segmap)
+    seg_copy[segmap == segmap[int(info_center['x']), int(info_center['y'])]] = 0
+    
+    return seg_copy, info_center
