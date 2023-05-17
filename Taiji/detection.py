@@ -590,6 +590,7 @@ def divide_dilate_segmap(segmap_ori,
                          divide_radius=50,
                          dilation_inner=1.5,
                          dilation_outer=3,
+                         inner_ellipse_Na=3,
                          seeing_fwhm=0.65,
                          pixel_scale=0.168):
     """We should divide the segmap into two parts, one is for the central object, the other is for the rest objects. For different parts we use different dilation radius.
@@ -654,7 +655,7 @@ def divide_dilate_segmap(segmap_ori,
                      maskEllipse_a_arr,
                      maskEllipse_b_arr,
                      maskEllipse_theta_arr,
-                     r=3)
+                     r=inner_ellipse_Na)
 
     return segmap_inner_dilation, segmap_outer_dilation, mask_ellipse_inner
 
@@ -672,6 +673,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    seeing_fwhm=0.65,
                                    image_data=None,
                                    inner_mask='segmap',
+                                   inner_ellipse_Na = 3
                                    show_img=False,
                                    show_img_dilated=False,
                                    show_img_parts=False):
@@ -762,7 +764,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         divide_radius=dilate_radius_criteria * dist_unit,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
-        seeing_fwhm=seeing_fwhm)
+        seeing_fwhm=seeing_fwhm,
+        inner_ellipse_Na=inner_ellipse_Na)
 
     seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
         seg_hot,
@@ -770,7 +773,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         divide_radius=dilate_radius_criteria * dist_unit,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
-        seeing_fwhm=seeing_fwhm)
+        seeing_fwhm=seeing_fwhm,
+        inner_ellipse_Na=inner_ellipse_Na)
 
     # then we should combine the cold+hot dilation masks.
     seg_combine_inner_dilation = np.logical_or(
