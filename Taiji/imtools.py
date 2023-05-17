@@ -2604,7 +2604,7 @@ def extract_obj(img,
 def seg_remove_cen_obj(seg):
     """Remove the central object from the segmentation."""
     seg_copy = copy.deepcopy(seg)
-    seg_copy[seg == seg[int(seg.shape[0] / 2.0), int(seg.shape[1] / 2.0)]] = 0
+    seg_copy[seg == seg[int(seg.shape[1] / 2.0), int(seg.shape[0] / 2.0)]] = 0
 
     return seg_copy
 
@@ -2634,8 +2634,8 @@ def seg_index_obj(seg, x, y):
         Should be absorbed by objects for segmentation image
 
     """
-    #TODO should check the order of int(x) and int(y).
-    obj = seg[int(x), int(y)]
+    #TODO should check the order of int(x) and int(y). Originally int(x) and int(y) in kungpao.
+    obj = seg[int(y), int(x)]
     if obj == 0:
         return None
 
@@ -2643,7 +2643,7 @@ def seg_index_obj(seg, x, y):
 
 
 def increase_mask_regions(mask, method='uniform', size=7, mask_threshold=0.01):
-    """Increase the size of the mask regions using smoothing algorithm."""
+    """Increase the size of the mask regions using smoothing algorithm. From jiaxuanli"""
     mask_arr = mask.astype('int16')
     mask_arr[mask_arr > 0] = 100
 
@@ -2659,6 +2659,24 @@ def increase_mask_regions(mask, method='uniform', size=7, mask_threshold=0.01):
 
     return mask_new.astype('uint8')
 
+def seg_to_mask(seg, sigma=5.0, msk_max=1000.0, msk_thr=0.01):
+    """Convert the segmentation array into an array. 
+       Basically it is a Gaussian smoothing of the segmentation array. From kungpao.
+
+    Parameters
+    ----------
+        sigma:  Sigma of the Gaussian Kernel
+
+    """
+    from scipy import ndimage
+
+    # Convolve the mask image with a gaussian kernel
+    msk_conv = ndimage.gaussian_filter(((seg.copy() > 0) * msk_max),
+                                       sigma=sigma,
+                                       order=0)
+    msk_bool = msk_conv > (msk_thr * msk_max)
+
+    return msk_bool.astype('uint8')
 
 def _image_gaia_stars_tigress(image,
                               wcs,
@@ -3034,8 +3052,17 @@ def create_elliptical_mask(image_data,
     cen_mask = ellipseGal_mask_img == 1
     return cen_mask
 
-
 def remove_consecutive(sma_ap, index_original, con_number=2):
+    """Remove continuous unnecesary apertures in SBPs.
+
+    Args:
+        sma_ap (_type_): _description_
+        index_original (_type_): _description_
+        con_number (int, optional): _description_. Defaults to 2.
+
+    Returns:
+        _type_: _description_
+    """
     index_left = np.argwhere(index_original)
     index_left_array = np.array(
         [index_left[i][0] for i in range(len(index_left))])
