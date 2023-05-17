@@ -604,6 +604,8 @@ def divide_dilate_segmap(segmap_ori,
     """
     import copy
 
+    import sep
+
     segmap_inner = copy.deepcopy(segmap_ori)
     segmap_outer = copy.deepcopy(segmap_ori)
     dist = np.sqrt((obj_cat['x'] - segmap_ori.shape[0] // 2)**2 +
@@ -631,7 +633,30 @@ def divide_dilate_segmap(segmap_ori,
     print('check the size of segmap_outer_dilation: ',
           dilation_outer * seeing_fwhm / pixel_scale)
 
-    return segmap_inner_dilation, segmap_outer_dilation
+    # we can construct the the inner segmap with 3 times of the a and b of the central object using sep make_ellipse function.
+    maskEllipse_x_arr = []
+    maskEllipse_y_arr = []
+    maskEllipse_a_arr = []
+    maskEllipse_b_arr = []
+    maskEllipse_theta_arr = []
+    for idx, obj in enumerate(obj_cat):
+        if dist[idx] <= divide_radius:
+            maskEllipse_x_arr.append(obj['x'])
+            maskEllipse_y_arr.append(obj['y'])
+            maskEllipse_a_arr.append(obj['a'])
+            maskEllipse_b_arr.append(obj['b'])
+            maskEllipse_theta_arr.append(obj['theta'])
+
+    mask_ellipse_inner = np.zeros(segmap_ori.shape, dtype=np.bool)
+    sep.mask_ellipse(mask_ellipse_inner,
+                     maskEllipse_x_arr,
+                     maskEllipse_y_arr,
+                     maskEllipse_a_arr,
+                     maskEllipse_b_arr,
+                     maskEllipse_theta_arr,
+                     r=3)
+
+    return segmap_inner_dilation, segmap_outer_dilation, mask_ellipse_inner
 
 
 def segmap_coldhot_removeinnermost(obj_cat_cold,
@@ -646,6 +671,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    dilation_outer=3,
                                    seeing_fwhm=0.65,
                                    image_data=None,
+                                   inner_mask='segmap',
                                    show_img=False,
                                    show_img_dilated=False,
                                    show_img_parts=False):
@@ -730,7 +756,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     seg_combine_direct = np.logical_or(seg_hot, seg_remove_cen_obj(seg_cold))
 
     # dilate the segmap_cold_removecenter and segmap_hot_remove with different dilation parameters and then add them together
-    seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation = divide_dilate_segmap(
+    seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation, maskEllipse_cold_inner = divide_dilate_segmap(
         seg_cold_removecenter,
         obj_cat_cold_removecenter,
         divide_radius=dilate_radius_criteria * dist_unit,
@@ -738,7 +764,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm)
 
-    seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation = divide_dilate_segmap(
+    seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
         seg_hot,
         obj_cat_hot_remove,
         divide_radius=dilate_radius_criteria * dist_unit,
@@ -751,9 +777,14 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         seg_cold_removecenter_inner_dilation, seg_hot_remove_inner_dilation)
     seg_combine_outer_dilation = np.logical_or(
         seg_cold_removecenter_outer_dilation, seg_hot_remove_outer_dilation)
-    
-    seg_combine_dilation = np.logical_or(seg_combine_inner_dilation,
+    maskEllipse_combine_inner = np.logical_or(maskEllipse_cold_inner, maskEllipse_hot_inner)
+
+    if inner_mask == 'segmap':
+        seg_combine_dilation = np.logical_or(seg_combine_inner_dilation,
                                          seg_combine_outer_dilation)
+    elif inner_mask == 'ellipse':
+        seg_combine_dilation = np.logical_or(seg_combine_outer_dilation,
+                                         maskEllipse_combine_inner)
 
     # show the image data with segmap. And add the circular mask for the central object.
     if show_img:
@@ -800,7 +831,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                             label='6 r50',
                             lw=2)
         ax.add_artist(circle)
-        
+
         # add the cicurlar patch for the central object
         circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
                             1.25 * r90_cen_cold,
@@ -809,7 +840,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                             label='1.25 r90',
                             lw=2)
         ax.add_artist(circle)
-        
+
         plt.legend()
 
     if show_img_parts:
