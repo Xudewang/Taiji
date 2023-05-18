@@ -577,13 +577,13 @@ def remove_overlap(obj_cat,
         zip(obj_cat['y'].astype(int), obj_cat['x'].astype(int)))]
     overlap_flag = np.array(overlap_flag)
 
-    overlap_flag = np.logical_and(overlap_flag,
-                                  dist <= 3 * obj_cat_ori[cen_indx_ori]['a'])
+    # overlap_flag = np.logical_and(overlap_flag,
+    #                               dist <= 3 * obj_cat_ori[cen_indx_ori]['a'])
     overlap_flag = np.logical_and(
         overlap_flag,
         obj_cat['flux'] < 0.5 * obj_cat_ori[cen_indx_ori]['flux'])
-    overlap_flag = np.logical_and(overlap_flag,
-                                  obj_cat['b'] / obj_cat['a'] <= 0.8)
+    # overlap_flag = np.logical_and(overlap_flag,
+    #                               obj_cat['b'] / obj_cat['a'] <= 0.8)
     overlap_flag |= (dist < dist_minimum / pixel_scale)
 
     for ind in np.where(overlap_flag)[0]:
@@ -616,6 +616,7 @@ def divide_dilate_segmap(segmap_ori,
 
     segmap_inner = copy.deepcopy(segmap_ori)
     segmap_outer = copy.deepcopy(segmap_ori)
+    obj_cagt = copy.deepcopy(obj_cat)
     dist = np.sqrt((obj_cat['x'] - segmap_ori.shape[0] // 2)**2 +
                    (obj_cat['y'] - segmap_ori.shape[1] // 2)**2)
 
@@ -677,9 +678,9 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    image_data=None,
                                    inner_mask='segmap',
                                    inner_ellipse_Na=3,
-                                   show_img=False,
-                                   show_img_dilated=False,
-                                   show_img_parts=False):
+                                   show_removeinnermost_img_direct=False,
+                                   show_removeinnermost_img_dilated=False,
+                                   show_removeinnermost_img_parts=False):
     # combine the segmap of cold and hot mode. The basic spirit is to remove the central object from the hot mode segmap, and then add the cold mode segmap to the hot mode segmap. But we need to make sure that the segmap of hot mode does not divide the main object in the center several pieces in the cold mode. If it does, we need to remove the small pieces in the hot mode segmap. The selection criteria is the axis ratio of the small pieces should be larger than for example 0.25.
 
     # remove the central object from the hot and cold mode segmap
@@ -710,6 +711,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     #print('kron rad cold: ', kronrad_cen_cold)
     r50_cen_cold = info_cen_obj_cold['R50']
     r90_cen_cold = info_cen_obj_cold['R90']
+    flux_cen_cold = info_cen_obj_cold['flux']
 
     info_cen_obj_hot = obj_cat_hot[cen_obj_idx_hot]
     x_cen_obj_hot = info_cen_obj_hot['x']
@@ -739,17 +741,17 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                (obj_cat_hot_remove[i]['y'] -
                                 seg_hot_removecenter.shape[1] // 2)**2)
 
-        if np.logical_and(dist_cen_hot < boundary_innermost_criteria,
-                          (obj['b'] / obj['a'] <= q_criteria)):
+        if np.logical_and(np.logical_and(dist_cen_hot < boundary_innermost_criteria,
+                          (obj['b'] / obj['a'] <= q_criteria)), obj['flux'] < 0.5 * flux_cen_cold):
             seg_hot_removecenter[seg_hot_removecenter == (
                 obj_cat_hot_remove[i]['index'] + 1)] = 0
             idx_remove_arr.append(i)
 
     obj_cat_hot_remove.remove_rows(idx_remove_arr)
     #print('obj_cat_hot_remove: ', obj_cat_hot_remove)
-    # fig, ax = plt.subplots(figsize=(6, 6))
-    # plt.imshow(seg_hot_removecenter, origin='lower')
-    # plt.title('seg_hot_removecenter')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    plt.imshow(seg_hot_removecenter, origin='lower')
+    plt.title('seg_hot_removecenter')
 
     # after removing the center object of the segmap_cold, we should get the segmap_cold_removecenter and obj_cat_cold_removecenter
     seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
@@ -757,11 +759,11 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     obj_cat_cold_removecenter = copy.deepcopy(obj_cat_cold)
     obj_cat_cold_removecenter.remove_row(cen_obj_idx_cold)
     #print('obj_cat_cold_removecenter: ', obj_cat_cold_removecenter)
-    # fig, ax = plt.subplots(figsize=(6, 6))
-    # plt.imshow(seg_cold_removecenter,
-    #            origin='lower',
-    #            label='segmap_cold_removecenter')
-    # plt.title('seg_cold_removecenter')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    plt.imshow(seg_cold_removecenter,
+               origin='lower',
+               label='segmap_cold_removecenter')
+    plt.title('seg_cold_removecenter')
 
     #add the cold mode segmap to the hot mode segmap
     seg_combine_direct = np.logical_or(seg_hot_removecenter,
@@ -802,13 +804,13 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                              maskEllipse_combine_inner)
 
     # show the image data with segmap. And add the circular mask for the central object.
-    if show_img:
+    if show_removeinnermost_img_direct:
         fig, ax = plt.subplots(figsize=(6, 6))
 
         norm = simple_norm(image_data, 'sqrt', percent=99.9)
         ax.imshow(image_data, norm=norm, origin='lower', cmap='Greys')
         ax.imshow(seg_combine_direct, origin='lower', alpha=0.5, cmap='Blues')
-        ax.set_title('Modified combined Segmap')
+        ax.set_title('Direct removeinnermost combined Segmap')
 
         # add the cicurlar patch for the central object
         circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
@@ -817,7 +819,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                             fill=False)
         ax.add_artist(circle)
 
-    if show_img_dilated:
+    if show_removeinnermost_img_dilated:
 
         fig, ax = plt.subplots(figsize=(6, 6))
 
@@ -827,7 +829,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                   origin='lower',
                   alpha=0.5,
                   cmap='Blues')
-        ax.set_title('Modified combined Segmap')
+        ax.set_title('Removeinnermost combined Segmap')
 
         # add the cicurlar patch for the central object
         circle = plt.Circle(
@@ -841,7 +843,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         plt.legend()
 
-    if show_img_parts:
+    if show_removeinnermost_img_parts:
         fig, ax = plt.subplots(figsize=(6, 6))
 
         norm = simple_norm(image_data, 'sqrt', percent=99.9)
@@ -854,7 +856,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         # add the cicurlar patch for the central object
         circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            dilate_radius_criteria * dist_unit,
+                            dilate_radius_criteria * r50_cen_cold,
                             color='green',
                             fill=False)
         ax.add_artist(circle)
@@ -871,12 +873,13 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         # add the cicurlar patch for the central object
         circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            dilate_radius_criteria * dist_unit,
+                            dilate_radius_criteria * r50_cen_cold,
                             color='green',
                             fill=False)
         ax.add_artist(circle)
 
     return seg_combine_direct, seg_combine_dilation
+
 
 def coldhot_detection(image_data,
                       b1=256,
@@ -887,10 +890,12 @@ def coldhot_detection(image_data,
                       sigma2=1.,
                       pixel_scale=0.168,
                       minarea=5,
-                      deblend_nthresh=32,
-                      deblend_cont=0.05,
+                      deblend_nthresh1=32,
+                      deblend_nthresh2=32,
+                      deblend_cont1=0.05,
+                      deblend_cont2=0.001,
                       sky_subtract=True,
-                      show_fig=False,
+                      show_segmap=False,
                       mask=None,
                       convolve=False,
                       conv_radius=3,
@@ -903,37 +908,43 @@ def coldhot_detection(image_data,
                       seeing_fwhm=0.65,
                       inner_mask='segmap',
                       inner_ellipse_Na=5,
-                      show_img=False,
-                      show_img_dilated=False,
-                      show_img_parts=False):
+                      show_removeinnermost_img_direct=False,
+                      show_removeinnermost_img_dilated=False,
+                      show_removeinnermost_img_parts=False):
 
-    obj_cat_cold, segmap_cold = extract_obj(image_data,
-                                            b=b1,
-                                            f=f1,
-                                            sigma=sigma1,
-                                            pixel_scale=pixel_scale,
-                                            minarea=minarea,
-                                            deblend_nthresh=deblend_nthresh,
-                                            deblend_cont=deblend_cont,
-                                            sky_subtract=sky_subtract,
-                                            show_fig=show_fig,
-                                            mask=mask,
-                                            convolve=convolve,
-                                            conv_radius=conv_radius)
+    result_cold = extract_obj(image_data,
+                              b=b1,
+                              f=f1,
+                              sigma=sigma1,
+                              pixel_scale=pixel_scale,
+                              minarea=minarea,
+                              deblend_nthresh=deblend_nthresh1,
+                              deblend_cont=deblend_cont1,
+                              sky_subtract=sky_subtract,
+                              show_fig=show_segmap,
+                              mask=mask,
+                              convolve=convolve,
+                              conv_radius=conv_radius)
 
-    obj_cat_hot, segmap_hot = extract_obj(image_data,
+    obj_cat_cold = result_cold[0]
+    segmap_cold = result_cold[1]
+
+    result_hot = extract_obj(image_data,
                                           b=b2,
                                           f=f2,
                                           sigma=sigma2,
                                           pixel_scale=pixel_scale,
                                           minarea=minarea,
-                                          deblend_nthresh=deblend_nthresh,
-                                          deblend_cont=0.001,
+                                          deblend_nthresh=deblend_nthresh2,
+                                          deblend_cont=deblend_cont2,
                                           sky_subtract=sky_subtract,
-                                          show_fig=show_fig,
+                                          show_fig=show_segmap,
                                           mask=mask,
                                           convolve=convolve,
                                           conv_radius=6)
+    
+    obj_cat_hot = result_hot[0]
+    segmap_hot = result_hot[1]
 
     seg_removecenter_hot = seg_remove_cen_obj(segmap_hot)
     seg_removecenter_cold = seg_remove_cen_obj(segmap_cold)
@@ -946,7 +957,7 @@ def coldhot_detection(image_data,
                            segmap_hot,
                            obj_cat_cold,
                            segmap_cold,
-                           dist_minimum=1,
+                           dist_minimum=1.5*seeing_fwhm,
                            pixel_scale=pixel_scale)),
         seg_remove_cen_obj(segmap_cold))
 
@@ -965,8 +976,8 @@ def coldhot_detection(image_data,
         image_data=image_data,
         inner_mask=inner_mask,
         inner_ellipse_Na=inner_ellipse_Na,
-        show_img=show_img,
-        show_img_dilated=show_img_dilated,
-        show_img_parts=show_img_parts)
+        show_removeinnermost_img_direct=show_removeinnermost_img_direct,
+        show_removeinnermost_img_dilated=show_removeinnermost_img_dilated,
+        show_removeinnermost_img_parts=show_removeinnermost_img_parts)
 
     return seg_combine_removeinnermost_dilation, segmap_combine_removeoverlap, segmap_combine_direct
