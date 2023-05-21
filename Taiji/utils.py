@@ -189,13 +189,13 @@ def running_median_errorbar(x,y, method='percentile', bins=20):
         std_results = binned_statistic(
             x, y, statistic='std', bins=bins).statistic
         
+        return median_results.statistic, std_results.statistic
+        
     elif method == 'percentile':
         percentile_results_16 = running_percentile(x, y, 16, bins=bins)
         percentile_results_84 = running_percentile(x, y, 84, bins=bins)
         
-        errorbar_low = median_results.statistic - percentile_results_16.statistic
-        errorbar_high = percentile_results_84.statistic - median_results.statistic
-        
-        std_results = [errorbar_low, errorbar_high]
+        errorbar_low = median_results.statistic - percentile_results_16
+        errorbar_high = percentile_results_84 - median_results.statistic
     
-    return median_results.statistic, std_results
+        return median_results.statistic, errorbar_low, errorbar_high
