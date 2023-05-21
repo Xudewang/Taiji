@@ -581,7 +581,7 @@ def remove_overlap(obj_cat,
     #                               dist <= 3 * obj_cat_ori[cen_indx_ori]['a'])
     overlap_flag = np.logical_and(
         overlap_flag,
-        obj_cat['flux'] < 0.5 * obj_cat_ori[cen_indx_ori]['flux'])
+        obj_cat['flux'] < 0.8 * obj_cat_ori[cen_indx_ori]['flux'])
     # overlap_flag = np.logical_and(overlap_flag,
     #                               obj_cat['b'] / obj_cat['a'] <= 0.8)
     overlap_flag |= (dist < dist_minimum / pixel_scale)
