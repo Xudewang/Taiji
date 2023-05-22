@@ -199,3 +199,54 @@ def running_median_errorbar(x,y, method='percentile', bins=20):
         errorbar_high = percentile_results_84 - median_results.statistic
     
         return median_results.statistic, errorbar_low, errorbar_high
+    
+def match_sample(standard_sample, match_sample, bins, alpha, seed = None):
+    """This function is to match two samples, e.g. stellar mass.
+
+    Args:
+        standard_sample (numpy_array): The standard sample. This sample remains unchanged. We can get the numbers should be extracted for match sample combining the alpha value.
+        match_sample (_type_): _description_
+        bins (_type_): _description_
+        alpha (float): The alpha value for matching two samples. The numbers from standard sample multiply alpha should be extracted from match sample.
+    """
+    
+    import pandas as pd
+    from astropy.table import Table
+    from scipy.stats import binned_statistic
+    
+    if seed is None:
+        seed = len(match_sample) - 1 
+        
+    np.random.seed(seed)
+    
+    print('The number of standard sample: ', len(standard_sample))
+    print('The number of match sample: ', len(match_sample))
+    ids = np.arange(len(match_sample))
+    
+    binner_count = binned_statistic(standard_sample['logmstar_add076'], standard_sample['logmstar_add076'], statistic='count', bins=bins)[0]
+    extract_count = np.round(binner_count * alpha).astype(int)
+    
+    indices = np.digitize(match_sample['Mstar'], bins)
+    print(len(indices))
+    
+    sample = []
+    for i in range(1, len(bins)):
+        mask = indices == i
+        sub_ids = np.random.choice(ids[mask], extract_count[i-1], replace=False)
+        sub_sample = np.array(match_sample)[sub_ids]
+        # rng = np.random.default_rng()
+        # sub_sample = rng.choice(np.array(match_sample)[mask], extract_count[i-1], replace=False, axis=0)
+        sample.append(sub_sample)
+        
+    catalog = np.concatenate(sample)
+    
+    # check if the match sample is pandas.dataframe or astropy.table.Table
+    if isinstance(match_sample, pd.DataFrame):
+        catalog_withname = Table(catalog, names=match_sample.columns)
+        return catalog_withname
+    
+    elif isinstance(match_sample, Table):
+        catalog_withname = Table(catalog, names=match_sample.colnames)
+        return catalog_withname
+
+    return catalog
