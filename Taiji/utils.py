@@ -250,3 +250,158 @@ def match_sample(standard_sample, match_sample, bins, alpha, seed = None):
         return catalog_withname
 
     return catalog
+
+def gaussian_tension_approxiation(chi2, dof = 20, x0 = 20):
+    """This is for calculating equivalent gaussian sigma for a extremely low p-value due to large chi2 value. From Haslbauer et al. 2022.
+
+    Args:
+        chi2 (_type_): _description_
+        dof (int, optional): _description_. Defaults to 20.
+        x0 (int, optional): _description_. Defaults to 20.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    from scipy.optimize import fsolve
+    
+    right_chi2 = chi2**(dof/2-1)*np.exp(-chi2/2)/2**(dof/2)/np.math.factorial(dof/2-1)/(1/2-(dof/2-1)/chi2)
+    right_chi2 = (dof/2-1)*np.log(chi2) - chi2/2 - np.log(2**(dof/2)) - np.log(np.math.factorial(dof/2-1)) - np.log(1/2-(dof/2-1)/chi2)
+    print('right_chi2 = ', right_chi2)
+    
+    def func(x):
+        return np.log(np.sqrt(2/np.pi)) + (-x**2-np.log(x)) - (right_chi2)
+    
+    if x0 is None:
+        x0 = 20
+        
+    root = fsolve(func, x0)
+    
+    return root[0]*np.sqrt(2)
+
+def gaussian_tension(chisqval, dof=20, x0=5):
+    from scipy.integrate import quad
+    from scipy.optimize import fsolve
+    from scipy.stats import chi2
+
+    p = 1 - chi2.cdf(chisqval, dof)
+    print(r'The p-value for {chisqval} is: ', p)
+
+    def f(x):
+        return 1 - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-t**2 / 2),
+                                                 -x, x)[0] - p
+
+    x = fsolve(f, x0)
+
+    #print('The tension:', x[0])
+
+    return x[0]
+
+def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
+                   index_tng50, mass_bins, q_bins):
+    # 1. divide the data into different bins
+    # mass_bins = np.arange(10, 11.5001, 0.15)
+    # print('mass_bins', mass_bins)
+
+    # q_bins = np.arange(0, 1.0001, 0.05)
+    # print('q_bins', q_bins)
+    q_bins_center = (q_bins[1:] + q_bins[:-1]) / 2
+    index_q_bins = [(q_obs > q_bins[i]) & (q_obs <= q_bins[i + 1])
+                    for i in range(len(q_bins) - 1)]
+
+    # calculate the weight_obs based the numbers in different mass bins.
+    N_sim = binned_statistic(logM_tng50[index_tng50],
+                             logM_tng50[index_tng50],
+                             statistic='count',
+                             bins=mass_bins)[0]
+    N_obs = binned_statistic(logM_obs[index_obs],
+                             logM_obs[index_obs],
+                             statistic='count',
+                             bins=mass_bins)[0]
+    weight_obs = N_sim / N_obs
+    print('Simulated number', np.sum(N_sim))
+    print('Observed number', np.sum(N_obs))
+    #print('weight_obs', weight_obs)
+
+    # main step to derive the weight_total_i, this is the weight for each bin. That is to say, I directly multiply the weight_total_i to the histogram of the observations.
+    N_total = 0
+    weight_total_arr = []
+    weight_max_arr = []
+    sigma_obs_arr = []
+    sigma_model_arr = []
+    for i in range(len(q_bins) - 1):
+        mass_qbin_arr = logM_obs[index_q_bins[i] & index_obs]
+
+        bin_indices = np.digitize(mass_qbin_arr, mass_bins)
+
+        weight_obs_bin_arr = weight_obs[bin_indices - 1]
+        weight_total_bin = np.sum(weight_obs_bin_arr)
+        weight_total_arr.append(weight_total_bin)
+
+        N_total += len(mass_qbin_arr)
+
+        if len(weight_obs_bin_arr) == 0:
+            weight_max_arr.append(np.nan)
+        else:
+            weight_max_bin = np.max(weight_obs_bin_arr)
+            weight_max_arr.append(weight_max_bin)
+            
+    weight_total_arr = np.array(weight_total_arr)
+    sigma_model_arr = np.array(sigma_model_arr)
+
+    # calculate the sigma_obs_i for each bin based on the poisson uncertainty. Equation (8) in their paper.
+    for i in range(len(q_bins) - 1):
+        if weight_max_arr[i] == 0:
+            weight_max = np.nanmax(weight_max_arr)
+            weight_total = np.nansum(weight_total_arr)
+            sigma_obs_arr.append(weight_max / weight_total)
+        else:
+            weight_total = np.nansum(weight_total_arr)
+            sigma_obs_bin = weight_max_arr[i] / weight_total * np.sqrt(
+                weight_total_arr[i] / weight_max_arr[i] + 1)
+            sigma_obs_arr.append(sigma_obs_bin)
+            
+    sigma_obs_arr = np.array(sigma_obs_arr)
+
+    # calculate the sigma_model_i and unweighted observations for each bin based on the poisson uncertainty
+    N_model_qbins = np.array(binned_statistic(q_tng50[index_tng50],
+                               q_tng50[index_tng50],
+                               statistic='count',
+                               bins=q_bins)[0])
+    N_obs_qbins = binned_statistic(q_obs[index_obs],
+                                   q_obs[index_obs],
+                                   statistic='count',
+                                   bins=q_bins)[0]
+    sigma_model_arr = [
+        np.sqrt(N_model_qbins[i] + 1) / np.sum(N_model_qbins) for i in range(len(N_model_qbins))
+    ]
+    sigma_obs_arr_unweighted = [
+        np.sqrt(N_obs_qbins[i] + 1) / np.sum(N_obs_qbins)
+        for i in range(len(N_obs_qbins))
+    ]
+    
+    sigma_model_arr = np.array(sigma_model_arr)
+    
+    # calculate the chi-square.
+    chi_square_bin_arr = (weight_total_arr/np.sum(weight_total_arr)-N_model_qbins/np.sum(N_model_qbins))**2/(sigma_model_arr**2+sigma_obs_arr**2)
+    chi_square = np.nansum(chi_square_bin_arr)
+
+    # Combine all derived information into a dictory
+    dict_info = {
+        'q_bins_center': q_bins_center,
+        'weight_total_arr': weight_total_arr,
+        'weight_max_arr': weight_max_arr,
+        'N_sim': N_sim,
+        'N_obs': N_obs,
+        'N_model_qbins': N_model_qbins,
+        'N_obs_qbins': N_obs_qbins,
+        'sigma_obs_arr': sigma_obs_arr,
+        'sigma_model_arr': sigma_model_arr,
+        'sigma_obs_arr_unweighted': sigma_obs_arr_unweighted,
+        'chi-square': chi_square,
+    }
+
+    print('Ntotal in loop', N_total)
+    print('total weight (should equal Nsim)', np.sum(weight_total_arr))
+
+    return dict_info
