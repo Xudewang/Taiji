@@ -223,8 +223,8 @@ def match_sample(standard_sample, match_sample, bins, alpha, seed = None):
     print('The number of match sample: ', len(match_sample))
     ids = np.arange(len(match_sample))
     
-    binner_count = binned_statistic(standard_sample['logmstar_add076'], standard_sample['logmstar_add076'], statistic='count', bins=bins)[0]
-    extract_count = np.round(binner_count * alpha).astype(int)
+    binned_count = binned_statistic(standard_sample['logmstar_add076'], standard_sample['logmstar_add076'], statistic='count', bins=bins)[0]
+    extract_count = (binned_count * alpha).astype(int)
     
     indices = np.digitize(match_sample['Mstar'], bins)
     print(len(indices))
@@ -285,7 +285,7 @@ def gaussian_tension(chisqval, dof=20, x0=5):
     from scipy.stats import chi2
 
     p = 1 - chi2.cdf(chisqval, dof)
-    print(r'The p-value for {chisqval} is: ', p)
+    print(f'The p-value for {chisqval} is: ', p)
 
     def f(x):
         return 1 - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-t**2 / 2),
@@ -299,10 +299,11 @@ def gaussian_tension(chisqval, dof=20, x0=5):
 
 def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
                    index_tng50, mass_bins, q_bins):
+    from scipy.stats import binned_statistic
+
     # 1. divide the data into different bins
     # mass_bins = np.arange(10, 11.5001, 0.15)
     # print('mass_bins', mass_bins)
-
     # q_bins = np.arange(0, 1.0001, 0.05)
     # print('q_bins', q_bins)
     q_bins_center = (q_bins[1:] + q_bins[:-1]) / 2
