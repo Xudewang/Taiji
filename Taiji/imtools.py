@@ -147,7 +147,7 @@ def _set_matplotlib(style='default',
 
 def set_matplotlib(style='default',
                    usetex=False,
-                   fontsize=13,
+                   fontsize=15,
                    figsize=(6, 5),
                    dpi=60):
     '''
