@@ -200,7 +200,7 @@ def running_median_errorbar(x,y, method='percentile', bins=20):
     
         return median_results.statistic, errorbar_low, errorbar_high
     
-def match_sample(standard_sample, match_sample, bins, alpha, seed = None):
+def match_sample(standard_sample, match_sample, bins, alpha, standard_sample_logM_index, match_sample_logM_index, seed = None):
     """This function is to match two samples, e.g. stellar mass.
 
     Args:
@@ -223,10 +223,10 @@ def match_sample(standard_sample, match_sample, bins, alpha, seed = None):
     print('The number of match sample: ', len(match_sample))
     ids = np.arange(len(match_sample))
     
-    binned_count = binned_statistic(standard_sample['logmstar_add076'], standard_sample['logmstar_add076'], statistic='count', bins=bins)[0]
+    binned_count = binned_statistic(standard_sample[standard_sample_logM_index], standard_sample[standard_sample_logM_index], statistic='count', bins=bins)[0]
     extract_count = (binned_count * alpha).astype(int)
     
-    indices = np.digitize(match_sample['Mstar'], bins)
+    indices = np.digitize(match_sample[match_sample_logM_index], bins)
     print(len(indices))
     
     sample = []
