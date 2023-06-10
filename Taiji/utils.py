@@ -406,3 +406,11 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
     print('total weight (should equal Nsim)', np.sum(weight_total_arr))
 
     return dict_info
+
+def binedge_equalnumber(data, nbins):
+    percentiles = np.linspace(0, 100, nbins)
+    bins = np.percentile(data, percentiles)
+    
+    bins_center = (bins[:-1] +bins[1:]) / 2
+    
+    return bins, bins_center
