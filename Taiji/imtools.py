@@ -2412,7 +2412,8 @@ def extract_obj(img,
                 pixel_scale=0.168,
                 minarea=5,
                 convolve=False,
-                conv_radius=None,
+                convolve_kernel='tophat',
+                conv_radius=3,
                 deblend_nthresh=32,
                 deblend_cont=0.005,
                 clean_param=1.0,
@@ -2475,11 +2476,19 @@ def extract_obj(img,
         input_data = img
 
     if convolve:
-        from astropy.convolution import Gaussian2DKernel, convolve
-        input_data = convolve(input_data.astype(float),
-                              Gaussian2DKernel(conv_radius))
-        bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
-        input_data -= bkg.globalback
+        if convolve_kernel == 'gaussian':
+            from astropy.convolution import Gaussian2DKernel, convolve
+            input_data = convolve(input_data.astype(float),
+                                Gaussian2DKernel(conv_radius))
+            bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
+            input_data -= bkg.globalback
+            
+        elif convolve_kernel == 'tophat':
+            from astropy.convolution import Tophat2DKernel, convolve
+            input_data = convolve(input_data.astype(float),
+                                Tophat2DKernel(conv_radius))
+            bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
+            input_data -= bkg.globalback
 
     objects, segmap = sep.extract(input_data,
                                   sigma,
@@ -2565,8 +2574,10 @@ def extract_obj(img,
     # plot background-subtracted image
     if show_fig:
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        if min(input_data.shape) * pixel_scale < 5:
+            scale_bar_length = 0.5
         if min(input_data.shape) * pixel_scale < 30:
-            scale_bar_length = 5
+            scale_bar_length = 1
         elif min(input_data.shape) * pixel_scale > 100:
             scale_bar_length = 61
         else:
