@@ -744,9 +744,9 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
     boundary_innermost_criteria_a = dist_inner_criteria_Nkron * kronrad_cen_cold * a_cen_cold
     boundary_innermost_criteria_b = dist_inner_criteria_Nkron * kronrad_cen_cold * b_cen_cold
-    
-    boundary_innermost_criteria_inner_a = 1 * kronrad_cen_cold * a_cen_cold
-    boundary_innermost_criteria_inner_b = 1 * kronrad_cen_cold * b_cen_cold
+
+    boundary_innermost_criteria_inner_a = 1.5 * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_inner_b = 1.5 * kronrad_cen_cold * b_cen_cold
 
     idx_remove_arr = []
     seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
@@ -760,15 +760,15 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                (obj_cat_hot_remove[i]['y'] -
                                 seg_hot_removecenter.shape[1] // 2)**2)
 
-        index_point_in_ellipse = is_point_in_ellipse(
+        index_point_in_ellipse_innerellipse = is_point_in_ellipse(
             center=(x_cen_cold, y_cen_cold),
-            width=1 * boundary_innermost_criteria_a,
-            height=1 * boundary_innermost_criteria_b,
+            width=2 * boundary_innermost_criteria_inner_a,
+            height=2 * boundary_innermost_criteria_inner_b,
             angle=theta_center_cold,
             test_point=(obj_cat_hot_remove[i]['x'],
                         obj_cat_hot_remove[i]['y']))
 
-        index_point_in_ellipse_ring = is_point_in_ellipse_ring(
+        index_point_in_ellipse_outerring = is_point_in_ellipse_ring(
             center=(x_cen_cold, y_cen_cold),
             outer_width=2 * boundary_innermost_criteria_a,
             outer_height=2 * boundary_innermost_criteria_b,
@@ -784,11 +784,14 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         #         index_point_in_ellipse,
         #         np.logical_and((obj['b'] / obj['a']) <= q_criteria,
         #                        obj['flux'] <= (0.8 * flux_cen_cold))):
-        if np.logical_and(
-                index_point_in_ellipse_ring,
-                np.logical_and((obj['b'] / obj['a']) <= q_criteria,
-                               obj['flux'] <= (0.8 * flux_cen_cold))) or np.logical_and(index_point_in_ellipse, obj['flux'] <= (0.8 * flux_cen_cold)):
-            
+        if np.logical_or(
+                np.logical_and(
+                    index_point_in_ellipse_outerring,
+                    np.logical_and((obj['b'] / obj['a']) <= q_criteria,
+                                   obj['flux'] <= (0.8 * flux_cen_cold))),
+                np.logical_and(index_point_in_ellipse_innerellipse, obj['flux'] <=
+                               (0.8 * flux_cen_cold))):
+
             seg_hot_removecenter[seg_hot_removecenter == (
                 obj_cat_hot_remove[i]['index'] + 1)] = 0
             idx_remove_arr.append(i)
@@ -958,7 +961,7 @@ def make_simple_coldhot_mask(image_data,
                              convolve=False,
                              convolve_kernel='tophat',
                              conv_radius=3,
-                             q_criteria = 0.9,
+                             q_criteria=0.9,
                              dist_inner_criteria_Nkron=2,
                              dilate_radius_criteria=6,
                              dist_unit_flag='r50',
@@ -1025,30 +1028,34 @@ def make_simple_coldhot_mask(image_data,
     obj_cat_cold = Table(obj_cat_cold)
     obj_cat_hot = Table(obj_cat_hot)
 
-    seg_combine_direct, seg_combine_dilation = segmap_coldhot_removeinnermost(obj_cat_cold,
-                                   seg_cold,
-                                   obj_cat_hot,
-                                   seg_hot,
-                                   dist_inner_criteria_Nkron=dist_inner_criteria_Nkron,
-                                   q_criteria=q_criteria,
-                                   dilate_radius_criteria=dilate_radius_criteria,
-                                   dist_unit_flag=dist_unit_flag,
-                                   dilation_inner=dilation_inner,
-                                   dilation_outer=dilation_outer,
-                                   seeing_fwhm=seeing_fwhm,
-                                   image_data=image_data,
-                                   inner_mask=inner_mask,
-                                   inner_ellipse_Na=inner_ellipse_Na,
-                                   show_removeinnermost_img_direct=show_removeinnermost_img_direct,
-                                   show_removeinnermost_img_dilated=show_removeinnermost_img_dilated,
-                                   show_removeinnermost_img_parts=show_removeinnermost_img_parts)
-    
+    seg_combine_direct, seg_combine_dilation = segmap_coldhot_removeinnermost(
+        obj_cat_cold,
+        seg_cold,
+        obj_cat_hot,
+        seg_hot,
+        dist_inner_criteria_Nkron=dist_inner_criteria_Nkron,
+        q_criteria=q_criteria,
+        dilate_radius_criteria=dilate_radius_criteria,
+        dist_unit_flag=dist_unit_flag,
+        dilation_inner=dilation_inner,
+        dilation_outer=dilation_outer,
+        seeing_fwhm=seeing_fwhm,
+        image_data=image_data,
+        inner_mask=inner_mask,
+        inner_ellipse_Na=inner_ellipse_Na,
+        show_removeinnermost_img_direct=show_removeinnermost_img_direct,
+        show_removeinnermost_img_dilated=show_removeinnermost_img_dilated,
+        show_removeinnermost_img_parts=show_removeinnermost_img_parts)
+
     if show_final_mask == True:
         #print('Show image')
         fig, ax = plt.subplots(1, 1, figsize=(8, 8))
         norm = simple_norm(image_data, 'sqrt', percent=99.)
         ax.imshow(image_data, origin='lower', cmap='Greys_r', norm=norm)
-        ax.imshow(seg_combine_dilation, origin='lower', cmap='Blues', alpha=0.5)
+        ax.imshow(seg_combine_dilation,
+                  origin='lower',
+                  cmap='Blues',
+                  alpha=0.5)
 
     # save the mask
     if save_mask_ori is not None:

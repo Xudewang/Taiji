@@ -148,7 +148,7 @@ def brokenexpfit_emcee(x,
     return parameter_arr
 
 
-def running_percentile(x, y, percentile, bins = 20):
+def running_percentile(x, y, percentile, bins=20):
     """This is for calculating the running percentile of y as a function of x.
 
     Args:
@@ -165,10 +165,11 @@ def running_percentile(x, y, percentile, bins = 20):
     # calculate the running percentiles of y as a function of x
     percentile_results = binned_statistic(
         x, y, statistic=lambda y: np.percentile(y, percentile), bins=bins)
-    
+
     return percentile_results.statistic
 
-def running_median_errorbar(x,y, method='percentile', bins=20):
+
+def running_median_errorbar(x, y, method='percentile', bins=20):
     """This is for calculating the running median and std of y as a function of x.
 
     Args:
@@ -182,25 +183,31 @@ def running_median_errorbar(x,y, method='percentile', bins=20):
     from scipy.stats import binned_statistic
 
     # calculate the running percentiles of y as a function of x
-    median_results = binned_statistic(
-        x, y, statistic='median', bins=bins)
-    
+    median_results = binned_statistic(x, y, statistic='median', bins=bins)
+
     if method == 'std':
-        std_results = binned_statistic(
-            x, y, statistic='std', bins=bins).statistic
-        
+        std_results = binned_statistic(x, y, statistic='std',
+                                       bins=bins).statistic
+
         return median_results.statistic, std_results.statistic
-        
+
     elif method == 'percentile':
         percentile_results_16 = running_percentile(x, y, 16, bins=bins)
         percentile_results_84 = running_percentile(x, y, 84, bins=bins)
-        
+
         errorbar_low = median_results.statistic - percentile_results_16
         errorbar_high = percentile_results_84 - median_results.statistic
-    
+
         return median_results.statistic, errorbar_low, errorbar_high
-    
-def match_sample(standard_sample, match_sample, bins, alpha, standard_sample_logM_index, match_sample_logM_index, seed = None):
+
+
+def match_sample(standard_sample,
+                 match_sample,
+                 bins,
+                 alpha,
+                 standard_sample_logM_index,
+                 match_sample_logM_index,
+                 seed=None):
     """This function is to match two samples, e.g. stellar mass.
 
     Args:
@@ -209,49 +216,56 @@ def match_sample(standard_sample, match_sample, bins, alpha, standard_sample_log
         bins (_type_): _description_
         alpha (float): The alpha value for matching two samples. The numbers from standard sample multiply alpha should be extracted from match sample.
     """
-    
+
     import pandas as pd
     from astropy.table import Table
     from scipy.stats import binned_statistic
-    
+
     if seed is None:
-        seed = len(match_sample) - 1 
-        
+        seed = len(match_sample) - 1
+
     np.random.seed(seed)
-    
+
     print('The number of standard sample: ', len(standard_sample))
     print('The number of match sample: ', len(match_sample))
     ids = np.arange(len(match_sample))
-    
-    binned_count = binned_statistic(standard_sample[standard_sample_logM_index], standard_sample[standard_sample_logM_index], statistic='count', bins=bins)[0]
+
+    binned_count = binned_statistic(
+        standard_sample[standard_sample_logM_index],
+        standard_sample[standard_sample_logM_index],
+        statistic='count',
+        bins=bins)[0]
     extract_count = (binned_count * alpha).astype(int)
-    
+
     indices = np.digitize(match_sample[match_sample_logM_index], bins)
     print(len(indices))
-    
+
     sample = []
     for i in range(1, len(bins)):
         mask = indices == i
-        sub_ids = np.random.choice(ids[mask], extract_count[i-1], replace=False)
+        sub_ids = np.random.choice(ids[mask],
+                                   extract_count[i - 1],
+                                   replace=False)
         sub_sample = np.array(match_sample)[sub_ids]
         # rng = np.random.default_rng()
         # sub_sample = rng.choice(np.array(match_sample)[mask], extract_count[i-1], replace=False, axis=0)
         sample.append(sub_sample)
-        
+
     catalog = np.concatenate(sample)
-    
+
     # check if the match sample is pandas.dataframe or astropy.table.Table
     if isinstance(match_sample, pd.DataFrame):
         catalog_withname = Table(catalog, names=match_sample.columns)
         return catalog_withname
-    
+
     elif isinstance(match_sample, Table):
         catalog_withname = Table(catalog, names=match_sample.colnames)
         return catalog_withname
 
     return catalog
 
-def gaussian_tension_approxiation(chi2, dof = 20, x0 = 20):
+
+def gaussian_tension_approxiation(chi2, dof=20, x0=20):
     """This is for calculating equivalent gaussian sigma for a extremely low p-value due to large chi2 value. From Haslbauer et al. 2022.
 
     Args:
@@ -262,22 +276,28 @@ def gaussian_tension_approxiation(chi2, dof = 20, x0 = 20):
     Returns:
         _type_: _description_
     """
-    
+
     from scipy.optimize import fsolve
-    
-    right_chi2 = chi2**(dof/2-1)*np.exp(-chi2/2)/2**(dof/2)/np.math.factorial(dof/2-1)/(1/2-(dof/2-1)/chi2)
-    right_chi2 = (dof/2-1)*np.log(chi2) - chi2/2 - np.log(2**(dof/2)) - np.log(np.math.factorial(dof/2-1)) - np.log(1/2-(dof/2-1)/chi2)
+
+    right_chi2 = chi2**(dof / 2 - 1) * np.exp(-chi2 / 2) / 2**(
+        dof / 2) / np.math.factorial(dof / 2 - 1) / (1 / 2 -
+                                                     (dof / 2 - 1) / chi2)
+    right_chi2 = (dof / 2 - 1) * np.log(chi2) - chi2 / 2 - np.log(
+        2**(dof / 2)) - np.log(
+            np.math.factorial(dof / 2 - 1)) - np.log(1 / 2 -
+                                                     (dof / 2 - 1) / chi2)
     print('right_chi2 = ', right_chi2)
-    
+
     def func(x):
-        return np.log(np.sqrt(2/np.pi)) + (-x**2-np.log(x)) - (right_chi2)
-    
+        return np.log(np.sqrt(2 / np.pi)) + (-x**2 - np.log(x)) - (right_chi2)
+
     if x0 is None:
         x0 = 20
-        
+
     root = fsolve(func, x0)
-    
-    return root[0]*np.sqrt(2)
+
+    return root[0] * np.sqrt(2)
+
 
 def gaussian_tension(chisqval, dof=20, x0=5):
     from scipy.integrate import quad
@@ -296,6 +316,7 @@ def gaussian_tension(chisqval, dof=20, x0=5):
     #print('The tension:', x[0])
 
     return x[0]
+
 
 def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
                    index_tng50, mass_bins, q_bins):
@@ -346,7 +367,7 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
         else:
             weight_max_bin = np.max(weight_obs_bin_arr)
             weight_max_arr.append(weight_max_bin)
-            
+
     weight_total_arr = np.array(weight_total_arr)
     sigma_model_arr = np.array(sigma_model_arr)
 
@@ -361,30 +382,34 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
             sigma_obs_bin = weight_max_arr[i] / weight_total * np.sqrt(
                 weight_total_arr[i] / weight_max_arr[i] + 1)
             sigma_obs_arr.append(sigma_obs_bin)
-            
+
     sigma_obs_arr = np.array(sigma_obs_arr)
 
     # calculate the sigma_model_i and unweighted observations for each bin based on the poisson uncertainty
-    N_model_qbins = np.array(binned_statistic(q_tng50[index_tng50],
-                               q_tng50[index_tng50],
-                               statistic='count',
-                               bins=q_bins)[0])
+    N_model_qbins = np.array(
+        binned_statistic(q_tng50[index_tng50],
+                         q_tng50[index_tng50],
+                         statistic='count',
+                         bins=q_bins)[0])
     N_obs_qbins = binned_statistic(q_obs[index_obs],
                                    q_obs[index_obs],
                                    statistic='count',
                                    bins=q_bins)[0]
     sigma_model_arr = [
-        np.sqrt(N_model_qbins[i] + 1) / np.sum(N_model_qbins) for i in range(len(N_model_qbins))
+        np.sqrt(N_model_qbins[i] + 1) / np.sum(N_model_qbins)
+        for i in range(len(N_model_qbins))
     ]
     sigma_obs_arr_unweighted = [
         np.sqrt(N_obs_qbins[i] + 1) / np.sum(N_obs_qbins)
         for i in range(len(N_obs_qbins))
     ]
-    
+
     sigma_model_arr = np.array(sigma_model_arr)
-    
+
     # calculate the chi-square.
-    chi_square_bin_arr = (weight_total_arr/np.sum(weight_total_arr)-N_model_qbins/np.sum(N_model_qbins))**2/(sigma_model_arr**2+sigma_obs_arr**2)
+    chi_square_bin_arr = (weight_total_arr / np.sum(weight_total_arr) -
+                          N_model_qbins / np.sum(N_model_qbins))**2 / (
+                              sigma_model_arr**2 + sigma_obs_arr**2)
     chi_square = np.nansum(chi_square_bin_arr)
 
     # Combine all derived information into a dictory
@@ -407,13 +432,15 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
 
     return dict_info
 
+
 def binedge_equalnumber(data, nbins):
     percentiles = np.linspace(0, 100, nbins)
     bins = np.percentile(data, percentiles)
-    
-    bins_center = (bins[:-1] +bins[1:]) / 2
-    
+
+    bins_center = (bins[:-1] + bins[1:]) / 2
+
     return bins, bins_center
+
 
 def is_point_in_ellipse(center, width, height, angle, test_point):
     """
@@ -437,10 +464,12 @@ def is_point_in_ellipse(center, width, height, angle, test_point):
     # Check if the test point is inside the ellipse
     return ellipse.contains_point(test_point)
 
+
 from matplotlib.patches import Ellipse
 
 
-def is_point_in_ellipse_ring(center, outer_width, outer_height, inner_width, inner_height, angle, test_point):
+def is_point_in_ellipse_ring(center, outer_width, outer_height, inner_width,
+                             inner_height, angle, test_point):
     """
     Check if a test point is inside an ellipse ring.
 
@@ -457,10 +486,22 @@ def is_point_in_ellipse_ring(center, outer_width, outer_height, inner_width, inn
         bool: True if the test point is inside the ellipse ring, False otherwise.
     """
     # Create an ellipse object and a smaller ellipse object
-    ellipse = Ellipse(xy=center, width=outer_width, height=outer_height, angle=angle, facecolor='none', edgecolor='blue')
-    inner_ellipse = Ellipse(xy=center, width=inner_width, height=inner_height, angle=angle, facecolor='none', edgecolor='green')
+    ellipse = Ellipse(xy=center,
+                      width=outer_width,
+                      height=outer_height,
+                      angle=angle,
+                      facecolor='none',
+                      edgecolor='blue')
+    inner_ellipse = Ellipse(xy=center,
+                            width=inner_width,
+                            height=inner_height,
+                            angle=angle,
+                            facecolor='none',
+                            edgecolor='green')
 
     # Check if the test point is inside the ellipse ring
-    is_inside = ellipse.contains_point(test_point) and not inner_ellipse.contains_point(test_point)
+    is_inside = np.logical_and(
+        ellipse.contains_point(test_point),
+        np.logical_not(inner_ellipse.contains_point(test_point)))
 
     return is_inside
