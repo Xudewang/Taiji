@@ -585,7 +585,7 @@ def remove_overlap(obj_cat,
 
     # overlap_flag = np.logical_and(overlap_flag,
     #                               dist <= 3 * obj_cat_ori[cen_indx_ori]['a'])
-    overlap_flag = np.logical_and(overlap_flag, overlap_flag_currentself)
+    #overlap_flag = np.logical_or(overlap_flag, overlap_flag_currentself)
     overlap_flag = np.logical_and(
         overlap_flag,
         obj_cat['flux'] < 0.8 * obj_cat_ori[cen_indx_ori]['flux'])
@@ -595,8 +595,10 @@ def remove_overlap(obj_cat,
 
     for ind in np.where(overlap_flag)[0]:
         segmap[segmap == ind + 1] = 0
+        
+    obj_cat = obj_cat[~overlap_flag]
 
-    return segmap
+    return segmap, obj_cat
 
 
 def divide_dilate_segmap(segmap_ori,
@@ -1237,7 +1239,7 @@ def coldhot_detection(image_data,
                            obj_cat_cold,
                            segmap_cold,
                            dist_minimum=1.5 * seeing_fwhm,
-                           pixel_scale=pixel_scale)),
+                           pixel_scale=pixel_scale)[0]),
         seg_remove_cen_obj(segmap_cold))
 
     seg_combine_removeinnermost, seg_combine_removeinnermost_dilation = segmap_coldhot_removeinnermost(

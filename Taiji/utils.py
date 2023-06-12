@@ -414,3 +414,25 @@ def binedge_equalnumber(data, nbins):
     bins_center = (bins[:-1] +bins[1:]) / 2
     
     return bins, bins_center
+
+def is_point_in_ellipse(center, width, height, angle, test_point):
+    """
+    Check if a test point is inside an ellipse.
+
+    Parameters:
+    center: The center point of the ellipse as a tuple (x, y).
+    width: The width of the ellipse. Note: This is the full width, not the radius.
+    height: The height of the ellipse.
+    angle: The angle of rotation of the ellipse in degrees.
+    test_point: The point to test as a tuple (x, y).
+
+    Returns:
+    True if the test point is inside the ellipse, False otherwise.
+    """
+    from matplotlib.patches import Ellipse
+
+    # Create an ellipse object
+    ellipse = Ellipse(xy=center, width=width, height=height, angle=angle)
+
+    # Check if the test point is inside the ellipse
+    return ellipse.contains_point(test_point)
