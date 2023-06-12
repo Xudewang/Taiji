@@ -677,7 +677,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    seg_cold,
                                    obj_cat_hot,
                                    seg_hot,
-                                   dist_inner_criteria_Nkron=3,
+                                   remove_segmap_outer_Nkron=3,
+                                   remove_segmap_inner_Nkron=3,
                                    q_criteria=0.8,
                                    dilate_radius_criteria=6,
                                    dist_unit_flag='r50',
@@ -742,11 +743,11 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dist_unit = kronrad_cen_cold * a_cen_cold
     print('dist unit: ', dist_unit)
 
-    boundary_innermost_criteria_a = dist_inner_criteria_Nkron * kronrad_cen_cold * a_cen_cold
-    boundary_innermost_criteria_b = dist_inner_criteria_Nkron * kronrad_cen_cold * b_cen_cold
+    boundary_innermost_criteria_a = remove_segmap_outer_Nkron * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_b = remove_segmap_outer_Nkron * kronrad_cen_cold * b_cen_cold
 
-    boundary_innermost_criteria_inner_a = 1.5 * kronrad_cen_cold * a_cen_cold
-    boundary_innermost_criteria_inner_b = 1.5 * kronrad_cen_cold * b_cen_cold
+    boundary_innermost_criteria_inner_a = remove_segmap_inner_Nkron * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_inner_b = remove_segmap_inner_Nkron * kronrad_cen_cold * b_cen_cold
 
     idx_remove_arr = []
     seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
@@ -784,18 +785,27 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         #         index_point_in_ellipse,
         #         np.logical_and((obj['b'] / obj['a']) <= q_criteria,
         #                        obj['flux'] <= (0.8 * flux_cen_cold))):
-        if np.logical_or(
-                np.logical_and(
-                    index_point_in_ellipse_outerring,
-                    np.logical_and((obj['b'] / obj['a']) <= q_criteria,
-                                   obj['flux'] <= (0.8 * flux_cen_cold))),
-                np.logical_and(index_point_in_ellipse_innerellipse, obj['flux'] <=
-                               (0.8 * flux_cen_cold))):
-
-            seg_hot_removecenter[seg_hot_removecenter == (
-                obj_cat_hot_remove[i]['index'] + 1)] = 0
+        # if np.logical_or(
+        #         np.logical_and(
+        #             index_point_in_ellipse_outerring,
+        #             np.logical_and((obj['b'] / obj['a']) <= q_criteria,
+        #                            obj['flux'] <= (0.8 * flux_cen_cold))),
+        #         np.logical_and(index_point_in_ellipse_innerellipse, obj['flux'] <=
+        #                        (0.8 * flux_cen_cold))):
+        # 判断object是否需要剔除
+        if index_point_in_ellipse_innerellipse and obj['flux'] <= (
+                0.8 * flux_cen_cold):
+            # 如果在inner ellipse内部且流量小于阈值，将object的索引添加到idx_remove_arr数组中
             idx_remove_arr.append(i)
-
+        elif index_point_in_ellipse_outerring and (
+                obj['b'] / obj['a']) <= q_criteria and obj['flux'] <= (
+                    0.8 * flux_cen_cold):
+            # 如果在outer ellipse内部且b/a小于阈值且流量小于阈值，将object的索引添加到idx_remove_arr数组中
+            idx_remove_arr.append(i)
+    print('remove index arr:', idx_remove_arr)
+    for idx in idx_remove_arr:
+        seg_hot_removecenter[seg_hot_removecenter == (
+            obj_cat_hot_remove[idx]['index'] + 1)] = 0
     obj_cat_hot_remove.remove_rows(idx_remove_arr)
     #print('obj_cat_hot_remove: ', obj_cat_hot_remove)
 
@@ -962,7 +972,7 @@ def make_simple_coldhot_mask(image_data,
                              convolve_kernel='tophat',
                              conv_radius=3,
                              q_criteria=0.9,
-                             dist_inner_criteria_Nkron=2,
+                             remove_segmap_outer_Nkron=2,
                              dilate_radius_criteria=6,
                              dist_unit_flag='r50',
                              dilation_inner=1.5,
@@ -1033,7 +1043,7 @@ def make_simple_coldhot_mask(image_data,
         seg_cold,
         obj_cat_hot,
         seg_hot,
-        dist_inner_criteria_Nkron=dist_inner_criteria_Nkron,
+        remove_segmap_outer_Nkron=remove_segmap_outer_Nkron,
         q_criteria=q_criteria,
         dilate_radius_criteria=dilate_radius_criteria,
         dist_unit_flag=dist_unit_flag,
@@ -1089,7 +1099,7 @@ def coldhot_detection(image_data,
                       mask=None,
                       convolve=False,
                       conv_radius=3,
-                      dist_inner_criteria_Nkron=3,
+                      remove_segmap_outer_Nkron=3,
                       q_criteria=0.8,
                       dilate_radius_criteria=5,
                       dist_unit_flag='a',
@@ -1156,7 +1166,7 @@ def coldhot_detection(image_data,
         segmap_cold,
         obj_cat_hot,
         segmap_hot,
-        dist_inner_criteria_Nkron=dist_inner_criteria_Nkron,
+        remove_segmap_outer_Nkron=remove_segmap_outer_Nkron,
         q_criteria=q_criteria,
         dilate_radius_criteria=dilate_radius_criteria,
         dist_unit_flag=dist_unit_flag,
