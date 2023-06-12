@@ -436,3 +436,31 @@ def is_point_in_ellipse(center, width, height, angle, test_point):
 
     # Check if the test point is inside the ellipse
     return ellipse.contains_point(test_point)
+
+from matplotlib.patches import Ellipse
+
+
+def is_point_in_ellipse_ring(center, outer_width, outer_height, inner_width, inner_height, angle, test_point):
+    """
+    Check if a test point is inside an ellipse ring.
+
+    Args:
+        center (tuple): The center point of the ellipse as a tuple (x, y).
+        outer_width (float): The full width of the outer ellipse.
+        outer_height (float): The height of the outer ellipse.
+        inner_width (float): The full width of the inner ellipse.
+        inner_height (float): The height of the inner ellipse.
+        angle (float): The angle of rotation of the ellipse in degrees.
+        test_point (tuple): The point to test as a tuple (x, y).
+
+    Returns:
+        bool: True if the test point is inside the ellipse ring, False otherwise.
+    """
+    # Create an ellipse object and a smaller ellipse object
+    ellipse = Ellipse(xy=center, width=outer_width, height=outer_height, angle=angle, facecolor='none', edgecolor='blue')
+    inner_ellipse = Ellipse(xy=center, width=inner_width, height=inner_height, angle=angle, facecolor='none', edgecolor='green')
+
+    # Check if the test point is inside the ellipse ring
+    is_inside = ellipse.contains_point(test_point) and not inner_ellipse.contains_point(test_point)
+
+    return is_inside

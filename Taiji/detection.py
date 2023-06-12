@@ -595,7 +595,7 @@ def remove_overlap(obj_cat,
 
     for ind in np.where(overlap_flag)[0]:
         segmap[segmap == ind + 1] = 0
-        
+
     obj_cat = obj_cat[~overlap_flag]
 
     return segmap, obj_cat
@@ -696,6 +696,9 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     import copy
 
     from astropy.visualization import simple_norm
+    from matplotlib.patches import Ellipse
+
+    from Taiji.utils import is_point_in_ellipse, is_point_in_ellipse_ring
 
     seg_hot = copy.deepcopy(seg_hot)
     seg_cold = copy.deepcopy(seg_cold)
@@ -712,7 +715,10 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                 (obj_cat_hot['y'] - seg_cold.shape[0] // 2)**2)
 
     info_cen_obj_cold = obj_cat_cold[cen_obj_idx_cold]
+    x_cen_cold = info_cen_obj_cold['x']
+    y_cen_cold = info_cen_obj_cold['y']
     a_cen_cold = info_cen_obj_cold['a']
+    theta_center_cold = info_cen_obj_cold['theta'] * 180 / np.pi
     #print('a_cen_cold', a_cen_cold)
     b_cen_cold = info_cen_obj_cold['b']
     #print('b_cen_cold', b_cen_cold)
@@ -736,7 +742,11 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dist_unit = kronrad_cen_cold * a_cen_cold
     print('dist unit: ', dist_unit)
 
-    boundary_innermost_criteria = dist_inner_criteria_Nkron * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_a = dist_inner_criteria_Nkron * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_b = dist_inner_criteria_Nkron * kronrad_cen_cold * b_cen_cold
+    
+    boundary_innermost_criteria_inner_a = 1 * kronrad_cen_cold * a_cen_cold
+    boundary_innermost_criteria_inner_b = 1 * kronrad_cen_cold * b_cen_cold
 
     idx_remove_arr = []
     seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
@@ -750,12 +760,35 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                (obj_cat_hot_remove[i]['y'] -
                                 seg_hot_removecenter.shape[1] // 2)**2)
 
-        # if np.logical_and(np.logical_and(dist_cen_hot < boundary_innermost_criteria,
+        index_point_in_ellipse = is_point_in_ellipse(
+            center=(x_cen_cold, y_cen_cold),
+            width=1 * boundary_innermost_criteria_a,
+            height=1 * boundary_innermost_criteria_b,
+            angle=theta_center_cold,
+            test_point=(obj_cat_hot_remove[i]['x'],
+                        obj_cat_hot_remove[i]['y']))
+
+        index_point_in_ellipse_ring = is_point_in_ellipse_ring(
+            center=(x_cen_cold, y_cen_cold),
+            outer_width=2 * boundary_innermost_criteria_a,
+            outer_height=2 * boundary_innermost_criteria_b,
+            inner_width=2 * boundary_innermost_criteria_inner_a,
+            inner_height=2 * boundary_innermost_criteria_inner_b,
+            angle=theta_center_cold,
+            test_point=(obj_cat_hot_remove[i]['x'],
+                        obj_cat_hot_remove[i]['y']))
+
+        # if np.logical_and(np.logical_and(dist_cen_hot < boundary_innermost_criteria_a,
         #                   (obj['b'] / obj['a'] <= q_criteria)), obj['flux'] < 0.5 * flux_cen_cold):
+        # if np.logical_and(
+        #         index_point_in_ellipse,
+        #         np.logical_and((obj['b'] / obj['a']) <= q_criteria,
+        #                        obj['flux'] <= (0.8 * flux_cen_cold))):
         if np.logical_and(
-                dist_cen_hot < boundary_innermost_criteria,
+                index_point_in_ellipse_ring,
                 np.logical_and((obj['b'] / obj['a']) <= q_criteria,
-                               obj['flux'] <= (0.8 * flux_cen_cold))):
+                               obj['flux'] <= (0.8 * flux_cen_cold))) or np.logical_and(index_point_in_ellipse, obj['flux'] <= (0.8 * flux_cen_cold)):
+            
             seg_hot_removecenter[seg_hot_removecenter == (
                 obj_cat_hot_remove[i]['index'] + 1)] = 0
             idx_remove_arr.append(i)
@@ -824,10 +857,24 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         # add the cicurlar patch for the central object
         circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            boundary_innermost_criteria,
+                            boundary_innermost_criteria_a,
                             color='r',
                             fill=False)
         ax.add_artist(circle)
+        ax.add_artist(
+            Ellipse(xy=(x_cen_cold, y_cen_cold),
+                    width=2 * boundary_innermost_criteria_a,
+                    height=2 * boundary_innermost_criteria_b,
+                    angle=theta_center_cold,
+                    facecolor='none',
+                    edgecolor='blue'))
+        ax.add_artist(
+            Ellipse(xy=(x_cen_cold, y_cen_cold),
+                    width=2 * boundary_innermost_criteria_inner_a,
+                    height=2 * boundary_innermost_criteria_inner_b,
+                    angle=theta_center_cold,
+                    facecolor='none',
+                    edgecolor='green'))
 
     if show_removeinnermost_img_dilated:
 
@@ -911,7 +958,8 @@ def make_simple_coldhot_mask(image_data,
                              convolve=False,
                              convolve_kernel='tophat',
                              conv_radius=3,
-                             dist_inner_criteria=3,
+                             q_criteria = 0.9,
+                             dist_inner_criteria_Nkron=2,
                              dilate_radius_criteria=6,
                              dist_unit_flag='r50',
                              dilation_inner=1.5,
@@ -919,10 +967,10 @@ def make_simple_coldhot_mask(image_data,
                              seeing_fwhm=0.65,
                              inner_mask='segmap',
                              inner_ellipse_Na=3,
-                             show_removeinnermost_segmap=False,
                              show_removeinnermost_img_direct=False,
                              show_removeinnermost_img_dilated=False,
                              show_removeinnermost_img_parts=False,
+                             show_final_mask=False,
                              save_mask_dilation=None,
                              save_mask_ori=None):
     # combine the segmap of cold and hot mode. The basic spirit is to remove the central object from the hot mode segmap, and then add the cold mode segmap to the hot mode segmap. But we need to make sure that the segmap of hot mode does not divide the main object in the center several pieces in the cold mode. If it does, we need to remove the small pieces in the hot mode segmap. The selection criteria is the axis ratio of the small pieces should be larger than for example 0.25.
@@ -977,101 +1025,30 @@ def make_simple_coldhot_mask(image_data,
     obj_cat_cold = Table(obj_cat_cold)
     obj_cat_hot = Table(obj_cat_hot)
 
-    cen_obj_idx_cold = np.argmin(
-        (obj_cat_cold['x'] - seg_cold.shape[1] // 2)**2 +
-        (obj_cat_cold['y'] - seg_cold.shape[0] // 2)**2)
-
-    cen_obj_idx_hot = np.argmin((obj_cat_hot['x'] -
-                                 seg_cold.shape[1] // 2)**2 +
-                                (obj_cat_hot['y'] - seg_cold.shape[0] // 2)**2)
-
-    info_cen_obj_cold = obj_cat_cold[cen_obj_idx_cold]
-    a_cen_cold = info_cen_obj_cold['a']
-    #print('a_cen_cold', a_cen_cold)
-    b_cen_cold = info_cen_obj_cold['b']
-    #print('b_cen_cold', b_cen_cold)
-    kronrad_cen_cold = info_cen_obj_cold['kron_rad']
-    #print('kron rad cold: ', kronrad_cen_cold)
-    r50_cen_cold = info_cen_obj_cold['R50']
-    r90_cen_cold = info_cen_obj_cold['R90']
-    flux_cen_cold = info_cen_obj_cold['flux']
-
-    info_cen_obj_hot = obj_cat_hot[cen_obj_idx_hot]
-    x_cen_obj_hot = info_cen_obj_hot['x']
-    y_cen_obj_hot = info_cen_obj_hot['y']
-
-    if dist_unit_flag == 'a':
-        dist_unit = a_cen_cold
-    elif dist_unit_flag == 'r50':
-        dist_unit = r50_cen_cold
-    elif dist_unit_flag == 'r90':
-        dist_unit = r90_cen_cold
-    elif dist_unit_flag == 'kronrad':
-        dist_unit = kronrad_cen_cold
-    print('dist unit: ', dist_unit)
-
-    boundary_innermost_criteria = dist_inner_criteria * dist_unit
-
-    idx_remove_arr = []
-    seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
-    obj_cat_hot_remove = copy.deepcopy(obj_cat_hot)
-    obj_cat_hot_remove.remove_row(cen_obj_idx_hot)
-
-    if show_removeinnermost_segmap == True:
-        fig, ax = plt.subplots(figsize=(6, 6))
-        plt.imshow(seg_hot_removecenter, origin='lower')
-        plt.title('seg_hot_removecenter')
-
-    # after removing the center object of the segmap_cold, we should get the segmap_cold_removecenter and obj_cat_cold_removecenter
-    seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
-
-    obj_cat_cold_removecenter = copy.deepcopy(obj_cat_cold)
-    obj_cat_cold_removecenter.remove_row(cen_obj_idx_cold)
-    #print('obj_cat_cold_removecenter: ', obj_cat_cold_removecenter)
-    if show_removeinnermost_segmap == True:
-        fig, ax = plt.subplots(figsize=(6, 6))
-        plt.imshow(seg_cold_removecenter,
-                   origin='lower',
-                   label='segmap_cold_removecenter')
-        plt.title('seg_cold_removecenter')
-
-    #add the cold mode segmap to the hot mode segmap
-    seg_combine_direct = np.logical_or(seg_hot_removecenter,
-                                       seg_remove_cen_obj(seg_cold))
-
-    # dilate the segmap_cold_removecenter and segmap_hot_remove with different dilation parameters and then add them together
-    seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation, maskEllipse_cold_inner = divide_dilate_segmap(
-        seg_cold_removecenter,
-        obj_cat_cold_removecenter,
-        divide_radius=dist_unit * dilate_radius_criteria,
-        dilation_inner=dilation_inner,
-        dilation_outer=dilation_outer,
-        seeing_fwhm=seeing_fwhm,
-        inner_ellipse_Na=inner_ellipse_Na)
-
-    seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
-        seg_hot_removecenter,
-        obj_cat_hot_remove,
-        divide_radius=dilate_radius_criteria * dist_unit,
-        dilation_inner=dilation_inner,
-        dilation_outer=dilation_outer,
-        seeing_fwhm=seeing_fwhm,
-        inner_ellipse_Na=inner_ellipse_Na)
-
-    # then we should combine the cold+hot dilation masks.
-    seg_combine_inner_dilation = np.logical_or(
-        seg_cold_removecenter_inner_dilation, seg_hot_remove_inner_dilation)
-    seg_combine_outer_dilation = np.logical_or(
-        seg_cold_removecenter_outer_dilation, seg_hot_remove_outer_dilation)
-    maskEllipse_combine_inner = np.logical_or(maskEllipse_cold_inner,
-                                              maskEllipse_hot_inner)
-
-    if inner_mask == 'segmap':
-        seg_combine_dilation = np.logical_or(seg_combine_inner_dilation,
-                                             seg_combine_outer_dilation)
-    elif inner_mask == 'ellipse':
-        seg_combine_dilation = np.logical_or(seg_combine_outer_dilation,
-                                             maskEllipse_combine_inner)
+    seg_combine_direct, seg_combine_dilation = segmap_coldhot_removeinnermost(obj_cat_cold,
+                                   seg_cold,
+                                   obj_cat_hot,
+                                   seg_hot,
+                                   dist_inner_criteria_Nkron=dist_inner_criteria_Nkron,
+                                   q_criteria=q_criteria,
+                                   dilate_radius_criteria=dilate_radius_criteria,
+                                   dist_unit_flag=dist_unit_flag,
+                                   dilation_inner=dilation_inner,
+                                   dilation_outer=dilation_outer,
+                                   seeing_fwhm=seeing_fwhm,
+                                   image_data=image_data,
+                                   inner_mask=inner_mask,
+                                   inner_ellipse_Na=inner_ellipse_Na,
+                                   show_removeinnermost_img_direct=show_removeinnermost_img_direct,
+                                   show_removeinnermost_img_dilated=show_removeinnermost_img_dilated,
+                                   show_removeinnermost_img_parts=show_removeinnermost_img_parts)
+    
+    if show_final_mask == True:
+        #print('Show image')
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        norm = simple_norm(image_data, 'sqrt', percent=99.)
+        ax.imshow(image_data, origin='lower', cmap='Greys_r', norm=norm)
+        ax.imshow(seg_combine_dilation, origin='lower', cmap='Blues', alpha=0.5)
 
     # save the mask
     if save_mask_ori is not None:
@@ -1083,81 +1060,6 @@ def make_simple_coldhot_mask(image_data,
         save_to_fits(img=seg_combine_dilation.astype('float32'),
                      fits_file=save_mask_dilation,
                      wcs=wcs_img)
-
-    # show the image data with segmap. And add the circular mask for the central object.
-    if show_removeinnermost_img_direct:
-        fig, ax = plt.subplots(figsize=(6, 6))
-
-        norm = simple_norm(image_data, 'sqrt', percent=99.9)
-        ax.imshow(image_data, norm=norm, origin='lower', cmap='Greys')
-        ax.imshow(seg_combine_direct, origin='lower', alpha=0.5, cmap='Blues')
-        ax.set_title('Direct removeinnermost combined Segmap')
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            boundary_innermost_criteria,
-                            color='r',
-                            fill=False)
-        ax.add_artist(circle)
-
-    if show_removeinnermost_img_dilated:
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-
-        norm = simple_norm(image_data, 'sqrt', percent=99.9)
-        ax.imshow(image_data, norm=norm, origin='lower', cmap='Greys')
-        ax.imshow(seg_combine_dilation,
-                  origin='lower',
-                  alpha=0.5,
-                  cmap='Blues')
-        ax.set_title('Removeinnermost combined Segmap')
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle(
-            (seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-            dilate_radius_criteria * r50_cen_cold,
-            color='green',
-            fill=False,
-            label=f'dilation radius: {dilate_radius_criteria} $Re$',
-            lw=2)
-        ax.add_artist(circle)
-
-        plt.legend()
-
-    if show_removeinnermost_img_parts:
-        fig, ax = plt.subplots(figsize=(6, 6))
-
-        norm = simple_norm(image_data, 'sqrt', percent=99.9)
-        ax.imshow(image_data, norm=norm, origin='lower', cmap='Greys')
-        ax.imshow(seg_combine_inner_dilation,
-                  origin='lower',
-                  alpha=0.5,
-                  cmap='Blues')
-        ax.set_title('Inner dilation Segmap')
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            dilate_radius_criteria * r50_cen_cold,
-                            color='green',
-                            fill=False)
-        ax.add_artist(circle)
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-
-        norm = simple_norm(image_data, 'sqrt', percent=99.9)
-        ax.imshow(image_data, norm=norm, origin='lower', cmap='Greys')
-        ax.imshow(seg_combine_outer_dilation,
-                  origin='lower',
-                  alpha=0.5,
-                  cmap='Blues')
-        ax.set_title('Outer dilation Segmap')
-
-        # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-                            dilate_radius_criteria * r50_cen_cold,
-                            color='green',
-                            fill=False)
-        ax.add_artist(circle)
 
     return seg_combine_direct, seg_combine_dilation
 
