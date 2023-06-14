@@ -588,7 +588,7 @@ def remove_overlap(obj_cat,
     #overlap_flag = np.logical_or(overlap_flag, overlap_flag_currentself)
     overlap_flag = np.logical_and(
         overlap_flag,
-        obj_cat['flux'] < 0.8 * obj_cat_ori[cen_indx_ori]['flux'])
+        obj_cat['npix'] < 0.8 * obj_cat_ori[cen_indx_ori]['npix'])
     overlap_flag = np.logical_and(overlap_flag,
                                   obj_cat['b'] / obj_cat['a'] <= 0.8)
     overlap_flag |= (dist < dist_minimum / pixel_scale)
@@ -728,6 +728,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     r50_cen_cold = info_cen_obj_cold['R50']
     r90_cen_cold = info_cen_obj_cold['R90']
     flux_cen_cold = info_cen_obj_cold['flux']
+    npix_cen_cold = info_cen_obj_cold['npix']
 
     info_cen_obj_hot = obj_cat_hot[cen_obj_idx_hot]
     x_cen_obj_hot = info_cen_obj_hot['x']
@@ -793,13 +794,13 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         #         np.logical_and(index_point_in_ellipse_innerellipse, obj['flux'] <=
         #                        (0.8 * flux_cen_cold))):
         # 判断object是否需要剔除
-        if index_point_in_ellipse_innerellipse and obj['flux'] <= (
-                0.8 * flux_cen_cold):
+        if index_point_in_ellipse_innerellipse and obj['npix'] <= (
+                0.8 * npix_cen_cold):
             # 如果在inner ellipse内部且流量小于阈值，将object的索引添加到idx_remove_arr数组中
             idx_remove_arr.append(i)
         elif index_point_in_ellipse_outerring and (
-                obj['b'] / obj['a']) <= q_criteria and obj['flux'] <= (
-                    0.8 * flux_cen_cold):
+                obj['b'] / obj['a']) <= q_criteria and obj['npix'] <= (
+                    0.8 * npix_cen_cold):
             # 如果在outer ellipse内部且b/a小于阈值且流量小于阈值，将object的索引添加到idx_remove_arr数组中
             idx_remove_arr.append(i)
     print('remove index arr:', idx_remove_arr)
@@ -904,10 +905,10 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         # add the cicurlar patch for the central object
         circle = plt.Circle(
             (seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
-            dilate_radius_criteria * r50_cen_cold,
+            dilate_radius_criteria * dist_unit,
             color='green',
             fill=False,
-            label=f'dilation radius: {dilate_radius_criteria} $Re$',
+            label=f'dilation radius: {dilate_radius_criteria} {dist_unit_flag}',
             lw=2)
         ax.add_artist(circle)
 
