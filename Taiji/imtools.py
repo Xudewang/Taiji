@@ -2523,7 +2523,8 @@ def extract_obj(img,
 
     # Measure R30, R50, R80
     temp = sep.flux_radius(input_data, objects['x'], objects['y'],
-                           6. * objects['a'], [0.3, 0.5, 0.8, 0.9])[0]
+                           6. * objects['a'], [0.2, 0.3, 0.5, 0.8, 0.9])[0]
+    objects.add_column(Column(data=temp[:, 0], name='R20'))
     objects.add_column(Column(data=temp[:, 0], name='R30'))
     objects.add_column(Column(data=temp[:, 1], name='R50'))
     objects.add_column(Column(data=temp[:, 2], name='R80'))
