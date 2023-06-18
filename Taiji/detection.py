@@ -608,7 +608,9 @@ def divide_dilate_segmap(segmap_ori,
                          dilation_outer=3,
                          inner_ellipse_Na=3,
                          seeing_fwhm=0.65,
-                         pixel_scale=0.168):
+                         pixel_scale=0.168,
+                         x_cen = None,
+                         y_cen = None):
     """We should divide the segmap into two parts, one is for the central object, the other is for the rest objects. For different parts we use different dilation radius.
 
     Args:
@@ -626,8 +628,12 @@ def divide_dilate_segmap(segmap_ori,
     segmap_inner = copy.deepcopy(segmap_ori)
     segmap_outer = copy.deepcopy(segmap_ori)
     obj_cagt = copy.deepcopy(obj_cat)
-    dist = np.sqrt((obj_cat['x'] - segmap_ori.shape[0] // 2)**2 +
+    
+    if x_cen is None:
+        dist = np.sqrt((obj_cat['x'] - segmap_ori.shape[0] // 2)**2 +
                    (obj_cat['y'] - segmap_ori.shape[1] // 2)**2)
+    else:
+        dist = np.sqrt((obj_cat['x'] - x_cen)**2 + (obj_cat['y'] - y_cen)**2)
 
     print('divide radius: ', divide_radius)
 
@@ -751,7 +757,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     boundary_innermost_criteria_inner_b = remove_segmap_inner_Nkron * kronrad_cen_cold * b_cen_cold
 
     idx_remove_arr = []
-    seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
+    #seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
+    seg_hot_removecenter = seg_remove_obj(seg_hot, x_cen_obj_hot, y_cen_obj_hot)
     obj_cat_hot_remove = copy.deepcopy(obj_cat_hot)
     obj_cat_hot_remove.remove_row(cen_obj_idx_hot)
 
@@ -811,7 +818,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     #print('obj_cat_hot_remove: ', obj_cat_hot_remove)
 
     # after removing the center object of the segmap_cold, we should get the segmap_cold_removecenter and obj_cat_cold_removecenter
-    seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
+    #seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
+    seg_cold_removecenter = seg_remove_obj(seg_cold, x_cen_cold, y_cen_cold)
 
     obj_cat_cold_removecenter = copy.deepcopy(obj_cat_cold)
     obj_cat_cold_removecenter.remove_row(cen_obj_idx_cold)
@@ -824,7 +832,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
     #add the cold mode segmap to the hot mode segmap
     seg_combine_direct = np.logical_or(seg_hot_removecenter,
-                                       seg_remove_cen_obj(seg_cold))
+                                       seg_cold_removecenter)
 
     # dilate the segmap_cold_removecenter and segmap_hot_remove with different dilation parameters and then add them together
     seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation, maskEllipse_cold_inner = divide_dilate_segmap(
@@ -834,7 +842,9 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
-        inner_ellipse_Na=inner_ellipse_Na)
+        inner_ellipse_Na=inner_ellipse_Na,
+        x_cen = x_cen_cold,
+        y_cen = y_cen_cold)
 
     seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
         seg_hot_removecenter,
@@ -843,7 +853,9 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dilation_inner=dilation_inner,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
-        inner_ellipse_Na=inner_ellipse_Na)
+        inner_ellipse_Na=inner_ellipse_Na,
+        x_cen = x_cen_obj_hot,
+        y_cen = y_cen_obj_hot)
 
     # then we should combine the cold+hot dilation masks.
     seg_combine_inner_dilation = np.logical_or(
@@ -870,7 +882,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         ax.set_title('Direct removeinnermost combined Segmap')
 
         # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
+        circle = plt.Circle((x_cen_cold, y_cen_cold),
                             boundary_innermost_criteria_a,
                             color='r',
                             fill=False)
@@ -904,7 +916,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         # add the cicurlar patch for the central object
         circle = plt.Circle(
-            (seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
+            (x_cen_cold, y_cen_cold),
             dilate_radius_criteria * dist_unit,
             color='green',
             fill=False,
@@ -926,7 +938,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         ax.set_title('Inner dilation Segmap')
 
         # add the cicurlar patch for the central object
-        circle = plt.Circle((seg_hot.shape[0] // 2, seg_hot.shape[1] // 2),
+        circle = plt.Circle((x_cen_cold, y_cen_cold),
                             dilate_radius_criteria * dist_unit,
                             color='green',
                             fill=False)
@@ -997,7 +1009,6 @@ def make_simple_coldhot_mask(image_data,
 
     from astropy.visualization import simple_norm
 
-    from Taiji.detection import divide_dilate_segmap
     from Taiji.imtools import easy_saveData_Tofits, extract_obj, save_to_fits
 
     result_cold = extract_obj(image_data,
