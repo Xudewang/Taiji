@@ -395,16 +395,14 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
                                    q_obs[index_obs],
                                    statistic='count',
                                    bins=q_bins)[0]
-    sigma_model_arr = [
+    sigma_model_arr = np.array([
         np.sqrt(N_model_qbins[i] + 1) / np.sum(N_model_qbins)
         for i in range(len(N_model_qbins))
-    ]
-    sigma_obs_arr_unweighted = [
+    ])
+    sigma_obs_arr_unweighted = np.array([
         np.sqrt(N_obs_qbins[i] + 1) / np.sum(N_obs_qbins)
         for i in range(len(N_obs_qbins))
-    ]
-
-    sigma_model_arr = np.array(sigma_model_arr)
+    ])
 
     # calculate the chi-square.
     chi_square_bin_arr = (weight_total_arr / np.sum(weight_total_arr) -
