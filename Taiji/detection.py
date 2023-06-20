@@ -683,6 +683,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
                                    seg_cold,
                                    obj_cat_hot,
                                    seg_hot,
+                                   remove_center_type = 'img',
                                    remove_segmap_outer_Nkron=3,
                                    remove_segmap_inner_Nkron=1.,
                                    q_criteria=0.8,
@@ -757,8 +758,11 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     boundary_innermost_criteria_inner_b = remove_segmap_inner_Nkron * kronrad_cen_cold * b_cen_cold
 
     idx_remove_arr = []
-    #seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
-    seg_hot_removecenter = seg_remove_obj(seg_hot, x_cen_obj_hot, y_cen_obj_hot)
+    
+    if remove_center_type == 'img':
+        seg_hot_removecenter = seg_remove_cen_obj(seg_hot)
+    elif remove_center_type == 'obj':
+        seg_hot_removecenter = seg_remove_obj(seg_hot, x_cen_obj_hot, y_cen_obj_hot)
     obj_cat_hot_remove = copy.deepcopy(obj_cat_hot)
     obj_cat_hot_remove.remove_row(cen_obj_idx_hot)
 
@@ -818,21 +822,23 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
     #print('obj_cat_hot_remove: ', obj_cat_hot_remove)
 
     # after removing the center object of the segmap_cold, we should get the segmap_cold_removecenter and obj_cat_cold_removecenter
-    #seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
-    seg_cold_removecenter = seg_remove_obj(seg_cold, x_cen_cold, y_cen_cold)
+    if remove_center_type == 'img':
+        seg_cold_removecenter = seg_remove_cen_obj(seg_cold)
+    elif remove_center_type == 'obj':
+        seg_cold_removecenter = seg_remove_obj(seg_cold, x_cen_cold, y_cen_cold)
 
     obj_cat_cold_removecenter = copy.deepcopy(obj_cat_cold)
     obj_cat_cold_removecenter.remove_row(cen_obj_idx_cold)
-    #print('obj_cat_cold_removecenter: ', obj_cat_cold_removecenter)
-    # fig, ax = plt.subplots(figsize=(6, 6))
-    # plt.imshow(seg_cold_removecenter,
-    #            origin='lower',
-    #            label='segmap_cold_removecenter')
-    # plt.title('seg_cold_removecenter')
 
     #add the cold mode segmap to the hot mode segmap
     seg_combine_direct = np.logical_or(seg_hot_removecenter,
                                        seg_cold_removecenter)
+    
+    # redefine the center used to remove minor objects, this is because some main galaxy is not exactly at the image center.
+    if remove_center_type == 'img':
+        remove_center_xc, remove_center_yc = image_data.shape[1]//2, image_data.shape[0]//2
+    elif remove_center_type == 'obj':
+        remove_center_xc, remove_center_yc = x_cen_cold, y_cen_cold
 
     # dilate the segmap_cold_removecenter and segmap_hot_remove with different dilation parameters and then add them together
     seg_cold_removecenter_inner_dilation, seg_cold_removecenter_outer_dilation, maskEllipse_cold_inner = divide_dilate_segmap(
@@ -843,8 +849,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
         inner_ellipse_Na=inner_ellipse_Na,
-        x_cen = x_cen_cold,
-        y_cen = y_cen_cold)
+        x_cen = remove_center_xc,
+        y_cen = remove_center_yc)
 
     seg_hot_remove_inner_dilation, seg_hot_remove_outer_dilation, maskEllipse_hot_inner = divide_dilate_segmap(
         seg_hot_removecenter,
@@ -854,8 +860,8 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         dilation_outer=dilation_outer,
         seeing_fwhm=seeing_fwhm,
         inner_ellipse_Na=inner_ellipse_Na,
-        x_cen = x_cen_obj_hot,
-        y_cen = y_cen_obj_hot)
+        x_cen = remove_center_xc,
+        y_cen = remove_center_yc)
 
     # then we should combine the cold+hot dilation masks.
     seg_combine_inner_dilation = np.logical_or(
@@ -882,7 +888,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         ax.set_title('Direct removeinnermost combined Segmap')
 
         # add the cicurlar patch for the central object
-        circle = plt.Circle((x_cen_cold, y_cen_cold),
+        circle = plt.Circle((remove_center_xc, remove_center_yc),
                             boundary_innermost_criteria_a,
                             color='r',
                             fill=False)
@@ -916,7 +922,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
 
         # add the cicurlar patch for the central object
         circle = plt.Circle(
-            (x_cen_cold, y_cen_cold),
+            (remove_center_xc, remove_center_yc),
             dilate_radius_criteria * dist_unit,
             color='green',
             fill=False,
@@ -938,7 +944,7 @@ def segmap_coldhot_removeinnermost(obj_cat_cold,
         ax.set_title('Inner dilation Segmap')
 
         # add the cicurlar patch for the central object
-        circle = plt.Circle((x_cen_cold, y_cen_cold),
+        circle = plt.Circle((remove_center_xc, remove_center_yc),
                             dilate_radius_criteria * dist_unit,
                             color='green',
                             fill=False)
@@ -987,6 +993,7 @@ def make_simple_coldhot_mask(image_data,
                              conv_radius1=3,
                              conv_radius2=3,
                              q_criteria=0.9,
+                             remove_center_type = 'img',
                              remove_segmap_outer_Nkron=2,
                              remove_segmap_inner_Nkron=1,
                              dilate_radius_criteria=6,
@@ -1058,6 +1065,7 @@ def make_simple_coldhot_mask(image_data,
         seg_cold,
         obj_cat_hot,
         seg_hot,
+        remove_center_type=remove_center_type,
         remove_segmap_outer_Nkron=remove_segmap_outer_Nkron,
         remove_segmap_inner_Nkron=remove_segmap_inner_Nkron,
         q_criteria=q_criteria,
