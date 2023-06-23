@@ -35,8 +35,6 @@ from scipy import ndimage
 from scipy.interpolate import interp1d
 from scipy.special import gamma, gammaincinv
 
-from .autoprof_utils import Background_Mode
-
 system_use = sys.platform
 
 Cmap = 'cividis'
@@ -2479,14 +2477,14 @@ def extract_obj(img,
         if convolve_kernel == 'gaussian':
             from astropy.convolution import Gaussian2DKernel, convolve
             input_data = convolve(input_data.astype(float),
-                                Gaussian2DKernel(conv_radius))
+                                  Gaussian2DKernel(conv_radius))
             bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
             input_data -= bkg.globalback
-            
+
         elif convolve_kernel == 'tophat':
             from astropy.convolution import Tophat2DKernel, convolve
             input_data = convolve(input_data.astype(float),
-                                Tophat2DKernel(conv_radius))
+                                  Tophat2DKernel(conv_radius))
             bkg = sep.Background(input_data, bw=b, bh=b, fw=f, fh=f)
             input_data -= bkg.globalback
 
@@ -2671,6 +2669,7 @@ def increase_mask_regions(mask, method='uniform', size=7, mask_threshold=0.01):
 
     return mask_new.astype('uint8')
 
+
 def seg_to_mask(seg, sigma=5.0, msk_max=1000.0, msk_thr=0.01):
     """Convert the segmentation array into an array. 
        Basically it is a Gaussian smoothing of the segmentation array. From kungpao.
@@ -2689,6 +2688,7 @@ def seg_to_mask(seg, sigma=5.0, msk_max=1000.0, msk_thr=0.01):
     msk_bool = msk_conv > (msk_thr * msk_max)
 
     return msk_bool.astype('uint8')
+
 
 def _image_gaia_stars_tigress(image,
                               wcs,
@@ -3064,6 +3064,7 @@ def create_elliptical_mask(image_data,
     cen_mask = ellipseGal_mask_img == 1
     return cen_mask
 
+
 def remove_consecutive(sma_ap, index_original, con_number=2):
     """Remove continuous unnecesary apertures in SBPs.
 
@@ -3259,7 +3260,8 @@ def align(pa):
 
 
 def get_initial_geometry(img, Nsigma=2):
-
+    from Taiji.autoprof_utils import Background_Mode
+    
     background = Background_Mode(img)
     bkgsig = background['background noise']
 
