@@ -171,7 +171,20 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0):
 
         # get the ellipticity at different radius, need to interpolate the sma versus ell
         ell_interp = interp1d(sma_ap, ell_ap, kind='linear')
+        pa_interp = interp1d(sma_ap, pa_ap, kind='linear')
         ell_R25 = ell_interp(R25)
+        pa_R25 = pa_interp(R25)
+        
+        # derive the average ellipticity and PA within k1 and k2 times r90.
+        k1 = 0.675
+        k2 = 1.467
+        innerRad = k1 * r90
+        outRad = k2 * r90
+        
+        ell_avg = np.mean(ell_ap[np.logical_and(sma_ap<outRad, sma_ap>innerRad)])
+        ell_avg_err = np.sqrt(np.sum(ell_err_ap[np.logical_and(sma_ap<outRad, sma_ap>innerRad)]**2))
+        pa_avg = np.mean(pa_ap[np.logical_and(sma_ap<outRad, sma_ap>innerRad)])
+        pa_avg_err = np.sqrt(np.sum(pa_err_ap[np.logical_and(sma_ap<outRad, sma_ap>innerRad)]**2))
 
     else:
         print('No such file!')
@@ -186,6 +199,11 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0):
         'r95': r95,
         'R25': R25,
         'ell_R25': ell_R25,
+        'pa_R25': pa_R25,
+        'ell_avg': ell_avg,
+        'ell_avg_err': ell_avg_err,
+        'pa_avg': pa_avg,
+        'pa_avg_err': pa_avg_err,
         'ell': ell,
         'err_ell': err_ell,
         'pa': pa,
