@@ -667,7 +667,7 @@ def divide_dilate_segmap(segmap_ori,
             maskEllipse_b_arr.append(obj['b'])
             maskEllipse_theta_arr.append(obj['theta'])
 
-    mask_ellipse_inner = np.zeros(segmap_ori.shape, dtype=np.bool)
+    mask_ellipse_inner = np.zeros(segmap_ori.shape, dtype=bool)
     sep.mask_ellipse(mask_ellipse_inner,
                      maskEllipse_x_arr,
                      maskEllipse_y_arr,

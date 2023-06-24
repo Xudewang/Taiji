@@ -2450,6 +2450,7 @@ def extract_obj(img,
     '''
     import sep
 
+    sep.set_extract_pixstack(1e6)
     # Subtract a mean sky value to achieve better object detection
     b = b  # Box size
     f = f  # Filter width
