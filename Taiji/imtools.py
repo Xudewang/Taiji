@@ -3383,6 +3383,64 @@ def get_initial_geometry(img, Nsigma=2):
 
     return results
 
+def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_max=1, ylim_res_low=None, ylim_res_high=None, xlabel=None, ylabel=None):
+    from matplotlib.gridspec import GridSpec
+    
+    residual = data2-data1
+    mean_bias = np.mean(residual)
+    #mean_bias = np.sum(mean_bias**2/sn**2 + np.log(sn**2))*(-0.5)
+    std_bias = np.std(residual)
+    
+    # show the scatter plot for original points and residual points in two subplots
+    
+    one_arr = np.linspace(xlim_min, xlim_max, 99)
+
+    fig = plt.figure(figsize=(6, 8), dpi=80)
+    fig.subplots_adjust(left=1,
+                        right=2,
+                        top=1,
+                        bottom=0,
+                        wspace=0.01,
+                        hspace=0.05)
+    gs = GridSpec(ncols=1, nrows=4, figure=fig)
+
+    ax1 = fig.add_subplot(gs[:3, :])
+
+    #plt.errorbar(ell_visual_arr, ellSample_arr, xerr=sn, color='black', fmt='o', lw=1)
+    plt.scatter(data1, data2, color='k', s=1)
+    plt.plot(one_arr, one_arr, color='r', lw=2, label=r'$1:1$', ls='-')
+    #plt.plot(one_arr, one_arr+mean_bias, color='green', lw=2, ls='--')
+    ax1_text = ax1.text(0.05, 0.95, f'Mean bias $={mean_bias:.3f}$; Std $={std_bias:.3f}$', transform=ax1.transAxes)
+    ax1.set_xlim(xlim_min,xlim_max)
+    ax1.set_ylim(ylim_min,ylim_max)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=18)
+    ax1.set_xticklabels([])
+    ax1.legend(loc='lower right', fontsize=18)
+
+    ax2 = fig.add_subplot(gs[3:, :])
+    plt.scatter(data1, residual, color='k', s=1)
+    plt.axhline(0, color='r', lw=2)
+    plt.ylabel(r'Res.', fontsize=18)
+    
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=18)
+    ax2.set_xlim(xlim_min,xlim_max)
+    
+    if ylim_res_low is not None:
+        ax2.set_ylim(ylim_res_low, ylim_res_high)
+        
+def make_rgb_HSC_lupton(data_R, data_G, data_B):
+    from astropy.visualization import make_lupton_rgb
+    rgb_q=15
+    rgb_stretch=0.5
+    rgb_min=0
+    
+    img_rgb = make_lupton_rgb(data_R, data_G, data_B,
+                                 Q=rgb_q, stretch=rgb_stretch, minimum=rgb_min)
+    
+    return img_rgb
+
 
 if __name__ == '__main__':
     test_pa = -50
