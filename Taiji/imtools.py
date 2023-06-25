@@ -3429,18 +3429,6 @@ def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_m
     
     if ylim_res_low is not None:
         ax2.set_ylim(ylim_res_low, ylim_res_high)
-        
-def make_rgb_HSC_lupton(data_R, data_G, data_B):
-    from astropy.visualization import make_lupton_rgb
-    rgb_q=15
-    rgb_stretch=0.5
-    rgb_min=0
-    
-    img_rgb = make_lupton_rgb(data_R, data_G, data_B,
-                                 Q=rgb_q, stretch=rgb_stretch, minimum=rgb_min)
-    
-    return img_rgb
-
 
 if __name__ == '__main__':
     test_pa = -50
