@@ -3445,6 +3445,33 @@ def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label=None):
     ellipse.set(clip_box=ax.bbox,
                 ls='-', label=label)
     ax.add_patch(ellipse)
+    
+def make_lupton_rgb_auto(image_r, image_g, image_b, filename=None):
+    
+    from astropy.visualization import (SqrtStretch, ZScaleInterval,
+                                       make_lupton_rgb)
+
+    stretch = SqrtStretch() + ZScaleInterval(krej=500, contrast=0.05)
+
+    r = stretch(image_r)
+    g = stretch(image_g)
+    b = stretch(image_b)
+
+    ### SAVING
+    # https://docs.astropy.org/en/stable/api/astropy.visualization.make_lupton_rgb.html
+    # astropy.visualization.make_lupton_rgb(image_r, image_g, image_b, minimum=0, stretch=5, Q=8, fil/ename=None)[source]
+    # Return a Red/Green/Blue color image from up to 3 images using an asinh stretch.
+    # The input images can be int or float, and in any range or bit-depth.
+
+    # Get the value of lower and upper 0.5% of all pixels
+    lo_val, up_val = np.percentile(np.hstack((r.flatten(), g.flatten(), b.flatten())), (0.1, 99.9))  
+    
+    stretch_val = up_val - lo_val
+    print(stretch_val)
+
+    rgb_default = make_lupton_rgb(r, g, b, minimum=lo_val, stretch=stretch_val, Q=0, filename=filename)
+    
+    return rgb_default
 
 if __name__ == '__main__':
     test_pa = -50
