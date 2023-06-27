@@ -3430,5 +3430,21 @@ def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_m
     if ylim_res_low is not None:
         ax2.set_ylim(ylim_res_low, ylim_res_high)
 
+def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label):
+    from matplotlib.patches import Ellipse
+    
+    ellipse = Ellipse(xy=(x,
+                          y),
+                      height=major_radius * 2.0,
+                      width=major_radius * 2.0 * q,
+                      angle=pa)
+    ellipse.set_facecolor('none')
+    ellipse.set_edgecolor(color)
+    ellipse.set_alpha(1)
+    ellipse.set_linewidth(2)
+    ellipse.set(clip_box=ax.bbox,
+                ls='-', label=label)
+    ax.add_patch(ellipse)
+
 if __name__ == '__main__':
     test_pa = -50
