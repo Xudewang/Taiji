@@ -3476,5 +3476,40 @@ def make_lupton_rgb_auto(image_r, image_g, image_b, filename=None):
     
     return rgb_default
 
+def adjust_image_size(image, target_shape, sky_rms):
+    from scipy.ndimage import gaussian_filter
+    original_shape = image.shape
+    padded_shape = target_shape
+
+    if padded_shape[0] > original_shape[0] or padded_shape[1] > original_shape[1]:
+        # Compute padding sizes
+        height_pad = max(0, padded_shape[0] - original_shape[0])
+        width_pad = max(0, padded_shape[1] - original_shape[1])
+        
+        # Create padded image
+        padded_image = np.zeros(padded_shape)
+        
+        # Compute start indices for embedding original image
+        start_row = height_pad // 2
+        start_col = width_pad // 2
+        
+        # Embed original image in padded image
+        padded_image[start_row : start_row + original_shape[0], start_col : start_col + original_shape[1]] = image
+        
+        # Add noise background to the padded image
+        noise = np.random.normal(loc=0, scale=sky_rms, size=padded_shape)
+        padded_image += noise
+        
+        return padded_image
+    else:
+        # Compute crop sizes
+        height_crop = (original_shape[0] - padded_shape[0]) // 2
+        width_crop = (original_shape[1] - padded_shape[1]) // 2
+        
+        # Crop image to target shape
+        cropped_image = image[height_crop : height_crop + padded_shape[0], width_crop : width_crop + padded_shape[1]]
+        
+        return cropped_image
+
 if __name__ == '__main__':
     test_pa = -50
