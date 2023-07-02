@@ -7,6 +7,7 @@ from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import sep
 from astropy import units as u
 from astropy import wcs
@@ -37,10 +38,10 @@ def suppress_stdout():
 
 
 def func_brokenexp(r, I0, gamma, betta, alpha, Rb):
-    S = (1 + np.exp(-alpha * Rb))**(1 / alpha * (1 / gamma - 1 / betta))
+    S = (1 + np.exp(-alpha * Rb)) ** (1 / alpha * (1 / gamma - 1 / betta))
     return (S * I0 * np.exp(-r / gamma) *
-            (1 + np.exp(alpha * (r - Rb)))**(1 / alpha *
-                                             (1 / gamma - 1 / betta)))
+            (1 + np.exp(alpha * (r - Rb))) ** (1 / alpha *
+                                               (1 / gamma - 1 / betta)))
 
 
 def brokenexpfit_emcee(x,
@@ -75,22 +76,22 @@ def brokenexpfit_emcee(x,
     """This is to perform exponential fit using EMCEE package.
     """
 
-    #from multiprocessing import Pool
+    # from multiprocessing import Pool
     import corner
     import emcee
     from pathos.multiprocessing import ProcessingPool as Pool
 
     def func_brokenexp(r, I0, gamma, betta, alpha, Rb):
-        S = (1 + np.exp(-alpha * Rb))**(1 / alpha * (1 / gamma - 1 / betta))
+        S = (1 + np.exp(-alpha * Rb)) ** (1 / alpha * (1 / gamma - 1 / betta))
         return (S * I0 * np.exp(-r / gamma) *
-                (1 + np.exp(alpha * (r - Rb)))**(1 / alpha *
-                                                 (1 / gamma - 1 / betta)))
+                (1 + np.exp(alpha * (r - Rb))) ** (1 / alpha *
+                                                   (1 / gamma - 1 / betta)))
 
     def log_likelihood(theta, x, y, yerr):
         I0, gamma, betta, alpha, Rb, log_f = theta
         model = func_brokenexp(x, I0, gamma, betta, alpha, Rb)
-        sigma2 = yerr**2 + model**2 * np.exp(2 * log_f)
-        return -0.5 * np.sum((y - model)**2 / sigma2 + np.log(sigma2))
+        sigma2 = yerr ** 2 + model ** 2 * np.exp(2 * log_f)
+        return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(sigma2))
 
     def log_prior(theta):
         I0, gamma, betta, alpha, Rb, log_f = theta
@@ -279,17 +280,17 @@ def gaussian_tension_approxiation(chi2, dof=20, x0=20):
 
     from scipy.optimize import fsolve
 
-    right_chi2 = chi2**(dof / 2 - 1) * np.exp(-chi2 / 2) / 2**(
-        dof / 2) / np.math.factorial(dof / 2 - 1) / (1 / 2 -
-                                                     (dof / 2 - 1) / chi2)
+    right_chi2 = chi2 ** (dof / 2 - 1) * np.exp(-chi2 / 2) / 2 ** (
+            dof / 2) / np.math.factorial(dof / 2 - 1) / (1 / 2 -
+                                                         (dof / 2 - 1) / chi2)
     right_chi2 = (dof / 2 - 1) * np.log(chi2) - chi2 / 2 - np.log(
-        2**(dof / 2)) - np.log(
-            np.math.factorial(dof / 2 - 1)) - np.log(1 / 2 -
-                                                     (dof / 2 - 1) / chi2)
+        2 ** (dof / 2)) - np.log(
+        np.math.factorial(dof / 2 - 1)) - np.log(1 / 2 -
+                                                 (dof / 2 - 1) / chi2)
     print('right_chi2 = ', right_chi2)
 
     def func(x):
-        return np.log(np.sqrt(2 / np.pi)) + (-x**2 - np.log(x)) - (right_chi2)
+        return np.log(np.sqrt(2 / np.pi)) + (-x ** 2 - np.log(x)) - (right_chi2)
 
     if x0 is None:
         x0 = 20
@@ -308,12 +309,12 @@ def gaussian_tension(chisqval, dof=20, x0=5):
     print(f'The p-value for {chisqval} is: ', p)
 
     def f(x):
-        return 1 - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-t**2 / 2),
+        return 1 - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-t ** 2 / 2),
                                                  -x, x)[0] - p
 
     x = fsolve(f, x0)
 
-    #print('The tension:', x[0])
+    # print('The tension:', x[0])
 
     return x[0]
 
@@ -343,7 +344,7 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
     weight_obs = N_sim / N_obs
     print('Simulated number', np.sum(N_sim))
     print('Observed number', np.sum(N_obs))
-    #print('weight_obs', weight_obs)
+    # print('weight_obs', weight_obs)
 
     # main step to derive the weight_total_i, this is the weight for each bin. That is to say, I directly multiply the weight_total_i to the histogram of the observations.
     N_total = 0
@@ -406,8 +407,8 @@ def weighted_tng50(q_obs, logM_obs, q_tng50, logM_tng50, index_obs,
 
     # calculate the chi-square.
     chi_square_bin_arr = (weight_total_arr / np.sum(weight_total_arr) -
-                          N_model_qbins / np.sum(N_model_qbins))**2 / (
-                              sigma_model_arr**2 + sigma_obs_arr**2)
+                          N_model_qbins / np.sum(N_model_qbins)) ** 2 / (
+                                 sigma_model_arr ** 2 + sigma_obs_arr ** 2)
     chi_square = np.nansum(chi_square_bin_arr)
 
     # Combine all derived information into a dictory
@@ -503,3 +504,74 @@ def is_point_in_ellipse_ring(center, outer_width, outer_height, inner_width,
         np.logical_not(inner_ellipse.contains_point(test_point)))
 
     return is_inside
+
+
+def match_sample_tolerance_mass(sample_tng, hsc_pool, N_control, mass_limit, name_mass_tng='Mstar',
+                                name_mass_hsc='logmstar_addbias', name_specz_hsc='spec_redshift', z_tng=0.05, with_replacement=False):
+    """
+    Generate a matched control sample for a given tng galaxy, based on the stellar mass and redshift. The algorithm is from Connor Bottrell.
+    """
+
+    sample_tng_retain = copy.deepcopy(sample_tng)
+    sample_mass_tng = sample_tng[name_mass_tng].to_numpy()
+    # hsc_pool: full hsc sample from which to match
+    hsc_pool = copy.deepcopy(hsc_pool)
+
+    # N: number of hsc controls you want per tng galaxy
+    N_control = N_control
+    # mass_limit: absolute match tolerance limit
+    mass_limit = mass_limit
+
+    # matches_all: a list to store all the matches
+    matches_all = pd.DataFrame()
+    n_grows_arr = []
+
+    # Loop over each tng galaxy
+    for idx in range(len(sample_mass_tng)):
+
+        # z: tng galaxy redshift
+        z = z_tng  # or 0?
+
+        # M: tng galaxy stellar mass
+        mass = sample_mass_tng[idx]
+
+        # matches_sample: a list to store the best matches for the current tng galaxy
+        matches_sample = pd.DataFrame()
+
+        # match_pool: hsc_pool with |z_hsc - z| < 0.05
+        match_pool = hsc_pool[np.abs(hsc_pool[name_specz_hsc] - z) < 0.05]
+
+        # n_grows: growth factor for matching tolerance
+        n_grows = 1
+
+        # mass_tolerance: initial matching tolerance
+        mass_tolerance = 0.05
+
+        # Loop until the matching tolerance reaches the absolute limit
+        while n_grows * mass_tolerance < mass_limit:
+
+            # pool2: match_pool where |M_hsc - M| < n_grows * mass_tolerance
+            pool2 = match_pool[np.abs(match_pool[name_mass_hsc] - mass) < n_grows * mass_tolerance]
+
+            # Find the N best matches to M from pool2
+            if len(pool2) >= N_control:
+                matches_sample = pool2.iloc[np.argsort(np.abs(pool2[name_mass_hsc] - mass))[:N_control]]
+            else:
+                n_grows += 1
+                continue
+            # Exit the loop if we have found N or more matches
+            break
+        
+        # Remove matched galaxies from the hsc_pool
+        if with_replacement is False:
+            hsc_pool = hsc_pool[~hsc_pool.index.isin(matches_sample.index)]
+        
+        # Remove the tng galaxy from the sample if there are no matches
+        if len(matches_sample) == 0:
+            sample_tng_retain.drop(sample_tng.index[idx], inplace=True)
+
+        # Add the matches to matches_all
+        matches_all = pd.concat([matches_all, matches_sample])
+        n_grows_arr.append(n_grows)
+
+    return sample_tng_retain, matches_all, n_grows_arr

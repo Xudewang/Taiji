@@ -3448,10 +3448,13 @@ def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label=None):
     
 def make_lupton_rgb_auto(image_r, image_g, image_b, filename=None):
     
-    from astropy.visualization import (SqrtStretch, ZScaleInterval,
-                                       make_lupton_rgb)
+    from astropy.visualization import (AsinhStretch, LinearStretch, LogStretch,
+                                       PercentileInterval, PowerStretch,
+                                       SinhStretch, SqrtStretch,
+                                       ZScaleInterval, make_lupton_rgb)
 
     stretch = SqrtStretch() + ZScaleInterval(krej=500, contrast=0.05)
+    stretch = SqrtStretch() + PercentileInterval(99.9)
 
     r = stretch(image_r)
     g = stretch(image_g)
