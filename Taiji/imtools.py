@@ -3454,7 +3454,7 @@ def make_lupton_rgb_auto(image_r, image_g, image_b, filename=None):
                                        ZScaleInterval, make_lupton_rgb)
 
     stretch = SqrtStretch() + ZScaleInterval(krej=500, contrast=0.05)
-    stretch = SqrtStretch() + PercentileInterval(99.9)
+    #stretch = SqrtStretch() + PercentileInterval(99.9)
 
     r = stretch(image_r)
     g = stretch(image_g)
