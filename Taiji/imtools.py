@@ -3383,7 +3383,9 @@ def get_initial_geometry(img, Nsigma=2):
 
     return results
 
-def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_max=1, ylim_res_low=None, ylim_res_high=None, xlabel=None, ylabel=None):
+def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_max=1, ylim_res_low=None, ylim_res_high=None, xlabel=None, ylabel=None, kdeplot=False, cmap='mako', bins=50):
+    import seaborn as sns
+    sns.set_style(None)
     from matplotlib.gridspec import GridSpec
     
     residual = data2-data1
@@ -3408,6 +3410,8 @@ def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_m
 
     #plt.errorbar(ell_visual_arr, ellSample_arr, xerr=sn, color='black', fmt='o', lw=1)
     plt.scatter(data1, data2, color='k', s=1)
+    if kdeplot:
+        sns.histplot(x=data1, y=data2, bins=bins, pthresh=.1, cmap=cmap)
     plt.plot(one_arr, one_arr, color='r', lw=2, label=r'$1:1$', ls='-')
     #plt.plot(one_arr, one_arr+mean_bias, color='green', lw=2, ls='--')
     ax1_text = ax1.text(0.05, 0.95, f'Mean bias $={mean_bias:.3f}$; Std $={std_bias:.3f}$', transform=ax1.transAxes)
@@ -3420,6 +3424,8 @@ def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_m
 
     ax2 = fig.add_subplot(gs[3:, :])
     plt.scatter(data1, residual, color='k', s=1)
+    if kdeplot:
+        sns.histplot(x=data1, y=residual, bins=bins, pthresh=.1, cmap=cmap)
     plt.axhline(0, color='r', lw=2)
     plt.ylabel(r'Res.', fontsize=18)
     
