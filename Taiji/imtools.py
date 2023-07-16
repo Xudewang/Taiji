@@ -277,6 +277,44 @@ def Exponential_intens(r, I0, rs):
 
     return intensity
 
+# Total magnitudes, assuming that inputs are in units of
+# counts/pixel and dimensions are in pixels
+
+def TotalMagExp(I_0, h, ell, zeroPoint=0, magOut=True):
+    """Calculate the total magnitude (or flux if magOut=False) for an
+    2D exponential with [I_0, h] = params, where I_0 is in counts/pixel
+    and h is in pixels.  Optionally, the ellipticity can be specified.
+    """
+
+    totalFlux = 2 * np.pi * I_0 * (h*h) * (1.0 - ell)
+    if magOut:
+        return (zeroPoint - 2.5 * np.log10(totalFlux))
+    else:
+        return totalFlux
+
+def TotalMagSersic(n, I_e, r_e, ell, zeroPoint=0, magOut=True):
+    """Calculate the total magnitude (or flux if magOut=False) for a
+    2D Sersic function with [n, I_e, r_e] = params, where I_0 is in counts/pixel
+    and h is in pixels.  Optionally, the ellipticity can be specified.
+    """
+    from scipy.special import gamma as Gamma
+    
+    bn = sersic_bn(n)
+    bn2n = bn**(2*n)
+    totalFlux = 2 * np.pi * n * np.exp(bn) * I_e * (r_e*r_e) * (1.0 - ell)
+    totalFlux = totalFlux * Gamma(2*n) / bn2n
+    if magOut:
+        return (zeroPoint - 2.5 * np.log10(totalFlux))
+    else:
+        return totalFlux
+    
+def getBtoT(n, I_e, r_e, ell_bulge, I_0, h, ell_disk):
+    flux_sersic_bulge = TotalMagSersic(n, I_e, r_e, ell_bulge, magOut=False)
+    flux_exp_disk = TotalMagExp(I_0, h, ell_disk, magOut=False)
+    
+    BtoT = flux_sersic_bulge/(flux_exp_disk+flux_sersic_bulge)
+    
+    return BtoT
 
 def nantozero(data):
     temp = []
