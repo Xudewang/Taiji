@@ -233,20 +233,6 @@ def muRe_to_intenRe(muRe, zpt, pixel_size=0.259):
     intenRe = 10**((zpt - muRe) / 2.5) * pixel_size**2
     return intenRe
 
-
-def Ser_kappa(n):
-    '''
-    # TODO: acutually this bn can be descirbed using a more accurate format from astropy modelling.
-    '''
-    if n > 0.36:
-        bn = 2 * n - 1 / 3 + 4 / (405 * n) + 46 / (25515 * n**2)
-
-    elif n < 0.36:
-        bn = 0.01945 - 0.8902 * n + 10.95 * n**2 - 19.67 * n**3 + 13.43 * n**4
-
-    return bn
-
-
 def sersic_bn(n):
     """ Accurate Sersic bn.
 
