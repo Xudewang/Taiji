@@ -3460,7 +3460,7 @@ def display_11_residual(data1, data2, xlim_min=0, xlim_max=1, ylim_min=0, ylim_m
     if ylim_res_low is not None:
         ax2.set_ylim(ylim_res_low, ylim_res_high)
 
-def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label=None):
+def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label=None, ls='-', lw=2):
     from matplotlib.patches import Ellipse
     
     ellipse = Ellipse(xy=(x,
@@ -3471,9 +3471,9 @@ def add_ellipse(ax, x, y, major_radius, q, pa, color='red', label=None):
     ellipse.set_facecolor('none')
     ellipse.set_edgecolor(color)
     ellipse.set_alpha(1)
-    ellipse.set_linewidth(2)
+    ellipse.set_linewidth(lw)
     ellipse.set(clip_box=ax.bbox,
-                ls='-', label=label)
+                ls=ls, label=label)
     ax.add_patch(ellipse)
     
 def make_lupton_rgb_auto(image_r, image_g, image_b, filename=None):
