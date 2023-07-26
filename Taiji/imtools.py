@@ -3540,6 +3540,27 @@ def adjust_image_size(image, target_shape, sky_rms):
         cropped_image = image[height_crop : height_crop + padded_shape[0], width_crop : width_crop + padded_shape[1]]
         
         return cropped_image
+    
+def richardson_lucy_np(image, psf, num_iters):
+    "Copy from https://github.com/MTLeist255/JWST_Deconvolution/blob/main/Convenience_Functions.py#L85"
+    '''11 April 2022: Non-circulant Richardson-Lucy deconvolution algorithm- developed by Brian
+    Northan'''
+    import scipy.fft as fft
+    from astropy.convolution import convolve_fft
+    from numpy.fft import fftn, fftshift, ifftn
+
+    otf = fftn(fftshift(psf))
+    otf_ = np.conjugate(otf)
+    estimate = image
+    #estimate = np.ones(image.shape)/image.sum()
+
+    for i in range(num_iters):
+        # print(i)
+        reblurred = ifftn(fftn(estimate) * otf)
+        ratio = image / (reblurred + 1e-30)
+        estimate = estimate * (ifftn(fftn(ratio) * otf_)).astype(float)
+
+    return estimate
 
 if __name__ == '__main__':
     test_pa = -50
