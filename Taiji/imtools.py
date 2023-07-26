@@ -3545,6 +3545,7 @@ def richardson_lucy_np(image, psf, num_iters):
     "Copy from https://github.com/MTLeist255/JWST_Deconvolution/blob/main/Convenience_Functions.py#L85"
     '''11 April 2022: Non-circulant Richardson-Lucy deconvolution algorithm- developed by Brian
     Northan'''
+    "This is different from the sckit-image version"
     import scipy.fft as fft
     from astropy.convolution import convolve_fft
     from numpy.fft import fftn, fftshift, ifftn
