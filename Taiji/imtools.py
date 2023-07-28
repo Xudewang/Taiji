@@ -3550,6 +3550,10 @@ def _richardson_lucy_np(image, psf, num_iters):
     import scipy.fft as fft
     from astropy.convolution import convolve_fft
     from numpy.fft import fftn, fftshift, ifftn
+    
+    if image.shape != psf.shape:
+        print('padding psf')
+        psf,_=pad(psf, image.shape, 'constant')
 
     otf = fftn(fftshift(psf))
     otf_ = np.conjugate(otf)
