@@ -3235,6 +3235,7 @@ def extract_fix_isophotes(image=None,
         sample = EllipseSample(image, sma, geometry=geometry)
 
         sample.update(geometry.fix)
+        #sample.update(fixed_parameters=None)
         isophote = Isophote(sample, 0, True, stop_code=4)
         isophote_list.append(isophote)
         sma = isophote.sample.geometry.update_sma(step)
@@ -3248,6 +3249,7 @@ def extract_fix_isophotes(image=None,
         sample = EllipseSample(image, sma, geometry=geometry)
 
         sample.update(geometry.fix)
+        #sample.update(fixed_parameters=None)
         isophote = Isophote(sample, 0, True, stop_code=4)
         isophote_list.append(isophote)
         sma = isophote.sample.geometry.update_sma(step)

@@ -1,10 +1,20 @@
 import copy
+import logging
 
 import numpy as np
 from astropy.table import Table
+from photutils.isophote import Ellipse as Photutils_Ellipse
+from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
+                                IsophoteList)
 from scipy.optimize import minimize
 from scipy.stats import iqr, norm
 
+from Taiji.autoprof_SharedFunctions import (
+    AddLogo, Fmode_fluxdens_to_fluxsum_errorprop, LSBImage,
+    PA_shift_convention, SBprof_to_COG_errorprop, _average, _inv_x_to_eps,
+    _inv_x_to_pa, _iso_between, _iso_extract, _scatter, _x_to_eps, _x_to_pa,
+    autocolours, flux_to_mag, flux_to_sb, fluxdens_to_fluxsum_errorprop,
+    mag_to_flux)
 from Taiji.constant import pixel_scale_HSCSSP
 from Taiji.imtools import (GrowthCurve, bright_to_mag, get_Rmag, get_Rpercent,
                            remove_consecutive, symmetry_propagate_err_mu)
@@ -488,3 +498,593 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0):
     df_save = pd.DataFrame([data_save], index=[0])
 
     return df_save
+
+def _Generate_Profile(IMG, results, Radius, parameters, options):
+
+    # Create image array with background and mask applied
+    try:
+        if np.any(results["mask"]):
+            mask = results["mask"]
+        else:
+            mask = None
+    except:
+        mask = None
+    dat = IMG - results["background"]
+    zeropoint = options["ap_zeropoint"] if "ap_zeropoint" in options else 22.5
+    fluxunits = options["ap_fluxunits"] if "ap_fluxunits" in options else "mag"
+
+    for p in range(len(parameters)):
+        # Indicate no Fourier modes if supplied parameters does not include it
+        if not "m" in parameters[p]:
+            parameters[p]["m"] = None
+        if not "C" in parameters[p]:
+            parameters[p]["C"] = None
+        # If no ellipticity error supplied, assume zero
+        if not "ellip err" in parameters[p]:
+            parameters[p]["ellip err"] = 0.0
+        # If no position angle error supplied, assume zero
+        if not "pa err" in parameters[p]:
+            parameters[p]["pa err"] = 0.0
+
+    sb = []
+    sbE = []
+    pixels = []
+    maskedpixels = []
+    cogdirect = []
+    sbfix = []
+    sbfixE = []
+    measFmodes = []
+
+    count_neg = 0
+    medflux = np.inf
+    end_prof = len(Radius)
+    compare_interp = []
+    for i in range(len(Radius)):
+        if "ap_isoband_fixed" in options and options["ap_isoband_fixed"]:
+            isobandwidth = (
+                options["ap_isoband_width"] if "ap_isoband_width" in options else 0.5
+            )
+        else:
+            isobandwidth = Radius[i] * (
+                options["ap_isoband_width"] if "ap_isoband_width" in options else 0.025
+            )
+        isisophoteband = False
+        if (
+            medflux
+            > (
+                results["background noise"]
+                * (options["ap_isoband_start"] if "ap_isoband_start" in options else 2)
+            )
+            or isobandwidth < 0.5
+        ):
+            isovals = _iso_extract(
+                dat,
+                Radius[i],
+                parameters[i],
+                results["center"],
+                mask=mask,
+                more=True,
+                rad_interp=(
+                    options["ap_iso_interpolate_start"]
+                    if "ap_iso_interpolate_start" in options
+                    else 5
+                )
+                * results["psf fwhm"],
+                interp_method=(
+                    options["ap_iso_interpolate_method"]
+                    if "ap_iso_interpolate_method" in options
+                    else "lanczos"
+                ),
+                interp_window=(
+                    int(options["ap_iso_interpolate_window"])
+                    if "ap_iso_interpolate_window" in options
+                    else 5
+                ),
+                sigmaclip=options["ap_isoclip"] if "ap_isoclip" in options else False,
+                sclip_iterations=options["ap_isoclip_iterations"]
+                if "ap_isoclip_iterations" in options
+                else 10,
+                sclip_nsigma=options["ap_isoclip_nsigma"]
+                if "ap_isoclip_nsigma" in options
+                else 5,
+            )
+        else:
+            isisophoteband = True
+            isovals = _iso_between(
+                dat,
+                Radius[i] - isobandwidth,
+                Radius[i] + isobandwidth,
+                parameters[i],
+                results["center"],
+                mask=mask,
+                more=True,
+                sigmaclip=options["ap_isoclip"] if "ap_isoclip" in options else False,
+                sclip_iterations=options["ap_isoclip_iterations"]
+                if "ap_isoclip_iterations" in options
+                else 10,
+                sclip_nsigma=options["ap_isoclip_nsigma"]
+                if "ap_isoclip_nsigma" in options
+                else 5,
+            )
+        isotot = np.sum(
+            _iso_between(dat, 0, Radius[i], parameters[i], results["center"], mask=mask)
+        )
+        medflux = _average(
+            isovals[0],
+            options["ap_isoaverage_method"]
+            if "ap_isoaverage_method" in options
+            else "median",
+        )
+        scatflux = _scatter(
+            isovals[0],
+            options["ap_isoaverage_method"]
+            if "ap_isoaverage_method" in options
+            else "median",
+        )
+        if (
+            "ap_iso_measurecoefs" in options
+            and not options["ap_iso_measurecoefs"] is None
+        ):
+            if (
+                mask is None
+                and (not "ap_isoclip" in options or not options["ap_isoclip"])
+                and not isisophoteband
+            ):
+                coefs = fft(isovals[0])
+            else:
+                N = max(15, int(0.9 * 2 * np.pi * Radius[i]))
+                theta = np.linspace(0, 2 * np.pi * (1.0 - 1.0 / N), N)
+                coefs = fft(np.interp(theta, isovals[1], isovals[0], period=2 * np.pi))
+            measFmodes.append(
+                {
+                    "a": [np.imag(coefs[0]) / len(coefs)]
+                    + list(
+                        np.imag(coefs[np.array(options["ap_iso_measurecoefs"])])
+                        / (np.abs(coefs[0]))
+                    ),
+                    "b": [np.real(coefs[0]) / len(coefs)]
+                    + list(
+                        np.real(coefs[np.array(options["ap_iso_measurecoefs"])])
+                        / (np.abs(coefs[0]))
+                    ),
+                }
+            )
+
+        pixels.append(len(isovals[0]))
+        maskedpixels.append(isovals[2])
+        if fluxunits == "intensity":
+            sb.append(medflux / options["ap_pixscale"] ** 2)
+            sbE.append(scatflux / np.sqrt(len(isovals[0])))
+            cogdirect.append(isotot)
+        else:
+            sb.append(
+                flux_to_sb(medflux, options["ap_pixscale"], zeropoint)
+                if medflux > 0
+                else 99.999
+            )
+            sbE.append(
+                (2.5 * scatflux / (np.sqrt(len(isovals[0])) * medflux * np.log(10)))
+                if medflux > 0
+                else 99.999
+            )
+            cogdirect.append(flux_to_mag(isotot, zeropoint) if isotot > 0 else 99.999)
+        if medflux <= 0:
+            count_neg += 1
+        if (
+            "ap_truncate_evaluation" in options
+            and options["ap_truncate_evaluation"]
+            and count_neg >= 2
+        ):
+            end_prof = i + 1
+            break
+
+    # Compute Curve of Growth from SB profile
+    if fluxunits == "intensity":
+        cog, cogE = Fmode_fluxdens_to_fluxsum_errorprop(
+            Radius[:end_prof] * options["ap_pixscale"],
+            np.array(sb),
+            np.array(sbE),
+            parameters[:end_prof],
+            N=100,
+            symmetric_error=True,
+        )
+
+        if cog is None:
+            cog = -99.999 * np.ones(len(Radius))
+            cogE = -99.999 * np.ones(len(Radius))
+        else:
+            cog[np.logical_not(np.isfinite(cog))] = -99.999
+            cogE[cog < 0] = -99.999
+    else:
+        cog, cogE = SBprof_to_COG_errorprop(
+            Radius[:end_prof] * options["ap_pixscale"],
+            np.array(sb),
+            np.array(sbE),
+            parameters[:end_prof],
+            N=100,
+            symmetric_error=True,
+        )
+        if cog is None:
+            cog = 99.999 * np.ones(len(Radius))
+            cogE = 99.999 * np.ones(len(Radius))
+        else:
+            cog[np.logical_not(np.isfinite(cog))] = 99.999
+            cogE[cog > 99] = 99.999
+
+    # For each radius evaluation, write the profile parameters
+    if fluxunits == "intensity":
+        params = [
+            "R",
+            "I",
+            "I_e",
+            "totflux",
+            "totflux_e",
+            "ellip",
+            "ellip_e",
+            "pa",
+            "pa_e",
+            "pixels",
+            "maskedpixels",
+            "totflux_direct",
+        ]
+
+        SBprof_units = {
+            "R": "arcsec",
+            "I": "flux*arcsec^-2",
+            "I_e": "flux*arcsec^-2",
+            "totflux": "flux",
+            "totflux_e": "flux",
+            "ellip": "unitless",
+            "ellip_e": "unitless",
+            "pa": "deg",
+            "pa_e": "deg",
+            "pixels": "count",
+            "maskedpixels": "count",
+            "totflux_direct": "flux",
+        }
+    else:
+        params = [
+            "R",
+            "SB",
+            "SB_e",
+            "totmag",
+            "totmag_e",
+            "ellip",
+            "ellip_e",
+            "pa",
+            "pa_e",
+            "pixels",
+            "maskedpixels",
+            "totmag_direct",
+        ]
+
+        SBprof_units = {
+            "R": "arcsec",
+            "SB": "mag*arcsec^-2",
+            "SB_e": "mag*arcsec^-2",
+            "totmag": "mag",
+            "totmag_e": "mag",
+            "ellip": "unitless",
+            "ellip_e": "unitless",
+            "pa": "deg",
+            "pa_e": "deg",
+            "pixels": "count",
+            "maskedpixels": "count",
+            "totmag_direct": "mag",
+        }
+
+    SBprof_data = dict((h, None) for h in params)
+    SBprof_data["R"] = list(Radius[:end_prof] * options["ap_pixscale"])
+    SBprof_data["I" if fluxunits == "intensity" else "SB"] = list(sb)
+    SBprof_data["I_e" if fluxunits == "intensity" else "SB_e"] = list(sbE)
+    SBprof_data["totflux" if fluxunits == "intensity" else "totmag"] = list(cog)
+    SBprof_data["totflux_e" if fluxunits == "intensity" else "totmag_e"] = list(cogE)
+    SBprof_data["ellip"] = list(parameters[p]["ellip"] for p in range(end_prof))
+    SBprof_data["ellip_e"] = list(parameters[p]["ellip err"] for p in range(end_prof))
+    SBprof_data["pa"] = list(parameters[p]["pa"] * 180 / np.pi for p in range(end_prof))
+    SBprof_data["pa_e"] = list(
+        parameters[p]["pa err"] * 180 / np.pi for p in range(end_prof)
+    )
+    SBprof_data["pixels"] = list(pixels)
+    SBprof_data["maskedpixels"] = list(maskedpixels)
+    SBprof_data[
+        "totflux_direct" if fluxunits == "intensity" else "totmag_direct"
+    ] = list(cogdirect)
+
+    if "ap_iso_measurecoefs" in options and not options["ap_iso_measurecoefs"] is None:
+        whichcoefs = [0] + list(options["ap_iso_measurecoefs"])
+        for i in list(range(len(whichcoefs))):
+            aa, bb = "a%i" % whichcoefs[i], "b%i" % whichcoefs[i]
+            params += [aa, bb]
+            SBprof_units.update(
+                {
+                    aa: "flux" if whichcoefs[i] == 0 else "a%i/F0" % whichcoefs[i],
+                    bb: "flux" if whichcoefs[i] == 0 else "b%i/F0" % whichcoefs[i],
+                }
+            )
+            SBprof_data[aa] = list(F["a"][i] for F in measFmodes)
+            SBprof_data[bb] = list(F["b"][i] for F in measFmodes)
+
+    if any(not p["m"] is None for p in parameters):
+        for m in range(len(parameters[0]["m"])):
+            AA, PP = "A%i" % parameters[0]["m"][m], "Phi%i" % parameters[0]["m"][m]
+            params += [AA, PP]
+            SBprof_units.update({AA: "unitless", PP: "deg"})
+            SBprof_data[AA] = list(p["Am"][m] for p in parameters[:end_prof])
+            SBprof_data[PP] = list(p["Phim"][m] for p in parameters[:end_prof])
+    if any(not p["C"] is None for p in parameters):
+        params += ["C"]
+        SBprof_units["C"] = "unitless"
+        SBprof_data["C"] = list(p["C"] for p in parameters[:end_prof])
+
+    return {"prof header": params, "prof units": SBprof_units, "prof data": SBprof_data}
+
+def Isophote_Extract_Photutils(IMG, results, options):
+    """Wrapper of photutils method for extracting SB profiles.
+
+    This simply gives users access to the photutils isophote
+    extraction methods. The one exception is that SB values are taken
+    as the median instead of the mean, as recomended in the photutils
+    documentation. See: `photutils
+    <https://photutils.readthedocs.io/en/stable/isophote.html>`_ for
+    more information.
+
+    Parameters
+    ----------
+    ap_zeropoint : float, default 22.5
+      Photometric zero point. For converting flux to mag units.
+
+    ap_fluxunits : str, default "mag"
+      units for outputted photometry. Can either be "mag" for log
+      units, or "intensity" for linear units.
+    
+    ap_plot_sbprof_ylim : tuple, default None
+      Tuple with axes limits for the y-axis in the SB profile
+      diagnostic plot. Be careful when using intensity units
+      since this will change the ideal axis limits.
+    
+    ap_plot_sbprof_xlim : tuple, default None
+      Tuple with axes limits for the x-axis in the SB profile
+      diagnostic plot.
+    
+    ap_plot_sbprof_set_errscale : float, default None
+      Float value by which to scale errorbars on the SB profile
+      this makes them more visible in cases where the statistical
+      errors are very small.
+    
+    Notes
+    ----------
+    :References:
+    - 'background'
+    - 'background noise'
+    - 'psf fwhm'
+    - 'center'
+    - 'init R' (optional)
+    - 'init ellip' (optional)
+    - 'init pa' (optional)
+    - 'fit R' (optional)
+    - 'fit ellip' (optional)
+    - 'fit pa' (optional)
+    - 'fit photutils isolist' (optional)
+
+    Returns
+    -------
+    IMG : ndarray
+      Unaltered galaxy image
+
+    results : dict
+      .. code-block:: python
+
+        {'prof header': , # List object with strings giving the items in the header of the final SB profile (list)
+         'prof units': , # dict object that links header strings to units (given as strings) for each variable (dict)
+         'prof data': # dict object linking header strings to list objects containing the rows for a given variable (dict)
+
+        }
+
+    """
+
+    zeropoint = options["ap_zeropoint"] if "ap_zeropoint" in options else 22.5
+    fluxunits = options["ap_fluxunits"] if "ap_fluxunits" in options else "mag"
+
+    if fluxunits == "intensity":
+        params = [
+            "R",
+            "I",
+            "I_e",
+            "totflux",
+            "totflux_e",
+            "ellip",
+            "ellip_e",
+            "pa",
+            "pa_e",
+            "a3",
+            "a3_e",
+            "b3",
+            "b3_e",
+            "a4",
+            "a4_e",
+            "b4",
+            "b4_e",
+        ]
+        SBprof_units = {
+            "R": "arcsec",
+            "I": "flux*arcsec^-2",
+            "I_e": "flux*arcsec^-2",
+            "totflux": "flux",
+            "totflux_e": "flux",
+            "ellip": "unitless",
+            "ellip_e": "unitless",
+            "pa": "deg",
+            "pa_e": "deg",
+            "a3": "unitless",
+            "a3_e": "unitless",
+            "b3": "unitless",
+            "b3_e": "unitless",
+            "a4": "unitless",
+            "a4_e": "unitless",
+            "b4": "unitless",
+            "b4_e": "unitless",
+        }
+    else:
+        params = [
+            "R",
+            "SB",
+            "SB_e",
+            "totmag",
+            "totmag_e",
+            "ellip",
+            "ellip_e",
+            "pa",
+            "pa_e",
+            "a3",
+            "a3_e",
+            "b3",
+            "b3_e",
+            "a4",
+            "a4_e",
+            "b4",
+            "b4_e",
+        ]
+        SBprof_units = {
+            "R": "arcsec",
+            "SB": "mag*arcsec^-2",
+            "SB_e": "mag*arcsec^-2",
+            "totmag": "mag",
+            "totmag_e": "mag",
+            "ellip": "unitless",
+            "ellip_e": "unitless",
+            "pa": "deg",
+            "pa_e": "deg",
+            "a3": "unitless",
+            "a3_e": "unitless",
+            "b3": "unitless",
+            "b3_e": "unitless",
+            "a4": "unitless",
+            "a4_e": "unitless",
+            "b4": "unitless",
+            "b4_e": "unitless",
+        }
+    SBprof_data = dict((h, []) for h in params)
+    res = {}
+    dat = IMG - results["background"]
+    if not "fit R" in results and not "fit photutils isolist" in results:
+        logging.info(
+            "%s: photutils fitting and extracting image data" % options["ap_name"]
+        )
+        geo = EllipseGeometry(
+            x0=results["center"]["x"],
+            y0=results["center"]["y"],
+            sma=results["init R"] / 2,
+            eps=results["init ellip"],
+            pa=results["init pa"],
+        )
+        ellipse = Photutils_Ellipse(dat, geometry=geo)
+
+        isolist = ellipse.fit_image(fix_center=True, linear=False)
+        res.update(
+            {
+                "fit photutils isolist": isolist,
+                "auxfile fitlimit": "fit limit semi-major axis: %.2f pix"
+                % isolist.sma[-1],
+            }
+        )
+    elif not "fit photutils isolist" in results:
+        logging.info("%s: photutils extracting image data" % options["ap_name"])
+        list_iso = []
+        for i in range(len(results["fit R"])):
+            if results["fit R"][i] <= 0:
+                continue
+            # Container for ellipse geometry
+            geo = EllipseGeometry(
+                sma=results["fit R"][i],
+                x0=results["center"]["x"],
+                y0=results["center"]["y"],
+                eps=results["fit ellip"][i],
+                pa=results["fit pa"][i],
+            )
+            # Extract the isophote information
+            ES = EllipseSample(dat, sma=results["fit R"][i], geometry=geo)
+            ES.update(fixed_parameters=True)
+            list_iso.append(Isophote(ES, niter=30, valid=True, stop_code=0))
+
+        isolist = IsophoteList(list_iso)
+        res.update(
+            {
+                "fit photutils isolist": isolist,
+                "auxfile fitlimit": "fit limit semi-major axis: %.2f pix"
+                % isolist.sma[-1],
+            }
+        )
+    else:
+        isolist = results["fit photutils isolist"]
+
+    for i in range(len(isolist.sma)):
+        SBprof_data["R"].append(isolist.sma[i] * options["ap_pixscale"])
+        if fluxunits == "intensity":
+            SBprof_data["I"].append(
+                np.median(isolist.sample[i].values[2]) / options["ap_pixscale"] ** 2
+            )
+            SBprof_data["I_e"].append(isolist.int_err[i])
+            SBprof_data["totflux"].append(isolist.tflux_e[i])
+            SBprof_data["totflux_e"].append(isolist.rms[i] / np.sqrt(isolist.npix_e[i]))
+        else:
+            SBprof_data["SB"].append(
+                flux_to_sb(
+                    np.median(isolist.sample[i].values[2]),
+                    options["ap_pixscale"],
+                    zeropoint,
+                )
+            )
+            SBprof_data["SB_e"].append(
+                2.5 * isolist.int_err[i] / (isolist.intens[i] * np.log(10))
+            )
+            SBprof_data["totmag"].append(flux_to_mag(isolist.tflux_e[i], zeropoint))
+            SBprof_data["totmag_e"].append(
+                2.5
+                * isolist.rms[i]
+                / (np.sqrt(isolist.npix_e[i]) * isolist.tflux_e[i] * np.log(10))
+            )
+        SBprof_data["ellip"].append(isolist.eps[i])
+        SBprof_data["ellip_e"].append(isolist.ellip_err[i])
+        SBprof_data["pa"].append(isolist.pa[i] * 180 / np.pi)
+        SBprof_data["pa_e"].append(isolist.pa_err[i] * 180 / np.pi)
+        SBprof_data["a3"].append(isolist.a3[i])
+        SBprof_data["a3_e"].append(isolist.a3_err[i])
+        SBprof_data["b3"].append(isolist.b3[i])
+        SBprof_data["b3_e"].append(isolist.b3_err[i])
+        SBprof_data["a4"].append(isolist.a4[i])
+        SBprof_data["a4_e"].append(isolist.a4_err[i])
+        SBprof_data["b4"].append(isolist.b4[i])
+        SBprof_data["b4_e"].append(isolist.b4_err[i])
+        for k in SBprof_data.keys():
+            if not np.isfinite(SBprof_data[k][-1]):
+                SBprof_data[k][-1] = 99.999
+    res.update(
+        {"prof header": params, "prof units": SBprof_units, "prof data": SBprof_data}
+    )
+
+    if "ap_doplot" in options and options["ap_doplot"]:
+        if fluxunits == "intensity":
+            Plot_I_Profile(
+                dat,
+                np.array(SBprof_data["R"]),
+                np.array(SBprof_data["I"]),
+                np.array(SBprof_data["I_e"]),
+                np.array(SBprof_data["ellip"]),
+                np.array(SBprof_data["pa"]),
+                results,
+                options,
+            )
+        else:
+            Plot_SB_Profile(
+                dat,
+                np.array(SBprof_data["R"]),
+                np.array(SBprof_data["SB"]),
+                np.array(SBprof_data["SB_e"]),
+                np.array(SBprof_data["ellip"]),
+                np.array(SBprof_data["pa"]),
+                results,
+                options,
+            )
+
+    return IMG, res
