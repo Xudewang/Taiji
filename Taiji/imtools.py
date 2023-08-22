@@ -3195,7 +3195,8 @@ def extract_fix_isophotes(image=None,
                           linear_growth=False,
                           minsma=None,
                           maxsma=None,
-                          silent=False):
+                          silent=False,
+                          mask=None):
     """
     Function to extract surface brightness profile with fixed center, ellipticity, and position angle using Photutils from Si-yue Yu.
     """
@@ -3208,6 +3209,11 @@ def extract_fix_isophotes(image=None,
         print(syntax)
         return []
     print(syntax) if silent == False else print("")
+    
+    if mask is not None:
+        image_data = copy.deepcopy(image)
+        image_data_masked = np.ma.masked_where(mask == 1, image_data)
+        image = image_data_masked
 
     minsma = minsma if minsma is not None else 0.5
     maxsma = maxsma if maxsma is not None else max(np.shape(image)) / 2 * 1.3
