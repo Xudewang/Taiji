@@ -869,11 +869,45 @@ def ellipseGetAvgGeometry_CoG(ellipseOut, outRad, minSma=2.0):
 
     return avgQ, avgPA
 
-
 def Remove_file(file):
     if os.path.exists(file):
         os.remove(file)
 
+def calculate_sky_stats(image_data, box_size = 20, nan_frac = 0.5, show_fig = False):
+    from astropy.nddata import block_reduce
+
+    from Taiji.imtools import extract_obj
+    
+    sep_res = extract_obj(image_data, convolve=True, conv_radius = 3, convolve_kernel='gaussian')
+    mask_data_all = sep_res[1]
+
+    mask_all_copy = copy.deepcopy(mask_data_all)
+    
+    if show_fig:
+        _ = display_single(mask_all_copy.astype('float'))
+        
+    mask_all_totalnumber = block_reduce(np.ones_like(image_data), box_size, np.sum)
+    mask_all_binnumber = block_reduce(mask_all_copy, box_size, np.sum)
+    index_percentile = (mask_all_binnumber/mask_all_totalnumber)>=nan_frac
+
+    img_copy = copy.deepcopy(image_data)
+
+    img_copy[mask_data_all==1] = np.nan
+
+    img_bin = block_reduce(img_copy, box_size, np.nanmedian)
+    img_bin[index_percentile] = np.nan
+
+    img_bin_std = block_reduce(img_copy, box_size, np.nanstd)
+    img_bin_std[index_percentile] = np.nan
+
+    sky_rms = np.sqrt(np.nansum(img_bin**2)/len(img_bin[~np.isnan(img_bin)])) # sky level uncertainty, refer to Gao and ho 2017 and this should be the DSKY in S4G
+    sky_value = np.nanmedian(img_bin)
+    sky_std = np.nanstd(img_bin)
+    sky_local_rms = np.nanmedian(img_bin_std) # RMS in S4G
+    
+    sky_stats = {'sky value': sky_value, 'sky std (box bin)': sky_std, 'sky uncertainty': sky_rms, 'sky local rms': sky_local_rms,}
+    
+    return sky_stats
 
 def plot_ellipse(ellipse_data, outer_limit, pixel_size=0.259):
     '''
