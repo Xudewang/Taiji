@@ -905,7 +905,7 @@ def calculate_sky_stats(image_data, box_size = 20, nan_frac = 0.5, show_fig = Fa
     sky_std = np.nanstd(img_bin)
     sky_local_rms = np.nanmedian(img_bin_std) # RMS in S4G
     
-    sky_stats = {'sky value': sky_value, 'sky std (box bin)': sky_std, 'sky uncertainty': sky_rms, 'sky local rms': sky_local_rms,}
+    sky_stats = {'sky value': sky_value, 'sky std (box bin)': sky_std, 'sky uncertainty': sky_rms, 'sky local rms': sky_local_rms}
     
     return sky_stats
 
