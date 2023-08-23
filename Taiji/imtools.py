@@ -348,6 +348,14 @@ def pospa(pa):
 
 
 def all_ninety_pa(pa):
+    """This is for modifying the position angle to be in the range of -90-90 for IRAF.
+
+    Args:
+        pa (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     temp = 0
     if pa > 90:
         temp = pa - 180
@@ -1211,8 +1219,8 @@ def plot_SBP(ax,
 
     ax.set_ylabel(r'$\mu_R\ (\mathrm{mag\ arcsec^{-2}})$')
     ax.set_xlabel(r'$r\,(\mathrm{arcsec})$')
+    ax.legend()
     plt.gca().invert_yaxis()
-
 
 def plot_completeSBP_firststep(sma,
                                x0,
