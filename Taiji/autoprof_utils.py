@@ -403,6 +403,9 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0):
                 if line.startswith('center'):
                     center_x = float(line.split()[2])
                     center_y = float(line.split()[5])
+                if line.startswith('option ap_set_center'):
+                    center_x = np.nan
+                    center_y = np.nan
 
         data_ap = pd.read_csv(ap_prof_name, header=1)
         data_ap = Table.from_pandas(data_ap)
@@ -465,6 +468,7 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0):
         return None
 
     # save all the information to pandas dataframe
+    
     data_save = {
         'center_x': center_x,
         'center_y': center_y,
