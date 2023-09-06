@@ -94,7 +94,7 @@ def get_local_h_2order(r, mu_obs):
 
         elif i - (len(r) - 1) > -1:
 
-            deltayx = (3 * mu_obs[i] - 4 * mu_obs[i - 1] + mu_obs[i - 2])
+            deltayx = (3 * mu_obs[i] - 4 * mu_obs[i - 1] + mu_obs[i - 2]) / (2 * dx)
             #err_temp = np.sqrt(9/4/dx**2*mu_err[i]**2+16/4/dx**2*mu_err[i-1]**2+1/4/dx**2*mu_err[i-2]**2)
         else:
 

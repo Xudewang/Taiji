@@ -3267,7 +3267,7 @@ def extract_fix_isophotes(image=None,
                                eps,
                                pa,
                                astep=step,
-                               linear_growth=False,
+                               linear_growth=linear_growth,
                                fix_center=True,
                                fix_pa=True,
                                fix_eps=True)
