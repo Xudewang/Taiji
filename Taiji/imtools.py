@@ -3226,27 +3226,16 @@ def Running_median(X, Y):
 
     return np.array(new_x), np.array(new_y), np.array(running_std)
 
-
-def extract_fix_isophotes(image=None,
-                          xcen=None,
-                          ycen=None,
-                          initsma=None,
-                          eps=None,
-                          pa=None,
-                          step=None,
-                          linear_growth=False,
-                          minsma=None,
-                          maxsma=None,
-                          silent=False,
-                          mask=None):
+def extract_fix_isophotes(image=None, xcen=None, ycen=None, initsma=None, eps=None, pa=None, step=None, 
+                          linear_growth=False, minsma=None, maxsma=None, silent=False, integrmode='bilinear', sclip=3.0, nclip=3, mask=None):
     """
-    Function to extract surface brightness profile with fixed center, ellipticity, and position angle using Photutils from Si-yue Yu.
+    Function to extract surface brightness profile with fixed center, ellipticity, and position angle.
     """
-    syntax = "syntax: results = extract_fix_isophotes(image=, xcen=, ycen=, initsma=, eps=, pa=, step=, linear_growth=False/True, minsma=None, maxsma=None, silent=False/True; minsma maxsma are optional)"
-
+    
     from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
                                     IsophoteList)
-
+    
+    syntax = "syntax: results = extract_fix_isophotes(image=, xcen=, ycen=, initsma=, eps=, pa=, step=, linear_growth=False/True, minsma=None, maxsma=None, silent=False/True, integrmode='bilinear', sclip=3.0, nclip=3; minsma maxsma are optional)"
     if (None in [xcen, ycen, initsma, eps, pa, step]) or (image is None):
         print(syntax)
         return []
@@ -3256,28 +3245,19 @@ def extract_fix_isophotes(image=None,
         image_data = copy.deepcopy(image)
         image_data_masked = np.ma.masked_where(mask == 1, image_data)
         image = image_data_masked
-
+    
     minsma = minsma if minsma is not None else 0.5
-    maxsma = maxsma if maxsma is not None else max(np.shape(image)) / 2 * 1.3
+    maxsma = maxsma if maxsma is not None else max(np.shape(image))/2*1.3
     isophote_list = []
 
-    geometry = EllipseGeometry(xcen,
-                               ycen,
-                               initsma,
-                               eps,
-                               pa,
-                               astep=step,
-                               linear_growth=linear_growth,
-                               fix_center=True,
-                               fix_pa=True,
-                               fix_eps=True)
-
+    geometry = EllipseGeometry(xcen, ycen, initsma, eps, pa, astep=step, linear_growth=linear_growth, 
+                               fix_center=True, fix_pa=True, fix_eps=True)
+    
     sma = initsma
     while True:
-        sample = EllipseSample(image, sma, geometry=geometry)
+        sample = EllipseSample(image, sma, geometry=geometry, integrmode=integrmode, sclip=sclip, nclip=nclip)
 
         sample.update(geometry.fix)
-        #sample.update(fixed_parameters=None)
         isophote = Isophote(sample, 0, True, stop_code=4)
         isophote_list.append(isophote)
         sma = isophote.sample.geometry.update_sma(step)
@@ -3288,10 +3268,9 @@ def extract_fix_isophotes(image=None,
     sma, step = first_isophote.sample.geometry.reset_sma(step)
 
     while True:
-        sample = EllipseSample(image, sma, geometry=geometry)
+        sample = EllipseSample(image, sma, geometry=geometry, integrmode=integrmode, sclip=sclip, nclip=nclip)
 
         sample.update(geometry.fix)
-        #sample.update(fixed_parameters=None)
         isophote = Isophote(sample, 0, True, stop_code=4)
         isophote_list.append(isophote)
         sma = isophote.sample.geometry.update_sma(step)
@@ -3300,7 +3279,7 @@ def extract_fix_isophotes(image=None,
 
     isophote_list.sort()
     iso_fix = IsophoteList(isophote_list)
-
+    
     return iso_fix
 
 

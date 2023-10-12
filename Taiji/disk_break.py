@@ -111,6 +111,31 @@ def get_local_h_2order(r, mu_obs):
 
     return np.array(local_h_arr_fd)
 
+def get_local_h(r, mu_obs, order_num=2):
+    
+    local_h_arr_fd = []
+    
+    # This is the Deltax for finite difference.
+    dx = r[1] - r[0]
+    
+    for i in range(len(r)):
+        if i - 1 < 0:
+
+            deltayx = (-3 * mu_obs[i] + 4 * mu_obs[i + 1] -
+                       mu_obs[i + 2]) / (2 * dx)
+
+        elif i - (len(r) - 1) > -1:
+
+            deltayx = (3 * mu_obs[i] - 4 * mu_obs[i - 1] + mu_obs[i - 2]) / (2 * dx)
+        else:
+
+            #deltayx = (-mu_obs[i+2]+8*mu_obs[i+1]-8*mu_obs[i-1]+mu_obs[i-2])/(12*dx)
+            deltayx = (mu_obs[i + 1] - mu_obs[i - 1]) / (2 * dx)
+
+        # print(m)
+        h_local_temp = 1.086 / deltayx
+        local_h_arr_fd.append(h_local_temp)
+    
 
 def Get_localh_withmedian_old(sma, mu, length_h, frac):
 
