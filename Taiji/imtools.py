@@ -3132,6 +3132,15 @@ def create_elliptical_mask(image_data,
     cen_mask = ellipseGal_mask_img == 1
     return cen_mask
 
+def bulge_mask(redshift, pixel_scale=0.168, r_phy = 1, cosmo='Planck18'):
+    from Taiji.imtools import create_circular_mask
+    from Taiji.utils import r_phy_to_ang
+    
+    r_ang = r_phy_to_ang(redshift=redshift, r_phy=r_phy, cosmo=cosmo).value/pixel_scale
+    
+    bulge_mask = create_circular_mask(image_data, radius=r_ang)
+    
+    return bulge_mask
 
 def remove_consecutive(sma_ap, index_original, con_number=2):
     """Remove continuous unnecesary apertures in SBPs.

@@ -148,6 +148,25 @@ def brokenexpfit_emcee(x,
 
     return parameter_arr
 
+def r_phy_to_ang(r_phy, redshift, cosmo='Planck18', phy_unit='kpc', ang_unit='arcsec'):
+    """
+    Convert physical radius into angular size.
+    """
+    # Cosmology
+    if cosmo is None:
+        from astropy.cosmology import FlatLambdaCDM
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    elif cosmo == 'Planck15':
+        from astropy.cosmology import Planck15 as cosmo
+    elif cosmo == 'Planck18':
+        from astropy.cosmology import Planck18 as cosmo
+
+    # Convert the physical size into an Astropy quantity
+    if not isinstance(r_phy, u.quantity.Quantity):
+        r_phy = r_phy * u.Unit(phy_unit)
+
+    return (r_phy / cosmo.kpc_proper_per_arcmin(redshift)).to(u.Unit(ang_unit))
+
 
 def running_percentile(x, y, percentile, bins=20):
     """This is for calculating the running percentile of y as a function of x.
@@ -165,7 +184,7 @@ def running_percentile(x, y, percentile, bins=20):
 
     # calculate the running percentiles of y as a function of x
     percentile_results = binned_statistic(
-        x, y, statistic=lambda y: np.percentile(y, percentile), bins=bins)
+        x, y, statistic=lambda y: np.nanpercentile(y, percentile), bins=bins)
 
     return percentile_results.statistic
 
