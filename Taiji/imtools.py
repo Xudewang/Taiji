@@ -3132,7 +3132,7 @@ def create_elliptical_mask(image_data,
     cen_mask = ellipseGal_mask_img == 1
     return cen_mask
 
-def bulge_mask(redshift, pixel_scale=0.168, r_phy = 1, cosmo='Planck18'):
+def bulge_mask(image_data, redshift, r_phy = 1, pixel_scale=0.168, cosmo='Planck18'):
     from Taiji.imtools import create_circular_mask
     from Taiji.utils import r_phy_to_ang
     
