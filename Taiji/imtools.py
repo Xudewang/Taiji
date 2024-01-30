@@ -44,11 +44,13 @@ Vmap = 'viridis'
 Vmap_r = 'viridis_r'
 
 red = '#FF4C00'
+hedinghong = '#D24735'
 green = '#21A675'
 purple = '#8D4BBB'
 blue = '#4B5CC4'
 gold = '#F2BE45'
 jianghuang = '#FFC773'
+xiangye = '#ECD452'
 
 
 @contextmanager
