@@ -3257,6 +3257,8 @@ def extract_fix_isophotes(image=None, xcen=None, ycen=None, initsma=None, eps=No
                           linear_growth=False, minsma=None, maxsma=None, silent=False, integrmode='bilinear', sclip=3.0, nclip=3, mask=None):
     """
     Function to extract surface brightness profile with fixed center, ellipticity, and position angle.
+    
+    Note: init_sma should be large, e.g., init_sma = 2r50 !!! Otherwise, the result will be wrong, i.e., init_sma=1 the instensity profile will be wrong. See https://github.com/astropy/photutils/issues/1222.
     """
     
     from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
