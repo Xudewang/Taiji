@@ -532,7 +532,23 @@ def GrowthCurve(sma, ellip, isoInten):
     return np.asarray(curveOfGrowth), maxIsoSma, maxIsoFlux
 
 
-# firstly, I should judge the file is fits or fit.
+def GrowthCurve_trapz(R, I, axisratio):
+    """
+    Integrate a flux density profile from Autoprof writter by Connor Stone.
+
+    R: semi-major axis length (arcsec)
+    I: flux density (flux/arcsec^2)
+    axisratio: b/a profile
+    """
+
+    S = np.zeros(len(R))
+    S[0] = I[0] * np.pi * axisratio[0] * (R[0] ** 2)
+    for i in range(1, len(R)):
+        S[i] = (
+            np.trapz(2 * np.pi * I[: i + 1] * R[: i + 1] * axisratio[: i + 1], R[: i + 1])
+            + S[0]
+        )
+    return S
 
 
 def get_Rpercent(sma, cog, maxFlux, percent):
