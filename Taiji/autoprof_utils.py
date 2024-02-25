@@ -384,7 +384,9 @@ def Isophote_Initialize(IMG, results, options):
     }
 
 
-def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0, sky_value, sky_rms):
+def get_geometry_ap(
+    ap_prof_name, ap_aux_name, pixel_scale, zpt0, sky_value, sky_rms, sky_use=True
+):
     import os
 
     import pandas as pd
@@ -450,11 +452,18 @@ def get_geometry_ap(ap_prof_name, ap_aux_name, pixel_scale, zpt0, sky_value, sky
         index_above_sigma_fix = remove_consecutive(sma_ap, index_above_sigma_temp)[0]
 
         # calculate the CoG by myself
-        tflux = GrowthCurve_trapz(
-            R=sma_ap[index_above_sigma_fix],
-            I=ell_ap[index_above_sigma_fix],
-            axisratio=I_ap[index_above_sigma_fix] * pixel_scale**2,
-        )
+        if sky_use == True:
+            tflux = GrowthCurve_trapz(
+                R=sma_ap[index_above_sigma_fix],
+                I=(I_ap[index_above_sigma_fix] * pixel_scale**2 - sky_value),
+                axisratio=(1 - ell_ap[index_above_sigma_fix]),
+            )
+        elif sky_use == False:
+            tflux = GrowthCurve_trapz(
+                R=sma_ap[index_above_sigma_fix],
+                I=I_ap[index_above_sigma_fix] * pixel_scale**2,
+                axisratio=(1 - ell_ap[index_above_sigma_fix]),
+            )
 
         maxIsoFlux = np.max(tflux)
 
