@@ -211,6 +211,57 @@ def running_percentile(x, y, percentile, bins=20):
     return percentile_results.statistic
 
 
+def sliding_stats(
+    x_values, y_values, bin_size, slide_size, percentiles, start=None, boundary=None
+):
+    """
+    Calculate the running mean and percentiles of y as a function of x using a sliding window.
+
+    Parameters:
+        x_values (numpy.array): The x values.
+        y_values (numpy.array): The y values.
+        bin_size (float): The size of the sliding window.
+        slide_size (float): The step size for the sliding window.
+        percentiles (list): The percentiles to calculate.
+        start (float, optional): The start value of x for the sliding window. Defaults to the minimum of x_values.
+        boundary (float, optional): The upper boundary of x for the sliding window. Defaults to the maximum of x_values.
+
+    Returns:
+        x_bins (list): The center of each sliding window.
+        y_means (list): The mean of y in each sliding window.
+        y_percentiles (dict): The calculated percentiles of y in each sliding window. The keys are the string representation of the percentiles.
+    """
+    x_bins = []
+    y_means = []
+    y_percentiles = {str(p): [] for p in percentiles}
+
+    if start is None:
+        start = x_values.min()
+    if boundary is None:
+        boundary = x_values.max()
+
+    end = start + bin_size
+
+    while end <= boundary:
+
+        mask = (x_values >= start) & (x_values < end)
+
+        y_in_bin = y_values[mask]
+
+        y_mean = np.mean(y_in_bin)
+        for p in percentiles:
+            y_percentile = np.nanpercentile(y_in_bin, p)
+            y_percentiles[str(p)].append(y_percentile)
+
+        x_bins.append((start + end) / 2)
+        y_means.append(y_mean)
+
+        start += slide_size
+        end += slide_size
+
+    return x_bins, y_means, y_percentiles
+
+
 def running_median_errorbar(x, y, method="percentile", bins=20):
     """This is for calculating the running median and std of y as a function of x.
 
