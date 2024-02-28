@@ -4,40 +4,21 @@ import logging
 import numpy as np
 from astropy.table import Table
 from photutils.isophote import Ellipse as Photutils_Ellipse
-from photutils.isophote import EllipseGeometry, EllipseSample, Isophote, IsophoteList
+from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
+                                IsophoteList)
 from scipy.optimize import minimize
 from scipy.stats import iqr, norm
 
 from Taiji.autoprof_SharedFunctions import (
-    AddLogo,
-    Fmode_fluxdens_to_fluxsum_errorprop,
-    LSBImage,
-    PA_shift_convention,
-    SBprof_to_COG_errorprop,
-    _average,
-    _inv_x_to_eps,
-    _inv_x_to_pa,
-    _iso_between,
-    _iso_extract,
-    _scatter,
-    _x_to_eps,
-    _x_to_pa,
-    autocolours,
-    flux_to_mag,
-    flux_to_sb,
-    fluxdens_to_fluxsum_errorprop,
-    mag_to_flux,
-)
+    AddLogo, Fmode_fluxdens_to_fluxsum_errorprop, LSBImage,
+    PA_shift_convention, SBprof_to_COG_errorprop, _average, _inv_x_to_eps,
+    _inv_x_to_pa, _iso_between, _iso_extract, _scatter, _x_to_eps, _x_to_pa,
+    autocolours, flux_to_mag, flux_to_sb, fluxdens_to_fluxsum_errorprop,
+    mag_to_flux)
 from Taiji.constant import pixel_scale_HSCSSP
-from Taiji.imtools import (
-    GrowthCurve,
-    GrowthCurve_trapz,
-    bright_to_mag,
-    get_Rmag,
-    get_Rpercent,
-    remove_consecutive,
-    symmetry_propagate_err_mu,
-)
+from Taiji.imtools import (GrowthCurve, GrowthCurve_trapz, bright_to_mag,
+                           get_Rmag, get_Rpercent, remove_consecutive,
+                           symmetry_propagate_err_mu)
 
 
 def Smooth_Mode(v):
@@ -385,7 +366,14 @@ def Isophote_Initialize(IMG, results, options):
 
 
 def get_geometry_ap(
-    ap_prof_name, ap_aux_name, pixel_scale, zpt0, sky_value, sky_rms, sky_use=True
+    ap_prof_name,
+    ap_aux_name,
+    pixel_scale,
+    zpt0,
+    sky_value,
+    sky_rms,
+    sky_use=True,
+    Nsigma=1,
 ):
     import os
 
@@ -447,7 +435,7 @@ def get_geometry_ap(
         mu_ap = bright_to_mag(intens=I_ap, texp=1, pixel_size=1, zpt0=zpt0)
         mu_err_ap = symmetry_propagate_err_mu(I_ap, I_err_ap)
 
-        index_above_sigma_temp = I_ap > 3 * I_err_ap
+        index_above_sigma_temp = I_ap > Nsigma * I_err_ap
 
         index_above_sigma_fix = remove_consecutive(sma_ap, index_above_sigma_temp)[0]
 
