@@ -218,11 +218,10 @@ def included_angle_and_cosine(v1, v2):
     """return the included angle (in radians) and cosine between two vectors"""
     cosine = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
-    cosine = np.abs(cosine)
     angle = np.arccos(cosine) * 180 / np.pi
 
-    # if angle > 90:
-    #     angle = 180 - angle
-    #     cosine = -cosine
+    if angle > 90:
+        angle = 180 - angle
+        cosine = -cosine
 
     return angle, cosine
