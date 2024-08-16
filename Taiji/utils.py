@@ -399,26 +399,37 @@ def gaussian_tension_approxiation(chi2, dof=20, x0=20):
     return root[0] * np.sqrt(2)
 
 
-def gaussian_tension(chisqval, dof=20, x0=5):
+def gaussian_tension(chisqval, dof=19, x0=5, usetype="h22"):
     from scipy.integrate import quad
     from scipy.optimize import fsolve
-    from scipy.stats import chi2
+    from scipy.stats import chi2, norm
 
-    p = 1 - chi2.cdf(chisqval, dof)
-    print(f"The p-value for {chisqval} is: ", p)
+    if usetype == "h22":
 
-    def f(x):
-        return (
-            1
-            - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-(t**2) / 2), -x, x)[0]
-            - p
-        )
+        p = 1 - chi2.cdf(chisqval, dof)
+        print(f"The p-value for {chisqval} is: ", p)
 
-    x = fsolve(f, x0)
+        def f(x):
+            return (
+                1
+                - 1 / np.sqrt(2 * np.pi) * quad(lambda t: np.exp(-(t**2) / 2), -x, x)[0]
+                - p
+            )
 
-    # print('The tension:', x[0])
+        x = fsolve(f, x0)
 
-    return x[0]
+        # print('The tension:', x[0])
+
+        return x[0]
+
+    elif usetype == "mine":
+
+        p = 1 - chi2.cdf(chisqval, dof)
+        print(f"The p-value for {chisqval} is: ", p)
+
+        x = norm.ppf(1 - p / 2)
+
+        return x
 
 
 def weighted_tng50(
