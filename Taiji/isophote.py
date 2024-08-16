@@ -21,7 +21,7 @@ if importlib.util.find_spec(package_name) is not None:
     iraf.stsdas()
     iraf.analysis()
     iraf.isophote()
-    
+
 else:
     print(f"Package {package_name} is not installed.")
 
@@ -211,8 +211,15 @@ def extract_autoprof_aux(aux_path_arr):
     check_fit_initial_fit_compare = np.full((len(aux_path_arr)), np.nan)
     check_fit_isophote_variability = np.full((len(aux_path_arr)), np.nan)
 
+    file_name_arr = []
+
     for ind, aux_path in enumerate(aux_path_arr):
+
+        file_name = Path(aux_path).stem
+        file_name_arr.append(file_name)
+        
         if path.exists(aux_path):
+            
             with open(aux_path, "r") as file_aux:
                 num_pass = 0
                 for line in file_aux:
@@ -251,8 +258,8 @@ def extract_autoprof_aux(aux_path_arr):
                             err_pa_arr[ind] = float(err_pa)
                             rad_pix_arr[ind] = float(rad_pix)
 
-    # return a pd dataframe
     return pd.DataFrame({
+        "file_name": file_name_arr,
         "ell": ell_arr,
         "err_ell": err_ell_arr,
         "pa": pa_arr,
