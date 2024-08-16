@@ -1,8 +1,11 @@
-from pyraf import iraf
+import importlib
 import os
 from astropy.table import Table
 import numpy as np
 from astropy.table import Table, Column
+from pathlib import Path
+from os import path
+import pandas as pd
 
 from Taiji.imtools import removeellipseIndef
 from Taiji.imtools import bright_to_mag
@@ -10,9 +13,17 @@ from Taiji.imtools import symmetry_propagate_err_mu
 from Taiji.imtools import normalize_angle
 from Taiji.imtools import correct_pa_profile
 
-iraf.stsdas()
-iraf.analysis()
-iraf.isophote()
+package_name = 'pyraf'
+
+if importlib.util.find_spec(package_name) is not None:
+    from pyraf import iraf
+
+    iraf.stsdas()
+    iraf.analysis()
+    iraf.isophote()
+    
+else:
+    print(f"Package {package_name} is not installed.")
 
 def maskFitsTool(inputImg_fits_file, mask_fits_file):
 
@@ -186,4 +197,70 @@ def PyrafEllipse(input_img,
 
     return ellipse_data
 
+def extract_autoprof_aux(aux_path_arr):
 
+    ell_arr = np.full((len(aux_path_arr)), np.nan)
+    err_ell_arr = np.full((len(aux_path_arr)), np.nan)
+    pa_arr = np.full((len(aux_path_arr)), np.nan)
+    err_pa_arr = np.full((len(aux_path_arr)), np.nan)
+    rad_pix_arr = np.full((len(aux_path_arr)), np.nan)
+
+    numpass_arr = np.full((len(aux_path_arr)), np.nan)
+    check_fit_fft_coefficients = np.full((len(aux_path_arr)), np.nan)
+    check_fit_light_symmetry = np.full((len(aux_path_arr)), np.nan)
+    check_fit_initial_fit_compare = np.full((len(aux_path_arr)), np.nan)
+    check_fit_isophote_variability = np.full((len(aux_path_arr)), np.nan)
+
+    for ind, aux_path in enumerate(aux_path_arr):
+        if path.exists(aux_path):
+            with open(aux_path, "r") as file_aux:
+                num_pass = 0
+                for line in file_aux:
+                    if line.startswith("checkfit"):
+                        num_pass = num_pass + 1 if line.strip(
+                        )[-4:] == "pass" else num_pass
+
+                        numpass_arr[ind] = num_pass
+
+                    if line.startswith("checkfit FFT"):
+                        check_fit_fft_coefficients[ind] = 1 if line.strip(
+                        )[-4:] == "pass" else 0
+                    if line.startswith("checkfit Light"):
+                        check_fit_light_symmetry[ind] = 1 if line.strip(
+                        )[-4:] == "pass" else 0
+                    if line.startswith("checkfit initial"):
+                        check_fit_initial_fit_compare[ind] = 1 if line.strip(
+                        )[-4:] == "pass" else 0
+                    if line.startswith("checkfit isophote"):
+                        check_fit_isophote_variability[ind] = 1 if line.strip(
+                        )[-4:] == "pass" else 0
+
+                    hua_mod = 1
+                    if line.startswith("global optimal ellipticity") and num_pass >= 0:
+                        ell, err_ell, pa, err_pa, rad_pix = np.array(
+                            line.split())[[2+hua_mod, 4+hua_mod, 6+hua_mod, 8+hua_mod, 11+hua_mod]]
+                        if float(rad_pix
+                                ) > 0:  # rad_pix should be larger than 3*seeing
+                            ell_arr[ind] = float(ell)
+                            if err_ell[-1] == ",":
+                                err_ell_arr[ind] = float(err_ell[:-1])
+                            else:
+                                print("error!")
+                                err_ell_arr[ind] = np.nan
+                            pa_arr[ind] = float(pa)
+                            err_pa_arr[ind] = float(err_pa)
+                            rad_pix_arr[ind] = float(rad_pix)
+
+    # return a pd dataframe
+    return pd.DataFrame({
+        "ell": ell_arr,
+        "err_ell": err_ell_arr,
+        "pa": pa_arr,
+        "err_pa": err_pa_arr,
+        "rad_pix": rad_pix_arr,
+        "numpass": numpass_arr,
+        "check_fit_fft_coefficients": check_fit_fft_coefficients,
+        "check_fit_light_symmetry": check_fit_light_symmetry,
+        "check_fit_initial_fit_compare": check_fit_initial_fit_compare,
+        "check_fit_isophote_variability": check_fit_isophote_variability
+    })
