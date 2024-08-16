@@ -18,7 +18,7 @@ from photutils.isophote import Ellipse as Photutils_Ellipse
 from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
                                 IsophoteList)
 from scipy.fftpack import fft, ifft
-from scipy.integrate import quad, trapz
+from scipy.integrate import quad, trapezoid
 from scipy.interpolate import (Rbf, RectBivariateSpline, SmoothBivariateSpline,
                                interp2d)
 from scipy.optimize import minimize
@@ -1121,7 +1121,7 @@ def fluxdens_to_fluxsum(R, I, axisratio):
     S[0] = I[0] * np.pi * axisratio[0] * (R[0] ** 2)
     for i in range(1, len(R)):
         S[i] = (
-            trapz(2 * np.pi * I[: i + 1] * R[: i + 1] * axisratio[: i + 1], R[: i + 1])
+            trapezoid(2 * np.pi * I[: i + 1] * R[: i + 1] * axisratio[: i + 1], R[: i + 1])
             + S[0]
         )
     return S
@@ -1244,7 +1244,7 @@ def Fmode_fluxdens_to_fluxsum(R, I, parameters, A=None):
     S[0] = I[0] * Aq[0]
     Adiff = np.array([Aq[0]] + list(Aq[1:] - Aq[:-1]))
     for i in range(1, len(R)):
-        S[i] = trapz(I[: i + 1] * Adiff[: i + 1], R[: i + 1]) + S[0]
+        S[i] = trapezoid(I[: i + 1] * Adiff[: i + 1], R[: i + 1]) + S[0]
     return S
 
 
