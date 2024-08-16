@@ -1,1 +1,1 @@
-This package is to be developed into a full set with some photometric codes
+This package contains a set of photometric codes developed for analyzing galaxy morphology and structure.
