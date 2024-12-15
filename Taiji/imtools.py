@@ -3733,5 +3733,12 @@ def richardson_lucy_np(image, psf, num_iters, noncirc=False, mask=None):
     
     return estimate
 
+def Hubble_inclination(q, q_0=0.2):
+    cosi = np.sqrt((q**2 - q_0**2) / (1 - q_0**2))
+    
+    i = np.arccos(cosi) * 180 / np.pi
+    
+    return i, cosi
+
 if __name__ == '__main__':
     test_pa = -50

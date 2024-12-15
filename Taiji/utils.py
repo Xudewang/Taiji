@@ -188,7 +188,30 @@ def r_phy_to_ang(r_phy, redshift, cosmo="Planck18", phy_unit="kpc", ang_unit="ar
 
     return (r_phy / cosmo.kpc_proper_per_arcmin(redshift)).to(u.Unit(ang_unit))
 
+def r_ang_to_phy(r_ang, redshift, cosmo="Planck18", phy_unit="kpc", ang_unit="arcsec"):
+    """
+    Convert angular size into physical radius.
+    """
+    if cosmo is None:
+        from astropy.cosmology import FlatLambdaCDM
 
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    elif cosmo == "Planck15":
+        from astropy.cosmology import Planck15 as cosmo
+    elif cosmo == "Planck18":
+        from astropy.cosmology import Planck18 as cosmo
+
+    # Convert the angular size into an Astropy quantity
+    if not isinstance(r_ang, u.quantity.Quantity):
+        r_ang = r_ang * u.Unit(ang_unit)
+
+    r_phy = (r_ang * cosmo.kpc_proper_per_arcmin(redshift)).to(u.Unit(phy_unit))
+
+    # convert to pure number
+    r_phy = r_phy.value
+
+    return r_phy
+    
 def running_percentile(x, y, percentile, bins=20):
     """This is for calculating the running percentile of y as a function of x.
 
@@ -248,7 +271,7 @@ def sliding_stats(
 
         y_in_bin = y_values[mask]
 
-        y_mean = np.mean(y_in_bin)
+        y_mean = np.nanmean(y_in_bin)
         for p in percentiles:
             y_percentile = np.nanpercentile(y_in_bin, p)
             y_percentiles[str(p)].append(y_percentile)
@@ -743,3 +766,60 @@ def determine_late(V_J, U_V, z=2):
     index = np.logical_or(i_12, i_3)
 
     return index
+
+def normalize_vector(vector):
+    """
+    Normalize a vector.
+
+    Parameters:
+    vector (array-like): Vector to be normalized.
+
+    Returns:
+    array-like: Normalized vector.
+    """
+    # Calculate the magnitude of the vector
+    magnitude = np.linalg.norm(vector)
+    
+    # Normalize the vector
+    normalized_vector = vector / magnitude
+    
+    return normalized_vector
+
+def calculate_cross_product_and_unit_normal(vector_a, vector_b):
+    """
+    Calculate the cross product and unit normal vector of two vectors.
+
+    Parameters:
+    vector_a (array-like): First vector.
+    vector_b (array-like): Second vector.
+
+    Returns:
+    tuple: Cross product and unit normal vector.
+    """
+    # Calculate the cross product
+    cross_product = np.cross(vector_a, vector_b)
+
+    # Calculate the unit normal vector
+    unit_normal_vector = normalize_vector(cross_product)
+    
+    return cross_product, unit_normal_vector
+
+def projected_vector_onplane(vector, plane_vector1, plane_vector2):
+    """
+    Project a vector onto a plane defined by two vectors.
+
+    Parameters:
+    vector (array-like): Vector to be projected.
+    plane_vector1 (array-like): First vector defining the plane.
+    plane_vector2 (array-like): Second vector defining the plane.
+
+    Returns:
+    array-like: Projected vector.
+    """
+    # Calculate the cross product of the two vectors defining the plane
+    cross_product = np.cross(plane_vector1, plane_vector2)
+    
+    # Calculate the projection of the vector onto the plane, normalizing the cross product
+    projection = vector - np.dot(vector, cross_product) * cross_product / np.dot(cross_product, cross_product)
+    
+    return projection

@@ -8,13 +8,17 @@ from photutils.isophote import (EllipseGeometry, EllipseSample, Isophote,
                                 IsophoteList)
 from scipy.optimize import minimize
 from scipy.stats import iqr, norm
+from scipy.fftpack import fft, ifft, dct, idct
+from matplotlib.patches import Ellipse, Wedge
+import matplotlib.pyplot as plt
+import os
 
 from Taiji.autoprof_SharedFunctions import (
     AddLogo, Fmode_fluxdens_to_fluxsum_errorprop, LSBImage,
     PA_shift_convention, SBprof_to_COG_errorprop, _average, _inv_x_to_eps,
     _inv_x_to_pa, _iso_between, _iso_extract, _scatter, _x_to_eps, _x_to_pa,
     autocolours, flux_to_mag, flux_to_sb, fluxdens_to_fluxsum_errorprop,
-    mag_to_flux)
+    mag_to_flux, Angle_Median, AddScale)
 from Taiji.constant import pixel_scale_HSCSSP
 from Taiji.imtools import (GrowthCurve, GrowthCurve_trapz, bright_to_mag,
                            get_Rmag, get_Rpercent, remove_consecutive,
@@ -101,6 +105,116 @@ def My_Background_Mode(IMG, mask=None):
 
     return {"background": bkgrnd, "background noise": noise}
 
+def Plot_Isophote_Init_Ellipse(dat, circ_ellipse_radii, ellip, phase, results, options):
+    ranges = [
+        [
+            max(0, int(results["center"]["x"] - circ_ellipse_radii[-1] * 1.5)),
+            min(dat.shape[1], int(results["center"]["x"] + circ_ellipse_radii[-1] * 1.5)),
+        ],
+        [
+            max(0, int(results["center"]["y"] - circ_ellipse_radii[-1] * 1.5)),
+            min(dat.shape[0], int(results["center"]["y"] + circ_ellipse_radii[-1] * 1.5)),
+        ],
+    ]
+
+    LSBImage(
+        dat[ranges[1][0] : ranges[1][1], ranges[0][0] : ranges[0][1]],
+        results["background noise"],
+    )
+    AddScale(plt.gca(), (ranges[0][1] - ranges[0][0]) * options["ap_pixscale"])
+    plt.gca().add_patch(
+        Ellipse(
+            xy=(
+                results["center"]["x"] - ranges[0][0],
+                results["center"]["y"] - ranges[1][0],
+            ),
+            width=2 * circ_ellipse_radii[-1],
+            height=2 * circ_ellipse_radii[-1] * (1.0 - ellip),
+            angle=phase * 180 / np.pi,
+            fill=False,
+            linewidth=1,
+            color=autocolours["blue1"],
+        )
+    )
+    plt.plot(
+        [results["center"]["x"] - ranges[0][0]],
+        [results["center"]["y"] - ranges[1][0]],
+        marker="x",
+        markersize=3,
+        color=autocolours["red1"],
+    )
+    if not ("ap_nologo" in options and options["ap_nologo"]):
+        AddLogo(plt.gcf())
+    plt.savefig(
+        os.path.join(
+            options["ap_plotpath"] if "ap_plotpath" in options else "",
+            f"initialize_ellipse_{options['ap_name']}.{options.get('ap_plot_extension', 'jpg')}",
+        ),
+        dpi=options["ap_plotdpi"] if "ap_plotdpi" in options else 300,
+    )
+    plt.close()
+
+
+def Plot_Isophote_Init_Optimize(
+    circ_ellipse_radii,
+    allphase,
+    phase,
+    pa_err,
+    test_ellip,
+    test_f2,
+    ellip,
+    ellip_err,
+    results,
+    options,
+):
+    fig, ax = plt.subplots(2, 1, figsize=(6, 6))
+    plt.subplots_adjust(hspace=0.01, wspace=0.01)
+    ax[0].plot(
+        circ_ellipse_radii[:-1],
+        ((-np.angle(allphase) / 2) % np.pi) * 180 / np.pi,
+        color="k",
+    )
+    ax[0].axhline(phase * 180 / np.pi, color="r")
+    ax[0].axhline((phase + pa_err) * 180 / np.pi, color="r", linestyle="--")
+    ax[0].axhline((phase - pa_err) * 180 / np.pi, color="r", linestyle="--")
+    # ax[0].axvline(circ_ellipse_radii[-2], color = 'orange', linestyle = '--')
+    ax[0].set_xlabel("Radius [pix]", fontsize=16)
+    ax[0].set_ylabel("FFT$_{2}$ phase [deg]", fontsize=16)
+    ax[0].tick_params(labelsize=12)
+    ax[1].plot(test_ellip, test_f2, color="k")
+    ax[1].axvline(ellip, color="r")
+    ax[1].axvline(ellip + ellip_err, color="r", linestyle="--")
+    ax[1].axvline(ellip - ellip_err, color="r", linestyle="--")
+    ax[1].set_xlabel("Ellipticity [1 - b/a]", fontsize=16)
+    ax[1].set_ylabel("Loss [FFT$_{2}$/med(flux)]", fontsize=16)
+    ax[1].tick_params(labelsize=14)
+    plt.tight_layout()
+    if not ("ap_nologo" in options and options["ap_nologo"]):
+        AddLogo(plt.gcf())
+    plt.savefig(
+        os.path.join(
+            options["ap_plotpath"] if "ap_plotpath" in options else "",
+            f"initialize_ellipse_optimize_{options['ap_name']}.{options.get('ap_plot_extension', 'jpg')}",
+        ),
+        dpi=options["ap_plotdpi"] if "ap_plotdpi" in options else 300,
+    )
+    plt.close()
+
+def _fitEllip_loss(e, dat, r, p, c, n, m):
+    isovals = _iso_extract(
+        dat,
+        r,
+        {"ellip": e, "pa": p},
+        c,
+        sigmaclip=True,
+        sclip_nsigma=3,
+        mask=m,
+        interp_mask=True,
+    )
+    coefs = fft(np.clip(isovals, a_max=np.quantile(isovals, 0.85), a_min=None))
+    return (iqr(isovals, rng=[16, 84]) / 2 + np.abs(coefs[2]) / len(isovals)) / (
+        max(0, np.median(isovals)) + n
+    )
 
 def Isophote_Initialize(IMG, results, options):
     """Fit global elliptical isophote to a galaxy image using FFT coefficients.
@@ -130,6 +244,9 @@ def Isophote_Initialize(IMG, results, options):
 
     ap_isoinit_ellip_set : float, default None
       User set initial ellipticity (1 - b/a), will override the calculation.
+
+    ap_isoinit_R_set : float, default None
+        User set initial semi-major axis length, will override the calculation.
 
     Notes
     ----------
@@ -167,34 +284,54 @@ def Isophote_Initialize(IMG, results, options):
     if not np.any(mask):
         mask = None
 
-    while circ_ellipse_radii[-1] < (len(IMG) / 2):
-        circ_ellipse_radii.append(circ_ellipse_radii[-1] * (1 + 0.2))
-        isovals = _iso_extract(
-            dat,
-            circ_ellipse_radii[-1],
-            {"ellip": 0.0, "pa": 0.0},
-            results["center"],
-            more=True,
-            mask=mask,
-            sigmaclip=True,
-            sclip_nsigma=3,
-            interp_mask=True,
-        )
-        coefs = fft(isovals[0])
-        allphase.append(coefs[2])
-        # Stop when at 3 time background noise
-        if (
-            np.quantile(isovals[0], 0.8)
-            < (
-                (options["ap_fit_limit"] + 1 if "ap_fit_limit" in options else 3)
-                * results["background noise"]
+    if "ap_isoinit_R_set" in options:
+        circ_ellipse_radii = np.logspace(
+            np.log10(circ_ellipse_radii[0]),
+            np.log10(options["ap_isoinit_R_set"]),
+            10,
+        ).tolist()
+        for r in circ_ellipse_radii[1:]:
+            isovals = _iso_extract(
+                dat,
+                r,
+                {"ellip": 0.0, "pa": 0.0},
+                results["center"],
+                more=True,
+                mask=mask,
+                sigmaclip=True,
+                sclip_nsigma=3,
+                interp_mask=True,
             )
-            and len(circ_ellipse_radii) > 4
-        ):
-            break
-    logging.info(
-        "%s: init scale: %f pix" % (options["ap_name"], circ_ellipse_radii[-1])
-    )
+            coefs = fft(isovals[0])
+            allphase.append(coefs[2])
+    else:
+        while circ_ellipse_radii[-1] < (len(IMG) / 2):
+            circ_ellipse_radii.append(circ_ellipse_radii[-1] * (1 + 0.2))
+            isovals = _iso_extract(
+                dat,
+                circ_ellipse_radii[-1],
+                {"ellip": 0.0, "pa": 0.0},
+                results["center"],
+                more=True,
+                mask=mask,
+                sigmaclip=True,
+                sclip_nsigma=3,
+                interp_mask=True,
+            )
+            coefs = fft(isovals[0])
+            allphase.append(coefs[2])
+            # Stop when at 3 time background noise
+            if (
+                np.quantile(isovals[0], 0.8)
+                < (
+                    (options["ap_fit_limit"] + 1 if "ap_fit_limit" in options else 3)
+                    * results["background noise"]
+                )
+                and len(circ_ellipse_radii) > 4
+            ):
+                break
+
+    logging.info("%s: init scale: %f pix" % (options["ap_name"], circ_ellipse_radii[-1]))
     # Find global position angle.
     phase = (-Angle_Median(np.angle(allphase[-5:])) / 2) % np.pi
     if "ap_isoinit_pa_set" in options:
@@ -266,6 +403,13 @@ def Isophote_Initialize(IMG, results, options):
             ]
         },
     )
+    fig, ax = plt.subplots(2, 1, figsize=(6, 6))
+    LSBImage(IMG, noise=1e-4)
+
+    plt.imshow(mask, cmap='gray', alpha=0.5, origin='lower')
+
+    plt.show()
+
     if res.success:
         logging.debug(
             "%s: using optimal ellipticity %.3f over grid ellipticity %.3f"
@@ -296,15 +440,11 @@ def Isophote_Initialize(IMG, results, options):
         )
         coefs = fft(isovals[0])
         errallphase.append(coefs[2])
-    sample_pas = (
-        -np.angle(1j * np.array(errallphase) / np.mean(errallphase)) / 2
-    ) % np.pi
+    sample_pas = (-np.angle(1j * np.array(errallphase) / np.mean(errallphase)) / 2) % np.pi
     pa_err = iqr(sample_pas, rng=[16, 84]) / 2
     res_multi = map(
         lambda rrp: minimize(
-            lambda e, d, r, p, c, n, m: _fitEllip_loss(
-                _x_to_eps(e[0]), d, r, p, c, n, m
-            ),
+            lambda e, d, r, p, c, n, m: _fitEllip_loss(_x_to_eps(e[0]), d, r, p, c, n, m),
             x0=_inv_x_to_eps(ellip),
             args=(
                 dat,
@@ -329,9 +469,7 @@ def Isophote_Initialize(IMG, results, options):
     circ_ellipse_radii = np.array(circ_ellipse_radii)
 
     if "ap_doplot" in options and options["ap_doplot"]:
-        Plot_Isophote_Init_Ellipse(
-            dat, circ_ellipse_radii, ellip, phase, results, options
-        )
+        Plot_Isophote_Init_Ellipse(dat, circ_ellipse_radii, ellip, phase, results, options)
         Plot_Isophote_Init_Optimize(
             circ_ellipse_radii,
             allphase,
@@ -345,15 +483,12 @@ def Isophote_Initialize(IMG, results, options):
             options,
         )
 
-    auxmessage = (
-        "global ellipticity: %.3f +- %.3f, pa: %.3f +- %.3f deg, size: %f pix"
-        % (
-            ellip,
-            ellip_err,
-            PA_shift_convention(phase) * 180 / np.pi,
-            pa_err * 180 / np.pi,
-            circ_ellipse_radii[-2],
-        )
+    auxmessage = "global ellipticity: %.3f +- %.3f, pa: %.3f +- %.3f deg, size: %f pix" % (
+        ellip,
+        ellip_err,
+        PA_shift_convention(phase) * 180 / np.pi,
+        pa_err * 180 / np.pi,
+        circ_ellipse_radii[-2],
     )
     return IMG, {
         "init ellip": ellip,

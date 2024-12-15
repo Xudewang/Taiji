@@ -225,3 +225,96 @@ def included_angle_and_cosine(v1, v2):
         cosine = -cosine
 
     return angle, cosine
+
+def solve_Binney1985_scipy(q_obs, phi, beta, gamma, theta=None, solve_style='brentq'):
+    """
+    Solve the Binney 1985 inclination equation using scipy's root finding functions
+    q_obs: observed axial ratio
+    phi: azimuthal angle in a polar coordinate system
+    beta: B/A
+    gamma: C/A
+    theta: incliantion angle
+    solve_style: method to solve the equation
+    """
+    from scipy.optimize import brentq, newton, root_scalar, brenth, ridder, bisect, toms748
+    from scipy.optimize import fsolve
+    import warnings
+
+    def equations(p):
+        thetaInclination_var = p
+        X_eq = ((np.cos(thetaInclination_var)**2 / gamma**2) * (np.sin(phi)**2 + np.cos(phi)**2 / beta**2) + np.sin(thetaInclination_var)**2 / beta**2)
+        Y_eq = (np.cos(thetaInclination_var) * np.sin(2 * phi) * (1 - 1 / beta**2) * (1 / gamma**2))
+        Z_eq = (np.sin(phi)**2 / beta**2 + np.cos(phi)**2) * (1 / gamma**2)
+
+        q_eq = np.sqrt((X_eq + Z_eq - np.sqrt((X_eq - Z_eq)**2 + Y_eq**2)) / (X_eq + Z_eq + np.sqrt((X_eq - Z_eq)**2 + Y_eq**2))) - q_obs
+
+        return q_eq
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            if solve_style == 'brentq':
+                theta_solution = brentq(equations, 0, np.pi/2)
+            elif solve_style == 'newton':
+                theta_solution = newton(equations, theta, maxiter=10000000)
+            elif solve_style == 'root_scalar':
+                theta_solution = root_scalar(equations, bracket=[0, np.pi/2])
+            elif solve_style == 'brenth':
+                theta_solution = brenth(equations, 0, np.pi/2)
+            elif solve_style == 'ridder':
+                theta_solution = ridder(equations, 0, np.pi/2)
+            elif solve_style == 'bisect':
+                theta_solution = bisect(equations, 0, np.pi/2)
+            elif solve_style == 'toms748':
+                theta_solution = toms748(equations, 0, np.pi/2)
+            elif solve_style == 'fsolve':
+                theta_solution = fsolve(equations, theta)
+            else:
+                raise ValueError("Invalid solve style")
+
+        if isinstance(theta_solution, np.ndarray) and theta_solution.size == 1:
+            theta_solution = theta_solution.item()
+
+        angle_solution = theta_solution/np.pi*180
+
+        if angle_solution > 90:
+            angle_solution = 180 - angle_solution
+
+        return angle_solution
+
+    except (RuntimeWarning, ValueError) as e:
+        print(f"Error solving for theta: {e}")
+        return np.nan
+    
+def solve_Binney1985_sympy(q_obs, phi, beta, gamma, theta = None, solve_style='numerical', tolerance = 1e-17):
+    import sympy as sp
+    from sympy import Symbol # 用于定义变量
+    from sympy import solve # 用于方程的解析解
+    from sympy import nsolve # 用于方程的数值解
+
+    thetaInclination_var = Symbol('thetaInclination_var')
+
+    X_eq = ((sp.cos(thetaInclination_var)**2/gamma**2)*(sp.sin(phi)**2+sp.cos(phi)**2/beta**2) + sp.sin(thetaInclination_var)**2/beta**2)
+    Y_eq = (sp.cos(thetaInclination_var)*sp.sin(2*phi)*(1-1/beta**2)*(1/gamma**2))
+    Z_eq = (sp.sin(phi)**2/beta**2+sp.cos(phi)**2)*(1/gamma**2)
+
+    q_eq = sp.sqrt((X_eq+Z_eq-sp.sqrt((X_eq-Z_eq)**2+Y_eq**2))/(X_eq+Z_eq+sp.sqrt((X_eq-Z_eq)**2+Y_eq**2))) - q_obs
+
+    if solve_style == 'analytical':
+        results = sp.solve([q_eq, thetaInclination_var>0, thetaInclination_var<(sp.pi/2)], thetaInclination_var)
+
+        return results
+    
+    elif solve_style == 'numerical':
+        results = sp.nsolve(q_eq, thetaInclination_var, theta, tol = tolerance, domain=sp.Interval(0, sp.pi/2))
+
+        return np.degrees(float(results))
+    
+    elif solve_style == 'solveset':
+
+        solution_set = sp.solveset(q_eq, thetaInclination_var, domain=sp.Interval(0, sp.pi/2))
+
+        if not solution_set:
+                return np.nan
+        solution = next(iter(solution_set))
+        return np.degrees(float(solution))

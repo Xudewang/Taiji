@@ -242,10 +242,9 @@ def extract_autoprof_aux(aux_path_arr):
                         check_fit_isophote_variability[ind] = 1 if line.strip(
                         )[-4:] == "pass" else 0
 
-                    hua_mod = 1
                     if line.startswith("global optimal ellipticity") and num_pass >= 0:
                         ell, err_ell, pa, err_pa, rad_pix = np.array(
-                            line.split())[[2+hua_mod, 4+hua_mod, 6+hua_mod, 8+hua_mod, 11+hua_mod]]
+                            line.split())[[2, 4, 6, 8, 11]]
                         if float(rad_pix
                                 ) > 0:  # rad_pix should be larger than 3*seeing
                             ell_arr[ind] = float(ell)
